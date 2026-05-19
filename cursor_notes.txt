@@ -37,9 +37,10 @@
 - Script: scripts/export-docs.ps1 → dist/*.docx
 - Needs on PATH (or default install paths): Pandoc (%LOCALAPPDATA%\Pandoc), Node (Program Files\nodejs), mermaid-filter.cmd (%APPDATA%\npm), wavedrom-cli (npm global)
 - Windows: pandoc must use `--filter mermaid-filter.cmd` (not bare mermaid-filter)
-- WaveDrom: docs/diagrams/wavedrom/*.json → docs/diagrams/assets/*.svg (export script renders if JSON newer)
+- WaveDrom: docs/diagrams/wavedrom/*.json → assets/*.svg + *.png (md embeds .png for Word; export renders if JSON newer)
 - WaveDrom Editor GUI (optional): C:\Program Files\wavedrom-editor-v3.5.0-win-x64
 - Targets: -Target all|manual|overview|scenarios|developer|parameters|pir|diagrams (parameters = own .docx, not bundled in developer)
+- Parallel: default on PS 7+ (up to 4 pandoc jobs); -Sequential to disable; each job uses its own TEMP subfolder for mermaid-filter
 - PDF: open .docx in Word → Save as PDF (no LaTeX in pipeline)
 
 ## 2026-05-19 (scenarios)

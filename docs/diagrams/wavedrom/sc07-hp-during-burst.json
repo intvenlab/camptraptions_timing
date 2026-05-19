@@ -1,12 +1,11 @@
 {
+  "config": { "hscale": 3, "vscale": 2 },
+  "head": { "text": "SC-07 — HP input during burst (exception)" },
   "signal": [
-    { "name": "HP in",  "wave": "0...n..n..n....................", "node": ".w..x..y" },
-    { "name": "HP out", "wave": "0...1........................." },
-    { "name": "FP in",  "wave": "0.......1.1.1.................", "node": ".c....d" },
-    { "name": "FP out", "wave": "0.......10101010............." }
+    {"name": "HP in", "wave": "0.n.n.|..." },
+    {"name": "HP out", "wave": "0..1...|..." },
+    {"name": "FP in",  "wave": "0..1.1.|..." },
+    {"name": "FP out", "wave": "0..1010|..." }
   ],
-  "edge": [
-    "w,x,y ignored R14",
-    "c-~>d FP in during sequence ignored R10"
-  ]
+  "foot": { "text": "HP in glitches ignored (R14). Extra FP in during sequence ignored (R10). FP out schedule unchanged." }
 }

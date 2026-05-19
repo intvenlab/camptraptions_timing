@@ -53,9 +53,7 @@ sequenceDiagram
 
 **Camera outputs (SC-01 defaults)**
 
-Source: [wavedrom/sc01-nominal-outputs.json](wavedrom/sc01-nominal-outputs.json) — edit in [WaveDrom Editor](https://wavedrom.com/editor.html) or `C:\Program Files\wavedrom-editor-v3.5.0-win-x64`; re-render with `wavedrom-cli` (see README).
-
-![SC-01 nominal camera outputs](assets/sc01-nominal-outputs.svg)
+![SC-01 nominal camera outputs](assets/sc01-nominal-outputs.png){ width=6.5in }
 
 | Event | Time (s) |
 |-------|----------|
@@ -182,8 +180,6 @@ sequenceDiagram
 
 *Exception input — wide PIR glitches during burst; schedule unchanged (R14).*
 
-Source: [wavedrom/sc07-hp-during-burst.json](wavedrom/sc07-hp-during-burst.json)
-
-![SC-07 HP during burst](assets/sc07-hp-during-burst.svg)
+![SC-07 HP during burst](assets/sc07-hp-during-burst.png){ width=6.5in }
 
 HP **input** does not reset `remainingFrames` or add frames (**R14**). Camera HP **output** stays latched (**R7**). Extra FP **input** during the sequence is ignored (**R10**); only the scheduled `FrameCount` FP OUT pulses fire.

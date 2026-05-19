@@ -33,6 +33,8 @@ From the repo root (requires [Pandoc](https://pandoc.org/), [mermaid-filter](htt
 
 Outputs land in `dist/` as `.docx` (Mermaid and WaveDrom diagrams rendered as images). Bundles: `overview`, `scenarios`, `developer` (behavior spec only), `parameters`, `pir`, `diagrams`, or `manual` (all). Example: `.\scripts\export-docs.ps1 -Target parameters`
 
+With multiple `-Target` values (or `-Target all`), docx builds run **in parallel** — `ForEach-Object -Parallel` on PowerShell 7+ (up to 4 at once), or `Start-Job` on Windows PowerShell 5.1 (all targets at once). Use `-Sequential` if mermaid-filter misbehaves.
+
 **WaveDrom timing diagrams:** JSON sources in `docs/diagrams/wavedrom/`; SVG output in `docs/diagrams/assets/`. The export script runs `wavedrom-cli` when JSON is newer than SVG. GUI editor (optional): `C:\Program Files\wavedrom-editor-v3.5.0-win-x64`.
 
 ## Quick physical model
