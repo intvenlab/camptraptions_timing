@@ -1,0 +1,15 @@
+{
+  "config": { "hscale": 3, "vscale": 3 },
+  "head": { "text": "SC-04 — wake timeout, no FP (exception)" },
+  "signal": [
+    ["In",
+      { "name": "FP in",  "wave": "0..........|.." },
+      { "name": "HP in",  "wave": "010........|.." }
+    ],
+    ["Out",
+      { "name": "HP out", "wave": "01.........|.0" },
+      { "name": "FP out", "wave": "0..........|.." }
+    ]
+  ],
+  "foot": { "text": "wakeHalfPressHoldTime X=10 s; no FP → HP OUT OFF (R2). ~1 unit ≈ 1 s." }
+}

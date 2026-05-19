@@ -1,0 +1,15 @@
+{
+  "config": { "hscale": 3, "vscale": 3 },
+  "head": { "text": "SC-06 — cold FP, no prior HP wake (exception)" },
+  "signal": [
+    ["In",
+      { "name": "FP in",  "wave": "10............" },
+      { "name": "HP in",  "wave": "0............." }
+    ],
+    ["Out",
+      { "name": "HP out", "wave": "01............" },
+      { "name": "FP out", "wave": "0..10.10.10.10" }
+    ]
+  ],
+  "foot": { "text": "FP asserts HP OUT (R3); frame 1 after minHalfPressBeforeShutter T=0.5 s; frames 2–4 at +Y=1.0 s (R6)." }
+}

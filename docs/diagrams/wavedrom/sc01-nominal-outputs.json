@@ -2,9 +2,13 @@
   "config": { "hscale": 3, "vscale": 3 },
   "head": { "text": "SC-01 — camera outputs (registry defaults)" },
   "signal": [
-  { "name": "HP out", "wave": "1....." },
-  { "name": "FP out", "wave": "0.1010" },
-  { "name": "FP in",  "wave": "0.1..." }
-],
-  "foot": { "text": "Times (s): wake 0 · FP accept 1.0 · frames 1–4 at 1.0–4.0 · HP off ~6 after Z. FP in retriggers during burst ignored (R10)." }
+    ["In",
+    { "name": "FP in",  "wave": "0.10...."},
+    { "name": "HP in",  "wave": "010.|..."}
+    ],
+    ["Out",
+      { "name": "HP out", "wave": "01..|..0" },
+      { "name": "FP out", "wave": "0.10|10." }
+    ]
+  ]  
 }

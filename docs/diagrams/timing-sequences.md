@@ -5,7 +5,7 @@ Waveform-style views cross-linked to [scenarios.md](../scenarios.md). Use [param
 **Read this first:** [Nominal path (defaults)](#nominal-path-defaults) — HP OUT latched for the whole activity; exceptions are labeled below.
 
 | Section | Scenario |
-|------|--------------|
+|---|--------------|
 | **Nominal** | [SC-01](#nominal-path-defaults) — default happy path |
 | A | [SC-04](../scenarios.md#sc-04--wake-timeout-no-fp) Wake timeout *(exception)* |
 | B | [SC-06](../scenarios.md#sc-06--cold-fp-no-prior-wake) Cold FP *(exception)* |
@@ -73,6 +73,16 @@ Exception paths: [A wake timeout](#a--sc-04-wake-only-then-timeout), [B cold FP]
 
 *Exception — not the nominal shoot path.*
 
+**Camera outputs (SC-04)**
+
+![SC-04 wake timeout](assets/sc04-wake-timeout.png){ width=6.5in }
+
+| Event | Time (s) |
+|-------|----------|
+| HP wake (HP OUT ON) | 0.0 |
+| No FP | — |
+| HP OUT OFF (`wakeHalfPressHoldTime` X=10) | ~10.0 |
+
 ```mermaid
 sequenceDiagram
     participant HPi as HP input (wide PIR)
@@ -90,6 +100,20 @@ sequenceDiagram
 ## B — SC-06: FP without prior wake (cold start)
 
 *Exception — FP before any HP wake.*
+
+**Camera outputs (SC-06)**
+
+![SC-06 cold FP](assets/sc06-cold-fp.png){ width=6.5in }
+
+| Event | Time (s) |
+|-------|----------|
+| FP in (cold) | 0.0 |
+| HP OUT ON (R3) | 0.0 |
+| Frame 1 FP OUT start | 0.5 (after T) |
+| Frame 2 FP OUT start | 1.5 |
+| Frame 3 FP OUT start | 2.5 |
+| Frame 4 FP OUT start | 3.5 |
+| HP OUT OFF (after Z) | ~5.5 |
 
 ```mermaid
 sequenceDiagram
@@ -114,6 +138,14 @@ Same as [Nominal path](#nominal-path-defaults). Canonical reference for acceptan
 *Overlay on nominal burst — PIR Gap minimum.*
 
 MCU ignores **all** FP **inputs** from sequence start until the burst **schedule** completes (R10). `fullPressIgnoreGap` is a timing budget, not a per-retrigger window after each pulse.
+
+**Camera outputs (SC-02)**
+
+![SC-02 FP during sequence ignored](assets/sc02-fp-during-sequence.png){ width=6.5in }
+
+**Camera outputs (SC-03)**
+
+![SC-03 FP flood ignored](assets/sc03-fp-flood.png){ width=6.5in }
 
 ```mermaid
 sequenceDiagram
@@ -145,6 +177,10 @@ SC-03: many FP inputs during burst → still only `FrameCount` frames — see [s
 
 Frames 2…N use **Y only** — no second T-wait. See [behavior-spec](../behavior-spec.md#burst-frame-scheduling-within-one-sequence).
 
+**Camera outputs (SC-11)**
+
+![SC-11 burst spacing](assets/sc11-burst-spacing.png){ width=6.5in }
+
 ```mermaid
 sequenceDiagram
     participant HPo as HP out
@@ -160,6 +196,10 @@ sequenceDiagram
 ## F — SC-05: Back-to-back sequence
 
 *Nominal multi-sequence — HP OUT stays latched across both sequences (R13).*
+
+**Camera outputs (SC-05)**
+
+![SC-05 back-to-back sequences](assets/sc05-back-to-back.png){ width=6.5in }
 
 ```mermaid
 sequenceDiagram

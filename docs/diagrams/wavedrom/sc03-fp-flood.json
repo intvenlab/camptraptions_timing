@@ -1,0 +1,15 @@
+{
+  "config": { "hscale": 3, "vscale": 3 },
+  "head": { "text": "SC-03 — FP flood during burst ignored (R10)" },
+  "signal": [
+    ["In",
+      { "name": "FP in",  "wave": "0..1.1.1.1...|.." },
+      { "name": "HP in",  "wave": "010..........|.." }
+    ],
+    ["Out",
+      { "name": "HP out", "wave": "01...........|.0" },
+      { "name": "FP out", "wave": "0.10.10.10.10|.." }
+    ]
+  ],
+  "foot": { "text": "Many FP in during fullPressIgnoreGap; exactly FrameCount=4 FP OUT (one sequence)." }
+}

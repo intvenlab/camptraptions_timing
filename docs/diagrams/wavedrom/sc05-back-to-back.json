@@ -1,0 +1,15 @@
+{
+  "config": { "hscale": 3, "vscale": 3 },
+  "head": { "text": "SC-05 — back-to-back sequences (same activity)" },
+  "signal": [
+    ["In",
+      { "name": "FP in",  "wave": "0.10|10......|..." },
+      { "name": "HP in",  "wave": "010.|........|..." }
+    ],
+    ["Out",
+      { "name": "HP out", "wave": "01..|........|..0" },
+      { "name": "FP out", "wave": "0.10|10.10.10|10." }
+    ]
+  ],
+  "foot": { "text": "Seq 2 after seq 1 burst + gap (R12); HP OUT latched whole activity (R13); Z may shorten before seq 2." }
+}

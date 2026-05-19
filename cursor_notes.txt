@@ -33,6 +33,11 @@
 - mcu-state-flow: removed per-frame FocusPrep; PostShutterHpExtension; HP stays ON through Z
 - Exception sections labeled in timing-sequences
 
+## WaveDrom sources (2026-05-19)
+- Template: docs/diagrams/wavedrom/sc01-nominal-outputs.json — always 4 pins in In (FP in, HP in) + Out (HP out, FP out) groups; config hscale/vscale 3.
+- JSON added: sc02, sc03, sc04, sc05, sc06, sc07 (updated), sc11 — embedded in timing-sequences.md § A–G.
+- Render: `.\scripts\export-docs.ps1 -Target diagrams` or npx wavedrom-cli per JSON → docs/diagrams/assets/*.png
+
 ## Doc export (pandoc + mermaid-filter + wavedrom-cli)
 - Script: scripts/export-docs.ps1 → dist/*.docx
 - Needs on PATH (or default install paths): Pandoc (%LOCALAPPDATA%\Pandoc), Node (Program Files\nodejs), mermaid-filter.cmd (%APPDATA%\npm), wavedrom-cli (npm global)

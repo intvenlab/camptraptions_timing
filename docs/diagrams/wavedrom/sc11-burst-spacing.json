@@ -1,0 +1,15 @@
+{
+  "config": { "hscale": 3, "vscale": 3 },
+  "head": { "text": "SC-11 — burst spacing with HP latched (T vs Y)" },
+  "signal": [
+    ["In",
+      { "name": "HP in",  "wave": "01............|." },
+      { "name": "FP in",  "wave": "10............|." }
+    ],
+    ["Out",
+      { "name": "HP out", "wave": "01............|." },
+      { "name": "FP out", "wave": "0..10.10.10.10|." }
+    ]
+  ],
+  "foot": { "text": "Frame 1 @0.5 s (T); frames 2–4 @+Y=1.0 s start-to-start (R6). No extra T between frames when HP held." }
+}
