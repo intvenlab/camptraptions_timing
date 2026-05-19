@@ -1,0 +1,56 @@
+# camptraptions_timing — cursor notes
+
+## Agent workflow (read this first)
+- **Read the current docs before editing.** Prefer small, targeted patches (StrReplace / section edits).
+- **Do not full-file rewrite** (`Write` over an entire doc) unless the user asks for a rewrite — easy to undo their section order, wording, and other edits.
+- Before any large change: read the file on disk, note structure and recent user edits, then change only what the task requires.
+
+## 2026-05-18
+- Repo purpose: document inline timing MCU between Camtraptions motion trigger and camera (HP/FP).
+- Do NOT commit/push to GitHub on user's behalf (user rule).
+- Use parameter names in all docs; legacy letters (X, T, N, Y, Z, Gap) only in parameters.md AKA column.
+- parameters.md section order: MCU behavior & timing FIRST, then Scenario traceability (user preference — do not reorder on bulk edits).
+- parameters.md: ONE registry table (Parameter|AKA|Default|Units, no Defines); ONE ## Parameter definitions section below; do NOT split into topic sub-tables. Enum params: list every allowed value in a table with exact behavior per value.
+- PIR v4 menu values: docs/pir-sensor-settings.md (not parameters.md). Manual: pir_v4_manual_fw_v1_19.pdf, FW 1.19.
+- PIR Wireless Channel = camera trap system number (1–15), must match receiver on that trap.
+
+## Design decisions
+- MaxSequenceCount (was SequenceCount, maxSequences); FrameCount (was burstFrameCount); StartFrameSpacingMin (was interFrameDelay); PostShutterHalfPressHoldTimeExtension (was postBurstHalfPressHoldTime, AKA Z)
+- fullPressIgnoreGap: tunable MCU param (s); PIR Gap = minimum 0.5 s (see pir-sensor-settings.md). Default estimate (NOT auto-computed): (FrameCount-1)×StartFrameSpacingMin + shutterPulseDuration → 3.1 s with registry defaults
+- No minStrobeRecycleTime; no maxWakeHalfPressHoldTime / no 30s activity cap
+- minHalfPressBeforeShutter applies before every shutter activation
+
+## Rule numbers (current)
+- R12 = new sequence boundary
+- R13 = activity HP hold
+- R14 = HP ignored during burst
+- R15 = on FP accept (sequence start), extend remaining wakeHalfPressHoldTime (not separate timer, not full restart)
+- MaxSequenceCount default = 4
+- StartFrameSpacingMin = rising-edge to rising-edge on FP OUT starts (confirmed)
+
+## Diagrams (2026-05-18)
+- Nominal path first in timing-sequences.md; HP OUT latched whole activity (SC-01 defaults)
+- mcu-state-flow: removed per-frame FocusPrep; PostShutterHpExtension; HP stays ON through Z
+- Exception sections labeled in timing-sequences
+
+## Doc export (pandoc + mermaid-filter + wavedrom-cli)
+- Script: scripts/export-docs.ps1 → dist/*.docx
+- Needs on PATH (or default install paths): Pandoc (%LOCALAPPDATA%\Pandoc), Node (Program Files\nodejs), mermaid-filter.cmd (%APPDATA%\npm), wavedrom-cli (npm global)
+- Windows: pandoc must use `--filter mermaid-filter.cmd` (not bare mermaid-filter)
+- WaveDrom: docs/diagrams/wavedrom/*.json → docs/diagrams/assets/*.svg (export script renders if JSON newer)
+- WaveDrom Editor GUI (optional): C:\Program Files\wavedrom-editor-v3.5.0-win-x64
+- Targets: -Target all|manual|overview|scenarios|developer|parameters|pir|diagrams (parameters = own .docx, not bundled in developer)
+- PDF: open .docx in Word → Save as PDF (no LaTeX in pipeline)
+
+## 2026-05-19 (scenarios)
+- SC-12/13/14/15 fleshed out as defined acceptance tests; SC-16 (mis-wired HP/FP) removed
+- SC-15: powerSaveIdleMode enabled vs disabled; delta latency must be < 1 ms
+- SC-13: synthetic bounce acceptance on HP/FP inputs
+
+## Resolved 2026-05-19
+- R15: extend wakeHalfPressHoldTime on FP accept
+- MaxSequenceCount default: 4
+- StartFrameSpacingMin: rising-edge to rising-edge on FP OUT starts (confirmed)
+
+## Pre-check-in backup 2026-05-19
+- Full copy (outside repo): C:\Users\3ricj\AppData\Local\Temp\camptraptions_timing_backup_20260519_094736 (23 files, ~33 MB)

@@ -1,0 +1,13 @@
+{
+  "signal": [
+    { "name": "HP out", "wave": "1................................", "node": ".a..............................b" },
+    { "name": "FP out", "wave": "0........10101010..............." },
+    { "name": "FP in",  "wave": "0........1...................." },
+    {},
+    ["t (s)", "0", "1.0", "2.0", "3.0", "4.0", "~6 HP off"]
+  ],
+  "edge": [
+    "a~>b PostShutterHalfPressHoldTimeExtension Z",
+    "FP in retriggers during burst ignored R10"
+  ]
+}

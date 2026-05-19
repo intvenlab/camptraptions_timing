@@ -1,0 +1,12 @@
+{
+  "signal": [
+    { "name": "HP in",  "wave": "0...n..n..n....................", "node": ".w..x..y" },
+    { "name": "HP out", "wave": "0...1........................." },
+    { "name": "FP in",  "wave": "0.......1.1.1.................", "node": ".c....d" },
+    { "name": "FP out", "wave": "0.......10101010............." }
+  ],
+  "edge": [
+    "w,x,y ignored R14",
+    "c-~>d FP in during sequence ignored R10"
+  ]
+}
