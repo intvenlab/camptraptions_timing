@@ -14,10 +14,18 @@ Normative description of what the timing MCU must do. Parameter names refer to [
 | [SC-06](scenarios.md#sc-06--cold-fp-no-prior-wake) | FP without prior HP |
 | [SC-07](scenarios.md#sc-07--hp-during-active-burst) | HP ignored during burst |
 | [SC-08](scenarios.md#sc-08--fp-before-hp) | FP before HP (proposed) |
+| [SC-09](scenarios.md#sc-09--fp-when-maxsequencecount-reached) | FP at sequence cap |
+| [SC-10](scenarios.md#sc-10--recovery-after-maxsequencecount-cap) | Recovery after cap |
+| [SC-11](scenarios.md#sc-11--startframespacingmin-vs-minhalfpressbeforeshutter) | StartFrameSpacingMin vs T |
 | [SC-12](scenarios.md#sc-12--hp-only-pir-gap-minimum) | HP only, PIR Gap minimum |
 | [SC-13](scenarios.md#sc-13--input-line-bounce-debounce) | Input line bounce (debounce) |
 | [SC-14](scenarios.md#sc-14--held-vs-pulsed-fp-input) | Held vs pulsed FP |
 | [SC-15](scenarios.md#sc-15--power-save-performance-budget) | Power-save performance (&lt; 1 ms) |
+| [SC-16](scenarios.md#sc-16--hp-input-released-immediately-after-fp) | HP input release after FP does not drop HP OUT |
+| [SC-17](scenarios.md#sc-17--first-frame-gated-by-short-hp-lead) | First frame gated by short HP lead |
+| [SC-18](scenarios.md#sc-18--hp-chatterrelease-during-burst-does-not-affect-fps) | HP chatter/release during burst does not affect FPS |
+| [SC-19](scenarios.md#sc-19--new-event-after-hp-release) | New event after HP OUT release |
+| [SC-20](scenarios.md#sc-20--t-greater-than-y-interaction) | T greater than Y interaction |
 
 ## Terminology
 
@@ -39,6 +47,8 @@ An **activity** begins when the MCU first asserts camera HP for a wake or cold F
 - `wakeHalfPressHoldTime` expires with no new wake/accepted FP, per policy — applies to wake-without-shoot timeout only, not a maximum activity duration.
 
 `MaxSequenceCount` applies **per activity**. Extra FP inputs within `fullPressIgnoreGap` after each sequence start are ignored (R10). PIR **Gap** is set to **minimum** ([pir-sensor-settings.md](pir-sensor-settings.md)); MCU `fullPressIgnoreGap` handles burst retrigger.
+
+HP **input release** is not mirrored to camera HP OUT in state-machine mode. HP input is an edge-triggered wake/refresh signal; once camera HP OUT is latched, only the MCU activity rules release it. A trigger may release HP input immediately after FP without dropping camera HP OUT or changing burst cadence (SC-16, SC-18).
 
 ## Core rules
 
@@ -140,9 +150,9 @@ Example (`minHalfPressBeforeShutter` = 0.5 s, `StartFrameSpacingMin` = 1.0 s, `F
 
 `StartFrameSpacingMin` sets the schedule. **`minHalfPressBeforeShutter` does not override or replace `StartFrameSpacingMin`** in this case.
 
-### Exception path (HP released mid-burst)
+### Exception path (HP OUT released mid-burst)
 
-Not normal operation. If camera HP OUT was released between scheduled frames, **before** the next FP OUT pulse:
+Not normal operation. This means camera HP **output** was released by the MCU, not that HP **input** from the trigger released. If camera HP OUT was released between scheduled frames, **before** the next FP OUT pulse:
 
 1. Assert HP OUT.
 2. Wait until `minHalfPressBeforeShutter` has elapsed since that assert.
@@ -155,6 +165,7 @@ The **actual** gap since the previous frame may be **longer than** `StartFrameSp
 - No separate focus-acquisition interval between frames.
 - `minHalfPressBeforeShutter` is **not** added to every inter-frame interval when HP stays latched.
 - `StartFrameSpacingMin` is **not** shortened or replaced by **T** when HP lead is already satisfied.
+- HP **input release** is not a command to release camera HP OUT in state-machine mode.
 
 ## Policies (enums)
 
@@ -169,6 +180,7 @@ The **actual** gap since the previous frame may be **longer than** `StartFrameSp
 2. **Subject in frame (narrow area):** camera takes a configured number of photos per trigger event, spaced by `StartFrameSpacingMin`.
 3. **Retriggers during a sequence:** extra full-press signals for `fullPressIgnoreGap` after sequence start are **ignored** (PIR Gap minimum; MCU R10) so the burst is not reset or extended.
 4. **Another pass after a sequence:** a new full-press after the prior sequence’s burst completes can start another sequence in the same activity (subject to AF timing and `MaxSequenceCount`).
+5. **Short HP trigger pulses:** once the MCU latches camera HP, releasing the trigger's HP input does not release camera HP during a shoot.
 
 ## Sequence boundaries (SC-05, SC-05b)
 

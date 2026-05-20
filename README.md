@@ -6,20 +6,23 @@ This repository documents the **inline timing microcontroller** that sits betwee
 
 | If you are… | Read |
 |-------------|------|
-| **Customer** — “what will it do in the field?” | [Operational scenarios](docs/scenarios.md) (SC-01–SC-07) |
+| **Customer** — “what will it do in the field?” | [Operational scenarios](docs/scenarios.md) (SC-01–SC-15) |
 | **Developer** — implementing or integrating firmware | [Scenarios](docs/scenarios.md) → [Behavior spec](docs/behavior-spec.md) → [Parameters](docs/parameters.md) |
 | **Integrator** — wiring and PIR setup | [Architecture](docs/architecture.md) → [PIR sensor settings](docs/pir-sensor-settings.md) |
+| **Validator** — fixture or bench acceptance testing | [Validation test plan](docs/validation-test-plan.md) |
 
 **Audience**
 
 | Document | Customers | Firmware / integration developers |
 |----------|-----------|-----------------------------------|
-| **[Scenarios](docs/scenarios.md)** | SC-01–SC-07 narratives | All SC-xx acceptance cases |
+| **[Scenarios](docs/scenarios.md)** | SC-01–SC-15 narratives | All SC-xx acceptance cases |
 | [System overview](docs/architecture.md) | Yes | Yes |
 | [Behavior specification](docs/behavior-spec.md) | Summary sections | Yes (rules R1–R15) |
 | [Parameter registry](docs/parameters.md) | MCU defaults & units | Yes — scenario-derived |
+| [Telemetry](docs/telemetry.md) | Field diagnostics summary | BLE payload, storage policy, SC-xx mapping |
 | [PIR v4 settings](docs/pir-sensor-settings.md) | Camtraptions menu values | Integrator checklist |
 | [Diagrams](docs/diagrams/) | High-level swim lanes | State flow & timing |
+| [Validation test plan](docs/validation-test-plan.md) | Field acceptance summary | Fixture, metrics, sweeps, reports |
 
 **Status:** See [parameters.md](docs/parameters.md) for MCU defaults.
 

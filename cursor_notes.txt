@@ -60,3 +60,23 @@
 
 ## Pre-check-in backup 2026-05-19
 - Full copy (outside repo): C:\Users\3ricj\AppData\Local\Temp\camptraptions_timing_backup_20260519_094736 (23 files, ~33 MB)
+
+## Firmware integration 2026-05-19
+- Firmware GATT camera config is now CAMERA_SETTINGS_VERSION 2, 20 bytes. New byte appended at offset 19: `fullPressIgnoreGapTenths` (default 31 = 3.1 s). Android `AppScreen.kt` must be updated to read/write this byte.
+- Firmware state names: `CAM_IDLE`, `CAM_WAKE_AF`, `CAM_COLD_FP_WAIT`, `CAM_BURST_ACTIVE`, `CAM_POST_SHUTTER_EXT`.
+- `StartFrameSpacingMin` scheduling is FP OUT rising-edge to rising-edge. `fpDebounceMs` is used in state-machine mode; non-camera/pass-through shutter count still uses the legacy 100 ms debounce.
+- Power-save idle uses GPIO interrupts plus `__WFE()` in `idleWaitWithCameraWake()` instead of a blind 950 ms delay; SC-15 still needs bench latency measurement.
+- Local Arduino CLI path: `C:\Program Files\Arduino CLI\arduino-cli.exe` (v1.5.0). Seeed nRF52 core installed: `Seeeduino:nrf52` 1.1.12; board FQBN: `Seeeduino:nrf52:xiaonRF52840`.
+- Firmware compile succeeds when `C:\Users\3ricj\AppData\Local\Programs\Python\Python311` is prepended to PATH for the command (the Seeed platform invokes `python`; without this, Windows Store alias causes exit 9009). Temp compile sketch folder used under `%TEMP%` and cleaned up.
+
+## Validation planning 2026-05-20
+- Validation fixture direction: Arduino Nano/Uno-class board next to DUT, drives HP/FP inputs and monitors HP/FP outputs. If timing evidence shows the fixture is limiting, use a faster board, but current expected timing needs are within Nano-class capability.
+- Thin Windows client/script should control the Arduino over serial, run test vectors, log edge timestamps/results, and change DUT camera timing parameters through BLE/GATT with readback verification.
+- Added SC-16..SC-20 for HP behavior: HP input release after FP does not drop HP OUT, short HP lead gates first FP only, HP chatter/release during burst does not affect FPS, new event after HP release is cold/short-lead, and T > Y does not add T between later frames. Rendered WaveDrom assets for SC-16 and SC-17 via `.\scripts\export-docs.ps1 -Target diagrams`.
+
+## Telemetry decisions 2026-05-20
+- Telemetry is RAM-first. Live state/current deadlines/current sequence fields stay RAM-only and are published over BLE.
+- Persist only coarse lifetime telemetry counters in a separate `InternalFS` / LittleFS file; do not put telemetry into `DeviceConfig` or `CameraConfig`.
+- Never write flash from ISR. ISR-safe paths may only update in-memory counters and set dirty/notify flags when a persisted counter actually changes.
+- Flush telemetry snapshots later from normal code at controlled boundaries such as activity end, BLE disconnect, periodic dirty checks, or explicit app/test request.
+- Target write budget is fewer than roughly 100,000 telemetry flash snapshots over board life; LittleFS wear leveling is acceptable for this project with rate-limited snapshots.

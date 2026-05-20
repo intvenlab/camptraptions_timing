@@ -1,0 +1,15 @@
+{
+  "config": { "hscale": 3, "vscale": 3 },
+  "head": { "text": "SC-17 - first frame gated by short HP lead" },
+  "signal": [
+    ["In",
+      { "name": "FP in",  "wave": "0.10..........|." },
+      { "name": "HP in",  "wave": "010...........|." }
+    ],
+    ["Out",
+      { "name": "HP out", "wave": "01............|0" },
+      { "name": "FP out", "wave": "0....10.10.10.10" }
+    ]
+  ],
+  "foot": { "text": "Short HP lead: first FP OUT starts at max(FP accept, HP OUT assert + T). Frames 2..N remain spaced by StartFrameSpacingMin." }
+}

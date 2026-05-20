@@ -14,6 +14,8 @@ Waveform-style views cross-linked to [scenarios.md](../scenarios.md). Use [param
 | E | [Burst scheduling](../behavior-spec.md#burst-frame-scheduling-within-one-sequence) StartFrameSpacingMin vs T |
 | F | [SC-05](../scenarios.md#sc-05--back-to-back-sequence) Back-to-back sequence |
 | G | [SC-07](../scenarios.md#sc-07--hp-during-active-burst) HP during burst *(exception input)* |
+| H | [SC-16](../scenarios.md#sc-16--hp-input-released-immediately-after-fp) HP input release after FP |
+| I | [SC-17](../scenarios.md#sc-17--first-frame-gated-by-short-hp-lead) / [SC-20](../scenarios.md#sc-20--t-greater-than-y-interaction) Short HP lead and T vs Y |
 
 ## Nominal path (defaults)
 
@@ -65,7 +67,7 @@ sequenceDiagram
 | Frame 4 FP OUT start | 4.0 |
 | HP OUT OFF (after Z) | ~6.0 |
 
-Exception paths: [A wake timeout](#a--sc-04-wake-only-then-timeout), [B cold FP](#b--sc-06-fp-without-prior-wake-cold-start), [G HP input during burst](#g--sc-07-hp-during-burst-no-effect-on-schedule), mid-burst HP release in [behavior-spec](../behavior-spec.md#exception-path-hp-released-mid-burst).
+Exception paths: [A wake timeout](#a--sc-04-wake-only-then-timeout), [B cold FP](#b--sc-06-fp-without-prior-wake-cold-start), [G HP input during burst](#g--sc-07-hp-during-burst-no-effect-on-schedule), [H HP input release after FP](#h--sc-16-hp-input-release-after-fp), [I short HP lead](#i--sc-17sc-20-short-hp-lead-and-t-vs-y), mid-burst HP OUT release in [behavior-spec](../behavior-spec.md#exception-path-hp-out-released-mid-burst).
 
 ---
 
@@ -223,3 +225,42 @@ sequenceDiagram
 ![SC-07 HP during burst](assets/sc07-hp-during-burst.png){ width=6.5in }
 
 HP **input** does not reset `remainingFrames` or add frames (**R14**). Camera HP **output** stays latched (**R7**). Extra FP **input** during the sequence is ignored (**R10**); only the scheduled `FrameCount` FP OUT pulses fire.
+
+## H — SC-16: HP input release after FP
+
+*Exception input — trigger HP input is short, but camera HP OUT remains latched by the MCU.*
+
+![SC-16 HP input release after FP](assets/sc16-hp-release-after-fp.png){ width=6.5in }
+
+HP **input** may release before or immediately after FP input. In state-machine mode, that release is not mirrored to camera HP OUT. The MCU keeps HP OUT latched through the burst and `PostShutterHalfPressHoldTimeExtension`; if the HP lead is short, frame 1 waits for `minHalfPressBeforeShutter`.
+
+```mermaid
+sequenceDiagram
+    participant HPi as HP in
+    participant FPi as FP in
+    participant MCU
+    participant HPo as HP out
+    participant FPo as FP out
+
+    HPi->>MCU: short HP wake
+    MCU->>HPo: ON latched
+    HPi->>MCU: releases
+    FPi->>MCU: FP accepted
+    Note over MCU: frame 1 waits for T if HP lead short
+    MCU->>FPo: FrameCount pulses
+    Note over HPo: stays ON through burst and Z
+```
+
+## I — SC-17/SC-20: Short HP lead and T vs Y
+
+*Timing interaction — T may delay frame 1, but it is not added between later frames while HP OUT is latched.*
+
+![SC-17 short HP lead](assets/sc17-short-hp-lead.png){ width=6.5in }
+
+The first frame starts at:
+
+```text
+max(FP accept time, HP OUT assert time + minHalfPressBeforeShutter)
+```
+
+After frame 1, `StartFrameSpacingMin` controls the burst cadence as long as HP OUT remains latched. Even when `minHalfPressBeforeShutter > StartFrameSpacingMin` (SC-20), T must not be applied again before frames 2..N.

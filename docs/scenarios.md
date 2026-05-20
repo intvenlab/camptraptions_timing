@@ -2,7 +2,7 @@
 
 Primary specification artifact for timing behavior. Each scenario has a stable ID for acceptance tests, customer explanations, and parameter tuning.
 
-**Related docs:** [behavior-spec.md](behavior-spec.md) (rules R1–R15) · [parameters.md](parameters.md) · [diagrams/](diagrams/)
+**Related docs:** [behavior-spec.md](behavior-spec.md) (rules R1–R15) · [parameters.md](parameters.md) · [validation-test-plan.md](validation-test-plan.md) · [diagrams/](diagrams/)
 
 ## Traceability
 
@@ -26,6 +26,11 @@ Primary specification artifact for timing behavior. Each scenario has a stable I
 | SC-13 | Input line bounce (debounce) | `halfPressInputDebounce`, `fullPressInputDebounce` | R1, R10b |
 | SC-14 | Held vs pulsed FP input | `fullPressInputDebounce` | R10b |
 | SC-15 | Power-save performance budget | `powerSaveIdleMode` | R4 |
+| SC-16 | HP input released immediately after FP | `minHalfPressBeforeShutter`, `PostShutterHalfPressHoldTimeExtension` | R4, R7, R13, R15 |
+| SC-17 | First frame gated by short HP lead | `minHalfPressBeforeShutter`, `StartFrameSpacingMin` | R4, R6, R7 |
+| SC-18 | HP chatter/release during burst | `halfPressDuringBurstPolicy`, `StartFrameSpacingMin` | R7, R13, R14 |
+| SC-19 | New event after HP release | `minHalfPressBeforeShutter`, `wakeHalfPressHoldTime`, `PostShutterHalfPressHoldTimeExtension` | R3, R4, R12 |
+| SC-20 | T greater than Y interaction | `minHalfPressBeforeShutter`, `StartFrameSpacingMin` | R4, R6, R7 |
 
 ### Illustrative defaults (examples in this doc)
 
@@ -714,3 +719,180 @@ Record debounce settings, temperature, and supply voltage in the log. Outliers f
 **Parameters:** `powerSaveIdleMode`, `halfPressInputDebounce`, `fullPressInputDebounce`
 
 **Rules:** R4 (gates apply after wake; not waived by power save)
+
+---
+
+## SC-16 — HP input released immediately after FP
+
+**Status:** defined
+
+**Intent:** Some trigger systems provide HP as a short wake pulse and then release it, including cases where HP has already released by the time FP arrives or releases immediately after FP. In state-machine mode, camera HP OUT is latched by the MCU activity rules; physical HP input release is not a camera HP release command.
+
+**Preconditions:** Idle. Use nominal `FrameCount`, `StartFrameSpacingMin`, `shutterPulseDuration`, and `PostShutterHalfPressHoldTimeExtension`. Set `minHalfPressBeforeShutter` to a visible value such as 0.5 s.
+
+**Input timeline**
+
+| Time | Input |
+|------|-------|
+| t=0 | HP wake pulse, then release after a short duration |
+| t=100 ms | FP pulse; HP input may already be released |
+| — | No further HP input |
+
+**Expected behavior**
+
+1. HP pulse asserts camera HP OUT and starts the wake hold (R1).
+2. FP is accepted and starts sequence 1 if gates pass; accepting the sequence extends `wakeHalfPressHoldTime` from FP accept (R15).
+3. Camera HP OUT remains asserted through the burst and `PostShutterHalfPressHoldTimeExtension` even though HP input is released (R7, R13).
+4. If the HP lead at FP accept is shorter than `minHalfPressBeforeShutter`, frame 1 waits until HP OUT has been active for T (R4).
+5. Frames 2..N follow `StartFrameSpacingMin`; no extra T wait is inserted while HP OUT remains latched.
+
+**Pass criteria**
+
+| Check | Expected |
+|-------|----------|
+| HP OUT | No drop when HP IN releases; held through burst and Z |
+| First FP OUT | Starts no earlier than `HP_OUT assert + minHalfPressBeforeShutter` |
+| Frames 2..N | Start-to-start spacing follows `StartFrameSpacingMin` |
+| Sequence count | 1 |
+
+**Parameters:** `minHalfPressBeforeShutter`, `FrameCount`, `StartFrameSpacingMin`, `PostShutterHalfPressHoldTimeExtension`
+
+**Rules:** R4, R7, R13, R15
+
+```mermaid
+sequenceDiagram
+    participant HPi as HP_in
+    participant FPi as FP_in
+    participant MCU
+    participant HPo as HP_out
+    participant FPo as FP_out
+
+    HPi->>MCU: short HP wake
+    MCU->>HPo: ON latched
+    HPi->>MCU: HP input releases
+    FPi->>MCU: FP accepted
+    Note over MCU: wait remainder of T if HP lead short
+    MCU->>FPo: FrameCount pulses
+    Note over HPo: HP OUT stays ON through burst and Z
+```
+
+---
+
+## SC-17 — First frame gated by short HP lead
+
+**Status:** defined
+
+**Intent:** Make the first-frame timing effect of `minHalfPressBeforeShutter` explicit. T gates the first FP OUT only when HP OUT lead is inadequate; it is not added before every frame.
+
+**Preconditions:** Idle before each variant. Use `minHalfPressBeforeShutter = 0.5 s`, `StartFrameSpacingMin = 1.0 s`, and `FrameCount = 4` unless the test is sweeping those values.
+
+**Input variants**
+
+| Variant | Stimulus | Expected first FP OUT start |
+|---------|----------|-----------------------------|
+| Cold FP | FP at t=0, no HP input | `HP_OUT assert + T` |
+| Short lead | HP at t=0, FP at t=100 ms | t=500 ms |
+| Exact lead | HP at t=0, FP at t=500 ms | t=500 ms, subject to debounce/latency |
+| Warm lead | HP at t=0, FP at t=1.0 s | FP accept time |
+
+**Expected behavior**
+
+The first FP OUT start follows:
+
+```text
+first FP_OUT start = max(FP accept time, HP_OUT assert time + minHalfPressBeforeShutter)
+```
+
+Frames 2..N follow:
+
+```text
+next FP_OUT start >= previous FP_OUT start + StartFrameSpacingMin
+```
+
+**Parameters:** `minHalfPressBeforeShutter`, `StartFrameSpacingMin`, `FrameCount`
+
+**Rules:** R4, R6, R7
+
+---
+
+## SC-18 — HP chatter/release during burst does not affect FPS
+
+**Status:** defined
+
+**Intent:** Wide PIR chatter during a burst must not change the output frame rate. HP input pulses, releases, or absence during the burst do not reset the burst schedule, add frames, delay frames, or drop camera HP OUT.
+
+**Preconditions:** A sequence is active. HP OUT is latched. Use a visible `StartFrameSpacingMin`, such as 1.0 s.
+
+**Input timeline**
+
+| Time | Input |
+|------|-------|
+| t=0 | Start a normal sequence |
+| Between frame 1 and frame N | Inject HP input pulses and releases |
+| — | Optional: keep HP input inactive after the chatter |
+
+**Expected behavior**
+
+- `halfPressDuringBurstPolicy = independent`: HP input during the burst is ignored for scheduling (R14).
+- Camera HP OUT does not drop because of HP input release or chatter (R7, R13).
+- `frameStartSpacingMs` remains governed by `StartFrameSpacingMin`.
+- No frames are inserted, skipped, or delayed because of HP input activity.
+
+**Parameters:** `halfPressDuringBurstPolicy`, `StartFrameSpacingMin`, `halfPressInputDebounce`
+
+**Rules:** R7, R13, R14
+
+---
+
+## SC-19 — New event after HP release
+
+**Status:** defined
+
+**Intent:** Cover the case where effective photos-per-second changes across separate events because HP OUT has actually been released. The next FP must re-establish HP lead before the first output FP.
+
+**Preconditions:** Prior activity has fully ended: post-burst hold is complete, any wake hold requirement has expired, HP OUT is released, and the MCU is idle.
+
+**Input timeline**
+
+| Time | Input |
+|------|-------|
+| t=0 | FP only, or FP before any new HP |
+| Optional | HP input arrives later |
+
+**Expected behavior**
+
+1. Treat the event as a cold/short-lead start (SC-06/SC-08).
+2. Assert HP OUT immediately on accepted cold FP if `fullPressWithoutPriorHpPolicy = assertHpThenWait` (R3).
+3. Delay first FP OUT until `minHalfPressBeforeShutter` has elapsed since HP OUT assertion (R4).
+4. Frames 2..N in the new sequence follow `StartFrameSpacingMin` while HP OUT remains latched.
+
+**Parameters:** `minHalfPressBeforeShutter`, `wakeHalfPressHoldTime`, `PostShutterHalfPressHoldTimeExtension`, `fullPressWithoutPriorHpPolicy`
+
+**Rules:** R3, R4, R12
+
+---
+
+## SC-20 — T greater than Y interaction
+
+**Status:** defined
+
+**Intent:** Prevent a parameter interpretation error when `minHalfPressBeforeShutter` is longer than `StartFrameSpacingMin`. T can delay frame 1 after inadequate HP lead, but it must not be added before every later frame while HP OUT stays latched.
+
+**Preconditions:** Configure `minHalfPressBeforeShutter > StartFrameSpacingMin`, for example T = 2.0 s and Y = 0.5 s. Use `FrameCount >= 3`.
+
+**Variants**
+
+| Variant | Stimulus | Expected |
+|---------|----------|----------|
+| Warm latched HP | HP lead already greater than T before FP | Frame 1 starts on FP accept; frames 2..N follow Y |
+| Cold/short lead | FP before adequate HP lead | Frame 1 waits T; frames 2..N follow Y from frame 1 start |
+
+**Expected behavior**
+
+- Warm-latched sequence: T has no visible effect on frame spacing because HP lead is already satisfied.
+- Cold/short-lead sequence: T delays the first FP OUT only.
+- `StartFrameSpacingMin` remains the burst cadence reference for frames 2..N.
+
+**Parameters:** `minHalfPressBeforeShutter`, `StartFrameSpacingMin`, `FrameCount`
+
+**Rules:** R4, R6, R7
