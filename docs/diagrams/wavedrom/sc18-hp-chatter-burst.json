@@ -1,0 +1,15 @@
+{
+  "config": { "hscale": 3, "vscale": 3 },
+  "head": { "text": "SC-18 - HP chatter during burst" },
+  "signal": [
+    ["In",
+      { "name": "FP in",  "wave": "0.1......|." },
+      { "name": "HP in",  "wave": "0.1.0.1.0|." }
+    ],
+    ["Out",
+      { "name": "HP out", "wave": "0.1......|0" },
+      { "name": "FP out", "wave": "0...10.10.10.10" }
+    ]
+  ],
+  "foot": { "text": "HP input chatter/release is not mirrored to HP OUT and does not alter burst frame cadence." }
+}

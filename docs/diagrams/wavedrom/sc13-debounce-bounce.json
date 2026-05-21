@@ -1,0 +1,15 @@
+{
+  "config": { "hscale": 3, "vscale": 3 },
+  "head": { "text": "SC-13 - HP/FP bounce rejection" },
+  "signal": [
+    ["In",
+      { "name": "FP in",  "wave": "0.101....|." },
+      { "name": "HP in",  "wave": "0.10.1...|." }
+    ],
+    ["Out",
+      { "name": "HP out", "wave": "0...1....|0" },
+      { "name": "FP out", "wave": "0.....10.|." }
+    ]
+  ],
+  "foot": { "text": "Sub-threshold chatter is rejected by debounce; only stable valid edges drive state/output changes." }
+}

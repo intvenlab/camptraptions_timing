@@ -1,0 +1,31 @@
+name: full_validation_suite
+description: SC-01..SC-20 plus mandatory add-on cases
+cases:
+  - ../scenarios/SC-01.yaml
+  - ../scenarios/SC-02.yaml
+  - ../scenarios/SC-03.yaml
+  - ../scenarios/SC-04.yaml
+  - ../scenarios/SC-04b.yaml
+  - ../scenarios/SC-05.yaml
+  - ../scenarios/SC-05b.yaml
+  - ../scenarios/SC-06.yaml
+  - ../scenarios/SC-07.yaml
+  - ../scenarios/SC-07b.yaml
+  - ../scenarios/SC-08.yaml
+  - ../scenarios/SC-09.yaml
+  - ../scenarios/SC-10.yaml
+  - ../scenarios/SC-11.yaml
+  - ../scenarios/SC-12.yaml
+  - ../scenarios/SC-13.yaml
+  - ../scenarios/SC-14.yaml
+  - ../scenarios/SC-15.yaml
+  - ../scenarios/SC-16.yaml
+  - ../scenarios/SC-17.yaml
+  - ../scenarios/SC-18.yaml
+  - ../scenarios/SC-19.yaml
+  - ../scenarios/SC-20.yaml
+  - ../scenarios/AO-BLE-CONNECTED-SC04.yaml
+  - ../scenarios/AO-BLE-CONNECTED-SC01.yaml
+  - ../scenarios/AO-GAP-BOUNDARY-TRIAD.yaml
+  - ../scenarios/AO-DEFERRED-CONFIG-WRITES.yaml
+  - ../scenarios/AO-FACTORY-RESET-AND-COERCION.yaml

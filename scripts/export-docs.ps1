@@ -4,10 +4,11 @@
 # Usage (from repo root):
 #   .\scripts\export-docs.ps1
 #   .\scripts\export-docs.ps1 -Target scenarios
+#   .\scripts\export-docs.ps1 -Target validation
 #   .\scripts\export-docs.ps1 -Sequential   # disable parallel pandoc (mermaid temp conflicts)
 
 param(
-    [ValidateSet("all", "manual", "overview", "scenarios", "developer", "parameters", "pir", "diagrams")]
+    [ValidateSet("all", "manual", "overview", "scenarios", "developer", "parameters", "pir", "diagrams", "validation", "validationreport")]
     [string]$Target = "all",
     [switch]$Sequential
 )
@@ -21,8 +22,7 @@ $WaveDromAssets = Join-Path $RepoRoot "docs\diagrams\assets"
 $OutDir = Join-Path $RepoRoot "dist"
 $FilterArgs = @("--filter", "mermaid-filter.cmd")
 $Meta = @(
-    "--standalone",
-    "--metadata", "author=Camptraptions timing documentation"
+    "--standalone"
 )
 $PandocResourcePath = "docs/diagrams;."
 
@@ -149,7 +149,6 @@ if (-not (Get-Command mermaid-filter.cmd -ErrorAction SilentlyContinue)) {
 }
 
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
-Render-WaveDromAssets -ToolPath $script:EnvPath
 
 $Builds = @{
     overview = @{
@@ -166,7 +165,10 @@ $Builds = @{
     }
     parameters = @{
         File = "Camptraptions-Timing-Parameters.docx"
-        Inputs = @("docs/parameters.md")
+        Inputs = @(
+            "docs/parameters.md",
+            "docs/telemetry.md"
+        )
     }
     pir = @{
         File = "Camptraptions-Timing-PIR-Settings.docx"
@@ -180,6 +182,14 @@ $Builds = @{
             "docs/diagrams/timing-sequences.md"
         )
     }
+    validation = @{
+        File = "Camptraptions-Timing-Validation-Test-Plan.docx"
+        Inputs = @("docs/validation-test-plan.md")
+    }
+    validationreport = @{
+        File = "Camptraptions-Timing-Test-Report.docx"
+        Inputs = @("docs/validation-test-report.md")
+    }
     manual = @{
         File = "Camptraptions-Timing-Manual.docx"
         Inputs = @(
@@ -189,6 +199,7 @@ $Builds = @{
             "docs/behavior-spec.md",
             "docs/parameters.md",
             "docs/pir-sensor-settings.md",
+            "docs/validation-test-plan.md",
             "docs/diagrams/system-swimlane.md",
             "docs/diagrams/mcu-state-flow.md",
             "docs/diagrams/timing-sequences.md"
@@ -197,9 +208,13 @@ $Builds = @{
 }
 
 $toRun = if ($Target -eq "all") {
-    @("overview", "scenarios", "developer", "parameters", "pir", "diagrams", "manual")
+    @("overview", "scenarios", "developer", "parameters", "pir", "validation", "validationreport", "diagrams", "manual")
 } else {
     @($Target)
+}
+
+if ($toRun | Where-Object { $_ -in @("all", "diagrams", "manual") }) {
+    Render-WaveDromAssets -ToolPath $script:EnvPath
 }
 
 $buildItems = $toRun | ForEach-Object {

@@ -1,0 +1,23 @@
+id: SC-05-BACK-TO-BACK
+scenario: SC-05
+description: FP after burst starts second sequence under cap
+tags: [core, multi-sequence]
+parameters: { enabled: 1, FrameCount: 4, MaxSequenceCount: 4, fullPressIgnoreGap: 3.1s }
+fixture: { captureAfterLastStimulusMs: 16000 }
+stimulus:
+  - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 1000, signal: FP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 7000, signal: FP_IN_STIM, state: active, durationMs: 100 }
+expect:
+  fpOut: { pulseCount: 8 }
+  sequences: 2
+  holdExpect:
+    noHpReleaseBeforeFinalFrame: true
+    requirePostFinalFrameHpRelease: true
+  timing:
+    interSequenceGapMs: { minMs: 2500, maxMs: 3500 }
+    hpHoldAfterLastFrameMs: { targetMs: 2000 }
+  telemetryDeltas:
+    acceptedFpCount: 2
+    sequenceCompletedCount: 2
+metrics: [sequenceCount, frameCount, hpHoldAfterLastFrameMs]

@@ -1,0 +1,31 @@
+id: SC-01-NOMINAL
+scenario: SC-01
+description: Normal wake then shoot
+tags: [core, nominal]
+parameters:
+  enabled: 1
+  wakeHalfPressHoldTime: 10s
+  minHalfPressBeforeShutter: 0.5s
+  FrameCount: 4
+  MaxSequenceCount: 4
+  StartFrameSpacingMin: 1.0s
+  PostShutterHalfPressHoldTimeExtension: 2.0s
+  shutterPulseDuration: 100ms
+  fullPressIgnoreGap: 3.1s
+fixture:
+  captureAfterLastStimulusMs: 8000
+stimulus:
+  - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 1000, signal: FP_IN_STIM, state: active, durationMs: 100 }
+expect:
+  fpOut: { pulseCount: 4, pulseWidthMs: 100, frameSpacingMs: 1000 }
+  sequences: 1
+  holdExpect:
+    noHpReleaseBeforeFinalFrame: true
+    requirePostFinalFrameHpRelease: true
+  timing:
+    hpHoldAfterLastFrameMs: { targetMs: 2000 }
+  telemetryDeltas:
+    acceptedFpCount: 1
+    sequenceCompletedCount: 1
+metrics: [hpInToHpOutLatencyMs, fpPulseWidthMs, frameStartSpacingMs, hpHoldAfterLastFrameMs]

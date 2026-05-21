@@ -1,15 +1,15 @@
 {
   "config": { "hscale": 3, "vscale": 3 },
-  "head": { "text": "SC-16 - HP input release after FP" },
+  "head": { "text": "SC-16 - HP input release immediately after FP" },
   "signal": [
     ["In",
-      { "name": "FP in",  "wave": "0.10..........|." },
-      { "name": "HP in",  "wave": "010...........|." }
+      { "name": "FP in",  "wave": "0..10.........|." },
+      { "name": "HP in",  "wave": "01.0..........|." }
     ],
     ["Out",
       { "name": "HP out", "wave": "01............|0" },
       { "name": "FP out", "wave": "0....10.10.10.10" }
     ]
   ],
-  "foot": { "text": "HP input releases before/after FP, but HP OUT stays latched through burst and post-shutter hold. Frame 1 waits until T if HP lead is short." }
+  "foot": { "text": "HP input drops immediately after FP input. HP OUT remains latched through burst/post-hold; frame 1 may wait for T if lead is short." }
 }

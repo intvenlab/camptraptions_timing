@@ -1,0 +1,19 @@
+id: SC-10-RECOVERY-AFTER-CAP
+scenario: SC-10
+description: New event after cap end starts fresh activity
+tags: [core, cap]
+parameters: { enabled: 1, FrameCount: 2, MaxSequenceCount: 1 }
+fixture: { captureAfterLastStimulusMs: 20000 }
+stimulus:
+  - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 1000, signal: FP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 12000, signal: FP_IN_STIM, state: active, durationMs: 100 }
+expect:
+  fpOut: { pulseCount: 4, frameSpacingMs: 1000 }
+  sequences: 2
+  timing:
+    interSequenceGapMs: { minMs: 5000 }
+  telemetryDeltas:
+    acceptedFpCount: 2
+    rejectedFpAtSequenceCapCount: 0
+metrics: [sequenceCount, frameCount]

@@ -1,0 +1,15 @@
+{
+  "config": { "hscale": 3, "vscale": 3 },
+  "head": { "text": "SC-20 - T greater than Y interaction" },
+  "signal": [
+    ["In",
+      { "name": "FP in",  "wave": "0.1......|." },
+      { "name": "HP in",  "wave": "0.1......|." }
+    ],
+    ["Out",
+      { "name": "HP out", "wave": "0.1......|0" },
+      { "name": "FP out", "wave": "0......10.10.10.10" }
+    ]
+  ],
+  "foot": { "text": "When T > Y, only frame 1 is delayed by T. Frames 2..N remain spaced by Y from frame-1 start." }
+}

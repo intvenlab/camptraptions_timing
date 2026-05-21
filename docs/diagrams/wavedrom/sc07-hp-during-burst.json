@@ -7,9 +7,9 @@
       { "name": "HP in",  "wave": "0.n.n..|.." }
     ],
     ["Out",
-      { "name": "HP out", "wave": "0.1....|..." },
+      { "name": "HP out", "wave": "0.1....|..0" },
       { "name": "FP out", "wave": "0..1010|..." }
     ]
   ],
-  "foot": { "text": "HP in glitches ignored (R14). Extra FP in during sequence ignored (R10). FP out schedule unchanged." }
+  "foot": { "text": "HP OUT stays latched through the burst window; HP input chatter is ignored for scheduling (R14). Extra FP in during sequence ignored (R10)." }
 }

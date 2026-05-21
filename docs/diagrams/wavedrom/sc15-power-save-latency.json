@@ -1,0 +1,15 @@
+{
+  "config": { "hscale": 3, "vscale": 3 },
+  "head": { "text": "SC-15 - power-save latency comparison" },
+  "signal": [
+    ["In",
+      { "name": "FP in",  "wave": "0..1......|." },
+      { "name": "HP in",  "wave": "0.1.......|." }
+    ],
+    ["Out",
+      { "name": "HP out", "wave": "0..1......|0" },
+      { "name": "FP out", "wave": "0....10.10|.." }
+    ]
+  ],
+  "foot": { "text": "Compare input-to-output latency with powerSaveIdleMode disabled vs enabled; behavior otherwise unchanged." }
+}

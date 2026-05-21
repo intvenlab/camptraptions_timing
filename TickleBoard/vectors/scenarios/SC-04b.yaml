@@ -1,0 +1,17 @@
+id: SC-04B-REPEATED-HP
+scenario: SC-04b
+description: Repeated HP pulses extend wake hold
+tags: [variant, wake-only]
+parameters: { enabled: 1, wakeHalfPressHoldTime: 10s, wakeHoldRefreshPolicy: 0 }
+fixture: { captureAfterLastStimulusMs: 18000 }
+stimulus:
+  - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 3000, signal: HP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 6000, signal: HP_IN_STIM, state: active, durationMs: 100 }
+expect:
+  fpOut: { pulseCount: 0 }
+  timing:
+    wakeOnlyHoldMs: { targetMs: 16000, toleranceMs: 40 }
+  telemetryDeltas:
+    hpRefreshCount: 2
+metrics: [wakeOnlyHoldMs]

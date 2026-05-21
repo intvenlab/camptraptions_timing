@@ -1,0 +1,15 @@
+id: SC-07B-HP-DURING-POST-HOLD
+scenario: SC-07b
+description: HP during post-hold may extend hold but not fire FP
+tags: [variant, hp-during-burst]
+parameters: { enabled: 1, wakeHoldRefreshPolicy: 0 }
+fixture: { captureAfterLastStimulusMs: 13000 }
+stimulus:
+  - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 1000, signal: FP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 6500, signal: HP_IN_STIM, state: active, durationMs: 100 }
+expect:
+  fpOut: { pulseCount: 4, frameSpacingMs: 1000 }
+  telemetryDeltas:
+    hpRefreshCount: 1
+metrics: [hpOutContinuityMs]

@@ -1,0 +1,20 @@
+id: SC-19-NEW-EVENT-AFTER-RELEASE
+scenario: SC-19
+description: New FP after HP release should be cold/short-lead behavior
+tags: [core, cold-fp]
+parameters: { enabled: 1, minHalfPressBeforeShutter: 0.5s }
+fixture: { captureAfterLastStimulusMs: 16000 }
+stimulus:
+  - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 1000, signal: FP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 11000, signal: FP_IN_STIM, state: active, durationMs: 100 }
+expect:
+  fpOut: { pulseCount: 8, frameSpacingMs: 1000 }
+  sequences: 2
+  timing:
+    interSequenceGapMs: { minMs: 6500, maxMs: 7500 }
+    secondSequenceStartDelayMs: { minMs: 450, maxMs: 700 }
+  telemetryDeltas:
+    coldFpSequenceCount: 1
+    acceptedFpCount: 2
+metrics: [firstFrameGateDelayMs, sequenceCount]

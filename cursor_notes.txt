@@ -44,7 +44,7 @@
 - Windows: pandoc must use `--filter mermaid-filter.cmd` (not bare mermaid-filter)
 - WaveDrom: docs/diagrams/wavedrom/*.json → assets/*.svg + *.png (md embeds .png for Word; export renders if JSON newer)
 - WaveDrom Editor GUI (optional): C:\Program Files\wavedrom-editor-v3.5.0-win-x64
-- Targets: -Target all|manual|overview|scenarios|developer|parameters|pir|diagrams (parameters = own .docx, not bundled in developer)
+- Targets: -Target all|manual|overview|scenarios|developer|parameters|pir|diagrams|validation|validationreport (parameters = own .docx, not bundled in developer)
 - Parallel: default on PS 7+ (up to 4 pandoc jobs); -Sequential to disable; each job uses its own TEMP subfolder for mermaid-filter
 - PDF: open .docx in Word → Save as PDF (no LaTeX in pipeline)
 
@@ -73,6 +73,8 @@
 - Validation fixture direction: Arduino Nano/Uno-class board next to DUT, drives HP/FP inputs and monitors HP/FP outputs. If timing evidence shows the fixture is limiting, use a faster board, but current expected timing needs are within Nano-class capability.
 - Thin Windows client/script should control the Arduino over serial, run test vectors, log edge timestamps/results, and change DUT camera timing parameters through BLE/GATT with readback verification.
 - Added SC-16..SC-20 for HP behavior: HP input release after FP does not drop HP OUT, short HP lead gates first FP only, HP chatter/release during burst does not affect FPS, new event after HP release is cold/short-lead, and T > Y does not add T between later frames. Rendered WaveDrom assets for SC-16 and SC-17 via `.\scripts\export-docs.ps1 -Target diagrams`.
+- Doc export now includes `validation`: `.\scripts\export-docs.ps1 -Target validation` builds `dist\Camptraptions-Timing-Validation-Test-Plan.docx` without rendering WaveDrom assets. `-Target all` includes it, and the full manual includes `docs/validation-test-plan.md`.
+- Parameters export includes `docs/telemetry.md` so telemetry BLE payload fields/counters/event hints appear in `dist\Camptraptions-Timing-Parameters.docx`.
 
 ## Telemetry decisions 2026-05-20
 - Telemetry is RAM-first. Live state/current deadlines/current sequence fields stay RAM-only and are published over BLE.
@@ -80,3 +82,179 @@
 - Never write flash from ISR. ISR-safe paths may only update in-memory counters and set dirty/notify flags when a persisted counter actually changes.
 - Flush telemetry snapshots later from normal code at controlled boundaries such as activity end, BLE disconnect, periodic dirty checks, or explicit app/test request.
 - Target write budget is fewer than roughly 100,000 telemetry flash snapshots over board life; LittleFS wear leveling is acceptable for this project with rate-limited snapshots.
+
+## Backlog closure status 2026-05-20
+- All backlog items listed below were implemented or documented in this repo during the full closure pass.
+- Firmware compiled successfully (Arduino CLI, Seeeduino XIAO nRF52840).
+- Doc exports succeeded for `diagrams`, `validation`, and `parameters`.
+- Android external work is represented by handoff doc: `docs/android-client-handoff.md` (no external repo edits from this workspace).
+
+## CLOSED TODO backlog 2026-05-20
+- Add additional telemetry fields to BLE advertising/beacon payload so clients can get more status without opening a full BLE connection.
+
+## CLOSED TODO backlog from full logic/docs audit 2026-05-20
+
+### Firmware logic fixes
+- Fix connected-mode starvation: keep `processCameraLogic()` running while BLE is connected (do not early-return before state machine).
+- Decide and implement intended behavior for `wakeHoldRefreshPolicy=extend` (`deadline += X` vs `deadline = now + X`) and align all docs/tests.
+- Implement SC-07b behavior in `CAM_POST_SHUTTER_EXT` (HP refresh handling during post-burst hold) or explicitly remove/de-scope it everywhere.
+- Enforce R13 consistently: do not end activity solely due to wake timer expiry while activity is still active and sequence cap allows more sequences.
+- Handle consumed ISR flags in every state (avoid dropping HP/FP edges silently in `CAM_COLD_FP_WAIT` / `CAM_POST_SHUTTER_EXT`).
+- Add wake-timeout handling in `CAM_COLD_FP_WAIT` (or document why unlimited cold wait is intended).
+- Reconcile `cfg.shutterCount` semantics: count accepted FP/sequence starts vs raw debounced FP edges; document whichever is intended.
+- Expand factory reset behavior decision: include/exclude camera config reset (`/camera.bin`) and live activity teardown; implement consistently.
+- Guard or queue camera config writes during active sequence/activity to avoid mid-burst behavior changes.
+- Implement or remove/deprecate currently-unused policy fields (`activityHalfPressHoldPolicy`, `halfPressDuringBurstPolicy`) to avoid dead config bytes.
+- Implement or de-scope `inputActivePolarity` and `outputDriveMode` runtime behavior (currently stored but not applied).
+- Decide and implement runtime re-init behavior after `onCamCfgWrite` / `onDevTypeWrite` (pin modes + interrupts + pass-through/state-machine switch).
+- Add clamping for additional camera config fields (`wakeHalfPressHoldSec`, pulse/spacing/hold values, enum bounds).
+- Add defensive handling for out-of-range enum values (default branches, safe fallback behavior).
+- Review telemetry counter increments so one event does not ambiguously double-count unless explicitly intended/documented.
+- Review `underSequenceCap()` behavior for corrupt configs; decide whether `0` should mean unlimited or invalid/clamped safe default.
+- Verify ISR-side `markTelemetryChanged(...)` usage and volatile/atomic handling remains race-safe under notify/read paths.
+- Evaluate advertising payload layout extension/versioning and total byte budget before adding new telemetry fields.
+
+### Documentation corrections
+- Update `firmware/firmware_editing_guide.md` power-save section to match current `idleWaitWithCameraWake()` + `__WFE()` implementation.
+- Add explicit statement in docs that connected BLE currently affects runtime scheduling (until firmware fix is applied).
+- Align `docs/parameters.md` wording for `wakeHoldRefreshPolicy` with actual firmware semantics after decision.
+- Align `docs/scenarios.md` SC-07b expectations with firmware behavior after decision.
+- Align R4 wording across `docs/behavior-spec.md` and `docs/architecture.md` (per-frame gate vs no extra T between latched frames).
+- Clarify in docs whether policy parameters are active/implemented vs reserved/no-op.
+- Fix scenario index drift in `docs/behavior-spec.md` if any SC variants are missing from index lists.
+- Add explicit telemetry note that burst-time FP rejects may increment both burst and gap counters (if retained).
+- Add telemetry payload version/length guidance for client parsers and backward compatibility expectations.
+- Clarify flush timing expectations in telemetry docs for validation workflows (before/after case, forced flush, disconnect flush).
+
+### Validation plan/test coverage gaps
+- Add L0 traceability matrix (SC -> rules -> parameters -> metrics -> telemetry deltas -> expected states).
+- Resolve status mismatch: SC-08 and SC-10 are still `proposed` while validation gates currently require SC-01..SC-20 pass.
+- Add mandatory test for BLE-connected runtime behavior (idle + active activity while phone connected).
+- Add boundary test cases around `fullPressIgnoreGap` (just-before / exact / just-after gate clear).
+- Add explicit SC-04b policy variants: `extend`, `restart`, and `ignoreWhileActive` with clear expected formulas.
+- Add explicit SC-07b post-burst HP refresh test (expected current behavior vs intended/future behavior).
+- Add test for `fpAfterMaxSequenceCountPolicy=endActivityImmediately` (currently implemented but unvalidated).
+- Add test for `fullPressWithoutPriorHpPolicy=ignoreFP` (documented option not currently validated).
+- Add SC-13 Case D in validation procedures (FP bounce during wake hold).
+- Add tests for mid-activity/mid-burst config writes (reject/defer/apply policy).
+- Add test for factory reset behavior while idle and while activity is active.
+- Add tests for active-high input polarity and push-pull/opto output mode if these modes remain supported.
+- Add telemetry delta validation rules for cases where multiple counters can change on one stimulus edge.
+- Add report template fields for telemetry deltas, `cameraState`, and timing windows (`msUntil*`) snapshots.
+- Add stronger SC-15 measurement guidance: when fixture jitter approaches threshold, require logic analyzer confirmation.
+- Add parameter interaction matrix coverage (T x Y, Z x inter-sequence timing, cap policies, debounce x held input, power-save modes).
+
+### WaveDrom/diagram backlog
+- Fix `sc07-hp-during-burst.json` HP OUT waveform rendering so it clearly reflects latched HP behavior.
+- Differentiate `sc16-hp-release-after-fp.json` vs `sc17-short-hp-lead.json` (they are currently effectively identical waveforms).
+- Add missing WaveDrom sources for scenario variants used in validation (especially 04b, 05b, 07b, 08-10, 12-15, 18-20) or explicitly mark which scenarios are intentionally prose-only.
+- Add a dedicated SC-20 waveform asset (`T > Y`) to avoid overloading SC-17 visuals.
+
+### Client/app integration backlog
+- Update client BLE adapter mapping table to include all camera config bytes/policies (not just primary timing fields).
+- Decide which telemetry fields are advertised vs connected-only, then update Android/Windows client parsers accordingly.
+- Add explicit compatibility strategy for beacon payload changes (version byte / feature flags / fallback parsing).
+
+## Upstream merge sync 2026-05-20
+- Synced firmware from `camptraptions_timing/firmware/Camtraptions_Firmware.ino` into `C:\Users\3ricj\Documents\GitHub\CamtraptionsBatteryMonitor\Camtraptions_Firmware\Camtraptions_Firmware.ino`.
+- Pre-merge upstream backup saved to `%TEMP%`: `C:\Users\3ricj\AppData\Local\Temp\Camtraptions_Firmware_upstream_backup_20260520_150238.ino`.
+- Verified post-merge SHA-256 matches source and compile succeeds with `arduino-cli` for `Seeeduino:nrf52:xiaonRF52840`.
+- Follow-up verification: recompiled merged upstream successfully and rechecked matching SHA-256 hash against source after merge.
+- Deep-sleep audit note: merged firmware retains `idleWaitWithCameraWake()` + `__WFE()` path (power-save idle enabled) while pre-merge upstream backup used delay-only idle waits.
+- Flash/upload note (XIAO nRF52840): board enumerates as `COM3` for serial but DFU upload hops to bootloader port (observed `COM5`) during `arduino-cli compile --upload`.
+
+## Beacon build timestamp 2026-05-20
+- Added compile-time build timestamp fields to beacon payload in `firmware/Camtraptions_Firmware.ino` and bumped `BEACON_LAYOUT_VERSION` to `2`.
+- Added 7 bytes after existing live flags in beacon data: build year (LE uint16), month, day, hour, minute, second.
+- Verified compile success via `arduino-cli` (`Seeeduino:nrf52:xiaonRF52840`) using a temporary `%TEMP%` sketch folder named `Camtraptions_Firmware` and removed temp folder after compile.
+
+## TickleBoard scaffold 2026-05-20
+- Created `TickleBoard/` workspace for validation fixture efforts.
+- Added `TickleBoard/TickleBoardBits/TickleBoardBits.ino` as Arduino Uno R3 fixture firmware implementing line protocol: `ID?`, `MAP`, `ARM`, `PULSE`, `LEVEL`, `RUN`, `DUMP`, `RESET`.
+- Added Windows orchestration scaffold: `TickleBoard/scripts/tickle_cli.py` (serial fixture control, vector loading) plus `requirements.txt`.
+- Added starter vector template `TickleBoard/vectors/SC-01-NOMINAL.yaml` based on validation plan normative shape.
+- Next implementation target: BLE/GATT camera-config adapter (read/write + readback verify) and metric/pass-fail pipeline.
+
+## TickleBoard framework buildout 2026-05-20
+- Implemented modular Python framework under `TickleBoard/scripts/tickleboard/`:
+  - `fixture_client.py`, `vector_schema.py`, `runner.py`, `artifacts.py`, `camera_config.py`, `ble_adapter.py`, `telemetry.py`, `metrics.py`, `evaluator.py`, `reporting.py`.
+- Reworked CLI `TickleBoard/scripts/tickle_cli.py` commands: `ports`, `discover`, `preflight`, `run-case`, `run-suite`, `resume`, `run-sc15`, `report`.
+- Added optional-dependency guards for `pyserial` and `bleak` so CLI help runs even if deps are not installed.
+- Fixture firmware `TickleBoardBits.ino` enhanced with deterministic run IDs and snapshot lines at ARM/RUN/DUMP boundaries; still compiles for `arduino:avr:uno`.
+- Added comprehensive scenario vectors in `TickleBoard/vectors/scenarios/` covering SC-01..SC-20 plus mandatory add-on cases.
+- Added suite definitions in `TickleBoard/vectors/suites/`:
+  - `full_validation_suite.yaml`, `golden_subset_suite.yaml`, `mandatory_addons_suite.yaml`, `parameter_interaction_suite.yaml`.
+- Added stabilization guidance `TickleBoard/stabilization.md` and updated `TickleBoard/README.md` + `TickleBoard/scripts/README.md`.
+- Validation checks run:
+  - `arduino-cli compile --fqbn arduino:avr:uno TickleBoard\\TickleBoardBits` (success)
+  - Python compileall on `TickleBoard/scripts` (success)
+  - full suite vector parse count = 28 case files (success)
+
+## TickleBoard bench smoke test 2026-05-20
+- For this machine, framework deps are available in `C:\\Python314\\python.exe` (pyserial + bleak), not in Python 3.11/3.13.
+- Uploaded `TickleBoardBits` to Uno R3 on `COM7` and confirmed preflight identity response.
+- Ran `SC-01` simple HP->FP case via fixture (`tickle_cli.py run-case ... --port COM7`) successfully at transport level.
+- Result captured in `TickleBoard/artifacts/20260520_160909_SC-01-NOMINAL/result.json`: HP/FP stimulus edges were generated, but no `HP_OUT`/`FP_OUT` edges detected from DUT (case failed expected 4 FP_OUT pulses).
+- Fixture firmware bug fixed during smoke test: `MAX_EDGES` constant had wrapped to 0 due `uint8_t 256`; now set RAM-safe (`MAX_EDGES=80`).
+
+## TickleBoard pin-map update 2026-05-20
+- User-defined fixed board wiring (DUT nRF52840 pinout is authoritative):
+  - DUT D2 `FP_IN_PIN` <- Uno D4
+  - DUT D3 `HP_IN_PIN` <- Uno D5
+  - DUT D4 `FP_OUT_PIN` -> Uno D2
+  - DUT D5 `HP_OUT_PIN` -> Uno D3
+- Updated Uno fixture defaults in `TickleBoard/TickleBoardBits/TickleBoardBits.ino` to `PinMap{hpStim=5, fpStim=4, hpMon=3, fpMon=2}`.
+- Updated host runner MAP command in `TickleBoard/scripts/tickleboard/runner.py` to `MAP HP_IN=5 FP_IN=4 HP_OUT=3 FP_OUT=2 POL=ACTIVE_LOW`.
+
+## BLE smoke and SC-01 with BLE 2026-05-20
+- DUT discovered by BLE as `Tickle Me XIAO` (`C9:E0:7E:27:B2:4A`).
+- `preflight --ble` confirms GATT access: camera config length 20 bytes; telemetry length 76 bytes.
+- Added dedicated CLI smoke command `ble-smoke` in `TickleBoard/scripts/tickle_cli.py`:
+  - tests discovery/beacon visibility,
+  - reads parameter,
+  - writes parameter,
+  - reads changed value,
+  - restores original value and verifies readback.
+- Verified `ble-smoke --ble C9:E0:7E:27:B2:4A --parameter FrameCount` passes (4 -> 5 -> 4 with strict readback match).
+- Running SC-01 with BLE-enforced config (`run-case ... --ble C9:E0:7E:27:B2:4A`) now yields 4 FP_OUT pulses and sequence count 1; current failure is pulse width tolerance (measured ~110.25 ms vs expected 100 +/- 5 ms).
+
+## Full validation execution report 2026-05-20
+- Executed all tests in `TickleBoard/vectors/suites/full_validation_suite.yaml` sequentially with per-test timeout/retry guard (timeout 180s, retries 1).
+- Full run duration: ~1092.9s (~18.2 min).
+- Results summary: 26 pass, 2 fail, 0 framework errors.
+- Failing cases:
+  - `SC-05B-FP-DURING-POST-HOLD` (logic_mismatch)
+  - `SC-09-SEQUENCE-CAP` (logic_mismatch)
+- Generated report artifacts:
+  - `TickleBoard/artifacts/full_exec_20260520_172234/full_test_report.md`
+  - `TickleBoard/artifacts/full_exec_20260520_172234/full_test_rollup.json`
+  - `TickleBoard/artifacts/full_exec_20260520_172234/full_test_rollup.csv`
+
+## Debug preference/context 2026-05-20
+- User requested no device-touching actions by the agent while hardware is under active test; prefer host-side investigation + instrumentation first.
+- SC-01 pulse width issue under BLE connection appears tied to connected-loop scheduling cadence (`delay(20)`), with measured FP_OUT widths repeatedly ~117 ms while camera readback still reports `shutterPulseDuration=100ms`.
+- Uploaded updated timing firmware to XIAO (`arduino-cli` DFU hop COM3 -> COM5) after implementing BLE-connected timing cadence change.
+- Post-upload SC-01 validation run passed pulse width tolerance with paired FP_OUT widths `[99,99,100,100]` and `fpPulseWidthMs=99.5`.
+
+## BLE telemetry smoke command 2026-05-20
+- Added `ble-telemetry-smoke` command to `TickleBoard/scripts/tickle_cli.py`.
+- Command reads BLE beacon manufacturer payload plus telemetry GATT characteristic and prints a decoded, human-readable report (including raw bytes/hex and parsed fields).
+- Beacon decode now includes legacy battery/config/shutter bytes and extension bytes (`beaconLayoutVersion`, camera state/flags, build timestamp when present).
+
+## Validation report publishing 2026-05-21
+- Added publication source `docs/validation-test-report.md` for a standalone validation outcome report (separate from `docs/validation-test-plan.md`).
+- Added export target `validationreport` in `scripts/export-docs.ps1` to build `dist/Camptraptions-Timing-Test-Report.docx`.
+- Current report baseline uses `TickleBoard/artifacts/full_exec_20260520_172234/full_test_rollup.json`; report-level status now treats `SC-09` as resolved/pass per latest rerun outcome.
+
+## TickleBoard core changes 2026-05-20
+- BLE adapter now supports reusable connected sessions (`DutBleSession`) so suite/sc15 loops can keep one GATT link instead of reconnecting for each read/write.
+- `tickle_cli.py run-suite` now reuses a single BLE session across all cases when `--ble` is provided.
+- Fixture firmware timing capture moved from monitor pin polling to ISR-driven edge logging (`attachInterrupt(..., CHANGE)` on monitor pins), with a bounded ISR queue drained in the run loop.
+- Fixture compile check passed for `arduino:avr:uno`; RAM is now ~94% used with low-memory warning, so avoid increasing fixture-side buffers without re-checking memory headroom.
+
+## Timing validation expansion 2026-05-21
+- Added machine-readable timing expectations across SC/AO vectors (`expect.fpOut.frameSpacingMs` and `expect.timing.*`) plus expanded telemetry delta expectations for timing-sensitive scenarios.
+- Evaluator now supports generic timing checks (target +/- tolerance and min/max ranges), with metric-specific tolerance floors and check categorization (`timing` vs `functional`).
+- Metrics extraction now computes sequence-aware fields: `sequenceCount` from FP_OUT sequence boundaries, `interSequenceGapMs`, and `secondSequenceStartDelayMs`.
+- Runner/report rollups now emit timing/functional assertion counts and classify failures as `pass`, `timing_tolerance`, or `logic_mismatch`.
+- Local validation commands for this workspace should use `C:\\Python314\\python.exe` (Microsoft Store alias `python` may fail).

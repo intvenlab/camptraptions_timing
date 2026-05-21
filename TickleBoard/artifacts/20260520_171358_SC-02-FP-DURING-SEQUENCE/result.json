@@ -1,0 +1,267 @@
+{
+  "camera_rw": {
+    "mismatches": {},
+    "payload_readback_hex": "02010a050a0a142314040400000000000000011f",
+    "payload_written_hex": "02010a050a0a142314040400000000000000011f",
+    "readback_norm": {
+      "FrameCount": 4,
+      "enabled": 1,
+      "fullPressIgnoreGap": 31
+    },
+    "requested_norm": {
+      "FrameCount": 4,
+      "enabled": 1,
+      "fullPressIgnoreGap": 31
+    }
+  },
+  "case_id": "SC-02-FP-DURING-SEQUENCE",
+  "checks": [
+    {
+      "detail": "expected 4, got 4",
+      "name": "frameCount",
+      "passed": true
+    },
+    {
+      "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 1, 'ignoredFpDuringBurstCount': 1, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 0}",
+      "name": "telemetry_delta_sanity",
+      "passed": true
+    }
+  ],
+  "description": "Extra FP during sequence should be ignored",
+  "fixture_dump": {
+    "edges": [
+      {
+        "signal": "HP_IN",
+        "state": "ACTIVE",
+        "t_ms": 0
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 48
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 100
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 525
+      },
+      {
+        "signal": "FP_IN",
+        "state": "ACTIVE",
+        "t_ms": 1000
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 1000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 1100
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 1100
+      },
+      {
+        "signal": "FP_IN",
+        "state": "ACTIVE",
+        "t_ms": 1400
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 1500
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 1999
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 2099
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 2998
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 3097
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 3997
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 4096
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 9000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 9000
+      }
+    ],
+    "malformed_lines": [],
+    "run_id": 1,
+    "snapshots": [
+      "SNAPSHOT HP_IN=INACTIVE FP_IN=INACTIVE HP_OUT=INACTIVE FP_OUT=INACTIVE"
+    ],
+    "warnings": []
+  },
+  "metrics": {
+    "firstFrameAfLeadMs": 952.0,
+    "firstFrameGateDelayMs": 0.0,
+    "fpInToFpOutLatencyMs": 0.0,
+    "fpInToHpOutLatencyMs": -952.0,
+    "fpPulseWidthMs": 99.5,
+    "frameCount": 4,
+    "frameStartSpacingMs": 999.0,
+    "hpHoldAfterLastFrameMs": -3571.0,
+    "hpInToHpOutLatencyMs": 48.0,
+    "hpOutContinuityMs": 477.0,
+    "ignoredFpCount": 0,
+    "sequenceCount": 1,
+    "wakeOnlyHoldMs": null
+  },
+  "passed": true,
+  "scenario": "SC-02",
+  "telemetry_after": {
+    "camera_state": 1,
+    "counters": {
+      "acceptedFpCount": 18,
+      "activityCompletedCount": 33,
+      "coldFpSequenceCount": 1,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 3,
+      "ignoredFpDuringBurstCount": 6,
+      "ignoredFpDuringGapCount": 6,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 18,
+      "version": 1,
+      "wakeTimeoutCount": 33
+    },
+    "flags": 2,
+    "frames_fired_this_sequence": 4,
+    "last_event_code": 7,
+    "last_scenario_hint": 0,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 1891,
+    "sequences_started_this_activity": 1,
+    "version": 1
+  },
+  "telemetry_before": {
+    "camera_state": 0,
+    "counters": {
+      "acceptedFpCount": 17,
+      "activityCompletedCount": 33,
+      "coldFpSequenceCount": 1,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 3,
+      "ignoredFpDuringBurstCount": 5,
+      "ignoredFpDuringGapCount": 5,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 17,
+      "version": 1,
+      "wakeTimeoutCount": 33
+    },
+    "flags": 0,
+    "frames_fired_this_sequence": 0,
+    "last_event_code": 4,
+    "last_scenario_hint": 1,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 0,
+    "sequences_started_this_activity": 0,
+    "version": 1
+  },
+  "telemetry_deltas": {
+    "acceptedFpCount": 1,
+    "activityCompletedCount": 0,
+    "coldFpSequenceCount": 0,
+    "fpDebounceRejectCount": 0,
+    "hpDebounceRejectCount": 0,
+    "hpIgnoredDuringBurstCount": 0,
+    "hpRefreshCount": 0,
+    "ignoredFpDuringBurstCount": 1,
+    "ignoredFpDuringGapCount": 1,
+    "rejectedFpAtSequenceCapCount": 0,
+    "sequenceCompletedCount": 1,
+    "wakeTimeoutCount": 0
+  },
+  "telemetry_notes": [
+    "dual_classification_expected: gap_and_burst_ignored_fp_incremented"
+  ],
+  "vector": {
+    "case_id": "SC-02-FP-DURING-SEQUENCE",
+    "description": "Extra FP during sequence should be ignored",
+    "expect": {
+      "fpOut": {
+        "pulseCount": 4
+      }
+    },
+    "fixture": {
+      "captureAfterLastStimulusMs": 9000
+    },
+    "metrics": [
+      "ignoredFpCount",
+      "frameCount"
+    ],
+    "parameters": {
+      "FrameCount": 4,
+      "enabled": 1,
+      "fullPressIgnoreGap": "3.1s"
+    },
+    "scenario": "SC-02",
+    "stimulus": [
+      {
+        "at_ms": 0,
+        "duration_ms": 100,
+        "signal": "HP_IN_STIM",
+        "state": "active"
+      },
+      {
+        "at_ms": 1000,
+        "duration_ms": 100,
+        "signal": "FP_IN_STIM",
+        "state": "active"
+      },
+      {
+        "at_ms": 1400,
+        "duration_ms": 100,
+        "signal": "FP_IN_STIM",
+        "state": "active"
+      }
+    ],
+    "tags": [
+      "core",
+      "ignore-gap"
+    ]
+  }
+}

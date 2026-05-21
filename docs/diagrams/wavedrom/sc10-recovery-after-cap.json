@@ -1,0 +1,15 @@
+{
+  "config": { "hscale": 3, "vscale": 3 },
+  "head": { "text": "SC-10 - recovery after sequence cap" },
+  "signal": [
+    ["In",
+      { "name": "FP in",  "wave": "0.1......1|." },
+      { "name": "HP in",  "wave": "0.........|." }
+    ],
+    ["Out",
+      { "name": "HP out", "wave": "0.1....0..1|0" },
+      { "name": "FP out", "wave": "0..1010...10" }
+    ]
+  ],
+  "foot": { "text": "After capped activity returns idle, a new FP starts a fresh activity with sequence count reset." }
+}

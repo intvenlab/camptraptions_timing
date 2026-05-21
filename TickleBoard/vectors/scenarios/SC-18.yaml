@@ -1,0 +1,16 @@
+id: SC-18-HP-CHATTER-BURST
+scenario: SC-18
+description: HP chatter/release during burst does not alter scheduling
+tags: [core, hp-during-burst]
+parameters: { enabled: 1, FrameCount: 4 }
+fixture: { captureAfterLastStimulusMs: 10000 }
+stimulus:
+  - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 1000, signal: FP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 1500, signal: HP_IN_STIM, state: active, durationMs: 30 }
+  - { atMs: 1600, signal: HP_IN_STIM, state: active, durationMs: 40 }
+expect:
+  fpOut: { pulseCount: 4, frameSpacingMs: 1000 }
+  telemetryDeltas:
+    hpIgnoredDuringBurstCount: 2
+metrics: [hpOutContinuityMs, frameStartSpacingMs]

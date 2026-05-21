@@ -1,0 +1,17 @@
+id: SC-02-FP-DURING-SEQUENCE
+scenario: SC-02
+description: Extra FP during sequence should be ignored
+tags: [core, ignore-gap]
+parameters: { enabled: 1, FrameCount: 4, fullPressIgnoreGap: 3.1s }
+fixture: { captureAfterLastStimulusMs: 9000 }
+stimulus:
+  - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 1000, signal: FP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 1400, signal: FP_IN_STIM, state: active, durationMs: 100 }
+expect:
+  fpOut: { pulseCount: 4, frameSpacingMs: 1000 }
+  telemetryDeltas:
+    acceptedFpCount: 1
+    ignoredFpDuringGapCount: 1
+    ignoredFpDuringBurstCount: 1
+metrics: [ignoredFpCount, frameCount]

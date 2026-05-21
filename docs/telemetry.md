@@ -27,6 +27,13 @@ The camera firmware publishes a read/notify telemetry characteristic:
 
 The payload is a fixed little-endian binary struct with a schema version byte. Android or validation clients should parse by version, not by inferred length alone.
 
+### Parser compatibility contract
+
+- Parse telemetry by `(version, expectedLength)`; reject or ignore unsupported versions.
+- Current telemetry payload is `TELEMETRY_VERSION = 1` and fixed to `sizeof(CameraTelemetryPayload)`.
+- Treat added trailing fields in future versions as opt-in via version bump, not as implicit extensions.
+- Validation/client logs should capture payload version and observed payload length for troubleshooting.
+
 ### Live state fields
 
 | Field | Meaning |
@@ -59,6 +66,21 @@ The payload is a fixed little-endian binary struct with a schema version byte. A
 | `hpDebounceRejectCount` | HP edges rejected by debounce | SC-13 |
 | `sequenceCompletedCount` | Completed burst sequences | SC-01, SC-05, SC-05b |
 | `activityCompletedCount` | Completed MCU activities, including wake-only timeouts | SC-01, SC-04, SC-05 |
+
+When an FP arrives during an active burst and still inside `fullPressIgnoreGap`, firmware intentionally increments both `ignoredFpDuringBurstCount` and `ignoredFpDuringGapCount`. Treat that pair as one rejected input viewed from two dimensions (burst-state + gap-rule), not as duplicate acceptance.
+
+## Advertising payload telemetry
+
+Manufacturer data now carries a versioned beacon suffix so clients can read basic runtime status without opening a full connection.
+
+| Byte offset (after company ID) | Field |
+|--------------------------------|-------|
+| `0..10` | Legacy battery/config/shutter fields (unchanged layout) |
+| `11` | Beacon layout version (`BEACON_LAYOUT_VERSION`, current `1`) |
+| `12` | `cameraState` snapshot |
+| `13` | Runtime flags (`bit0=activityActive`, `bit1=hpOutAsserted`) |
+
+Compatibility rule: parsers must keep legacy offsets stable and treat bytes beyond `10` as optional extension fields gated by beacon layout version.
 
 ## Event and scenario hints
 
@@ -93,3 +115,10 @@ Firmware counters are named by rule/reason. Scenario hints are deliberately broa
 The fixture remains the timing source of truth for edge latency and pulse width metrics. Telemetry complements fixture logs by showing internal decisions: accepted vs ignored FP, wake-only timeouts, sequence caps, debounce rejects, and current state transitions.
 
 For each validation case, capture a telemetry snapshot before and after the stimulus. Compare counter deltas with fixture-derived metrics such as `sequenceCount`, `frameCount`, and `ignoredFpCount`.
+
+For repeatable validation, capture snapshots at consistent boundaries:
+
+1. Pre-case baseline (before first stimulus edge)
+2. Post-case steady point (after outputs settle)
+3. Optional forced-flush point if persistence needs verification
+4. Post-disconnect snapshot when BLE disconnect-triggered flush behavior is under test

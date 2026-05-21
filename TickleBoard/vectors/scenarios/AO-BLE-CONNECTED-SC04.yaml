@@ -1,0 +1,15 @@
+id: AO-BLE-CONNECTED-SC04
+scenario: ADDON-BLE-CONNECTED
+description: Re-run SC-04 while BLE remains connected
+tags: [addon, ble-connected]
+parameters: { enabled: 1, wakeHalfPressHoldTime: 10s }
+fixture: { captureAfterLastStimulusMs: 12000 }
+stimulus:
+  - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
+expect:
+  fpOut: { pulseCount: 0 }
+  timing:
+    wakeOnlyHoldMs: { targetMs: 10000 }
+  telemetryDeltas:
+    wakeTimeoutCount: 1
+metrics: [wakeOnlyHoldMs]

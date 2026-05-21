@@ -1,0 +1,190 @@
+{
+  "camera_rw": {
+    "mismatches": {},
+    "payload_readback_hex": "02010a050a0a142314040100000000000000011f",
+    "payload_written_hex": "02010a050a0a142314040100000000000000011f",
+    "readback_norm": {
+      "enabled": 1,
+      "wakeHalfPressHoldTime": 10
+    },
+    "requested_norm": {
+      "enabled": 1,
+      "wakeHalfPressHoldTime": 10
+    }
+  },
+  "case_id": "SC-12-HP-ONLY-MIN-GAP",
+  "checks": [
+    {
+      "detail": "expected 0, got 0",
+      "name": "frameCount",
+      "passed": true
+    },
+    {
+      "detail": "deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 0, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 0, 'activityCompletedCount': 1}",
+      "name": "telemetry_delta_sanity",
+      "passed": true
+    }
+  ],
+  "description": "HP-only no-sequence behavior at field-like stimulus",
+  "fixture_dump": {
+    "edges": [
+      {
+        "signal": "HP_IN",
+        "state": "ACTIVE",
+        "t_ms": 0
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 56
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 100
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 743
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 12000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 12000
+      }
+    ],
+    "malformed_lines": [],
+    "run_id": 1,
+    "snapshots": [
+      "SNAPSHOT HP_IN=INACTIVE FP_IN=INACTIVE HP_OUT=INACTIVE FP_OUT=INACTIVE"
+    ],
+    "warnings": []
+  },
+  "metrics": {
+    "firstFrameAfLeadMs": null,
+    "firstFrameGateDelayMs": null,
+    "fpInToFpOutLatencyMs": null,
+    "fpInToHpOutLatencyMs": null,
+    "fpPulseWidthMs": null,
+    "frameCount": 0,
+    "frameStartSpacingMs": null,
+    "hpHoldAfterLastFrameMs": null,
+    "hpInToHpOutLatencyMs": 56.0,
+    "hpOutContinuityMs": 687.0,
+    "ignoredFpCount": 0,
+    "sequenceCount": 0,
+    "wakeOnlyHoldMs": 687.0
+  },
+  "passed": true,
+  "scenario": "SC-12",
+  "telemetry_after": {
+    "camera_state": 0,
+    "counters": {
+      "acceptedFpCount": 37,
+      "activityCompletedCount": 64,
+      "coldFpSequenceCount": 5,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 1,
+      "hpRefreshCount": 10,
+      "ignoredFpDuringBurstCount": 10,
+      "ignoredFpDuringGapCount": 10,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 37,
+      "version": 1,
+      "wakeTimeoutCount": 59
+    },
+    "flags": 0,
+    "frames_fired_this_sequence": 0,
+    "last_event_code": 4,
+    "last_scenario_hint": 1,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 0,
+    "sequences_started_this_activity": 0,
+    "version": 1
+  },
+  "telemetry_before": {
+    "camera_state": 0,
+    "counters": {
+      "acceptedFpCount": 37,
+      "activityCompletedCount": 63,
+      "coldFpSequenceCount": 5,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 1,
+      "hpRefreshCount": 10,
+      "ignoredFpDuringBurstCount": 10,
+      "ignoredFpDuringGapCount": 10,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 37,
+      "version": 1,
+      "wakeTimeoutCount": 58
+    },
+    "flags": 0,
+    "frames_fired_this_sequence": 0,
+    "last_event_code": 4,
+    "last_scenario_hint": 1,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 0,
+    "sequences_started_this_activity": 0,
+    "version": 1
+  },
+  "telemetry_deltas": {
+    "acceptedFpCount": 0,
+    "activityCompletedCount": 1,
+    "coldFpSequenceCount": 0,
+    "fpDebounceRejectCount": 0,
+    "hpDebounceRejectCount": 0,
+    "hpIgnoredDuringBurstCount": 0,
+    "hpRefreshCount": 0,
+    "ignoredFpDuringBurstCount": 0,
+    "ignoredFpDuringGapCount": 0,
+    "rejectedFpAtSequenceCapCount": 0,
+    "sequenceCompletedCount": 0,
+    "wakeTimeoutCount": 1
+  },
+  "telemetry_notes": [],
+  "vector": {
+    "case_id": "SC-12-HP-ONLY-MIN-GAP",
+    "description": "HP-only no-sequence behavior at field-like stimulus",
+    "expect": {
+      "fpOut": {
+        "pulseCount": 0
+      }
+    },
+    "fixture": {
+      "captureAfterLastStimulusMs": 12000
+    },
+    "metrics": [
+      "wakeOnlyHoldMs",
+      "sequenceCount"
+    ],
+    "parameters": {
+      "enabled": 1,
+      "wakeHalfPressHoldTime": "10s"
+    },
+    "scenario": "SC-12",
+    "stimulus": [
+      {
+        "at_ms": 0,
+        "duration_ms": 100,
+        "signal": "HP_IN_STIM",
+        "state": "active"
+      }
+    ],
+    "tags": [
+      "core",
+      "wake-only"
+    ]
+  }
+}

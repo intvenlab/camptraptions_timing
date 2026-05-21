@@ -1,0 +1,15 @@
+{
+  "config": { "hscale": 3, "vscale": 3 },
+  "head": { "text": "SC-14 - held vs pulsed FP input" },
+  "signal": [
+    ["In",
+      { "name": "FP in",  "wave": "0.1======|0" },
+      { "name": "HP in",  "wave": "0.1......|." }
+    ],
+    ["Out",
+      { "name": "HP out", "wave": "0.1......|0" },
+      { "name": "FP out", "wave": "0...10.10.10.10" }
+    ]
+  ],
+  "foot": { "text": "Held FP input is one accepted sequence, not a sustained FP output level or repeated re-accepts." }
+}

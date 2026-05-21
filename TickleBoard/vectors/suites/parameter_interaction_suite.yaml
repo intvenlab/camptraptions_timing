@@ -1,0 +1,12 @@
+name: parameter_interaction_suite
+description: Parameter extremes and interaction matrix coverage
+cases:
+  - ../scenarios/SC-11.yaml
+  - ../scenarios/SC-20.yaml
+  - ../scenarios/SC-05.yaml
+  - ../scenarios/SC-05b.yaml
+  - ../scenarios/SC-09.yaml
+  - ../scenarios/SC-10.yaml
+  - ../scenarios/SC-13.yaml
+  - ../scenarios/SC-14.yaml
+  - ../scenarios/SC-15.yaml

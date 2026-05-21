@@ -1,0 +1,14 @@
+id: SC-15-POWER-SAVE-BUDGET
+scenario: SC-15
+description: Compare latency paths with powerSaveIdleMode enabled vs disabled
+tags: [core, performance]
+parameters: { enabled: 1, powerSaveIdleMode: 1 }
+fixture: { captureAfterLastStimulusMs: 7000 }
+stimulus:
+  - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 1000, signal: FP_IN_STIM, state: active, durationMs: 100 }
+expect:
+  fpOut: { pulseCount: 4, frameSpacingMs: 1000 }
+  telemetryDeltas:
+    acceptedFpCount: 1
+metrics: [hpInToHpOutLatencyMs, fpInToHpOutLatencyMs, fpInToFpOutLatencyMs]

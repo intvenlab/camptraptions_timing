@@ -1,0 +1,8 @@
+name: mandatory_addons_suite
+description: Mandatory add-on cases from validation plan
+cases:
+  - ../scenarios/AO-BLE-CONNECTED-SC04.yaml
+  - ../scenarios/AO-BLE-CONNECTED-SC01.yaml
+  - ../scenarios/AO-GAP-BOUNDARY-TRIAD.yaml
+  - ../scenarios/AO-DEFERRED-CONFIG-WRITES.yaml
+  - ../scenarios/AO-FACTORY-RESET-AND-COERCION.yaml

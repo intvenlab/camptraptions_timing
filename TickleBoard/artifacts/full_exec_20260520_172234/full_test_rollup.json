@@ -1,0 +1,1535 @@
+[
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\SC-01.yaml",
+    "case_id": "SC-01-NOMINAL",
+    "scenario": "SC-01",
+    "status": "pass",
+    "passed": true,
+    "wall_ms": 32628,
+    "run_dir": "TickleBoard\\artifacts\\20260520_172235_SC-01-NOMINAL",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "pass",
+    "metrics": {
+      "firstFrameAfLeadMs": 947.0,
+      "firstFrameGateDelayMs": 0.0,
+      "fpInToFpOutLatencyMs": 0.0,
+      "fpInToHpOutLatencyMs": -947.0,
+      "fpPulseWidthMs": 101.0,
+      "frameCount": 4,
+      "frameStartSpacingMs": 999.0,
+      "hpHoldAfterLastFrameMs": -3358.0,
+      "hpInToHpOutLatencyMs": 53.0,
+      "hpOutContinuityMs": 687.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 1,
+      "wakeOnlyHoldMs": null
+    },
+    "checks": [
+      {
+        "detail": "expected 4, got 4",
+        "name": "frameCount",
+        "passed": true
+      },
+      {
+        "detail": "expected 100.0 +/- 5.0, got 101.0",
+        "name": "fpPulseWidthMs",
+        "passed": true
+      },
+      {
+        "detail": "expected 1, got 1",
+        "name": "sequenceCount",
+        "passed": true
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 0}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 1,
+      "activityCompletedCount": 0,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 1,
+      "wakeTimeoutCount": 0
+    },
+    "notes": []
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\SC-02.yaml",
+    "case_id": "SC-02-FP-DURING-SEQUENCE",
+    "scenario": "SC-02",
+    "status": "pass",
+    "passed": true,
+    "wall_ms": 33641,
+    "run_dir": "TickleBoard\\artifacts\\20260520_172308_SC-02-FP-DURING-SEQUENCE",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "pass",
+    "metrics": {
+      "firstFrameAfLeadMs": 995.0,
+      "firstFrameGateDelayMs": 0.0,
+      "fpInToFpOutLatencyMs": 0.0,
+      "fpInToHpOutLatencyMs": -995.0,
+      "fpPulseWidthMs": 99.25,
+      "frameCount": 4,
+      "frameStartSpacingMs": 999.0,
+      "hpHoldAfterLastFrameMs": -3482.0,
+      "hpInToHpOutLatencyMs": 5.0,
+      "hpOutContinuityMs": 609.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 1,
+      "wakeOnlyHoldMs": null
+    },
+    "checks": [
+      {
+        "detail": "expected 4, got 4",
+        "name": "frameCount",
+        "passed": true
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 1, 'ignoredFpDuringBurstCount': 1, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 0}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 1,
+      "activityCompletedCount": 0,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 1,
+      "ignoredFpDuringGapCount": 1,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 1,
+      "wakeTimeoutCount": 0
+    },
+    "notes": [
+      "dual_classification_expected: gap_and_burst_ignored_fp_incremented"
+    ]
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\SC-03.yaml",
+    "case_id": "SC-03-FP-FLOOD",
+    "scenario": "SC-03",
+    "status": "pass",
+    "passed": true,
+    "wall_ms": 36812,
+    "run_dir": "TickleBoard\\artifacts\\20260520_172341_SC-03-FP-FLOOD",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "pass",
+    "metrics": {
+      "firstFrameAfLeadMs": 958.0,
+      "firstFrameGateDelayMs": 0.0,
+      "fpInToFpOutLatencyMs": 0.0,
+      "fpInToHpOutLatencyMs": -958.0,
+      "fpPulseWidthMs": 99.0,
+      "frameCount": 4,
+      "frameStartSpacingMs": 999.0,
+      "hpHoldAfterLastFrameMs": -3367.0,
+      "hpInToHpOutLatencyMs": 42.0,
+      "hpOutContinuityMs": 687.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 1,
+      "wakeOnlyHoldMs": null
+    },
+    "checks": [
+      {
+        "detail": "expected 4, got 4",
+        "name": "frameCount",
+        "passed": true
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 3, 'ignoredFpDuringBurstCount': 3, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 0}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 1,
+      "activityCompletedCount": 0,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 3,
+      "ignoredFpDuringGapCount": 3,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 1,
+      "wakeTimeoutCount": 0
+    },
+    "notes": [
+      "dual_classification_expected: gap_and_burst_ignored_fp_incremented"
+    ]
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\SC-04.yaml",
+    "case_id": "SC-04-WAKE-TIMEOUT",
+    "scenario": "SC-04",
+    "status": "pass",
+    "passed": true,
+    "wall_ms": 39609,
+    "run_dir": "TickleBoard\\artifacts\\20260520_172418_SC-04-WAKE-TIMEOUT",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "pass",
+    "metrics": {
+      "firstFrameAfLeadMs": null,
+      "firstFrameGateDelayMs": null,
+      "fpInToFpOutLatencyMs": null,
+      "fpInToHpOutLatencyMs": null,
+      "fpPulseWidthMs": null,
+      "frameCount": 0,
+      "frameStartSpacingMs": null,
+      "hpHoldAfterLastFrameMs": null,
+      "hpInToHpOutLatencyMs": 56.0,
+      "hpOutContinuityMs": 686.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 0,
+      "wakeOnlyHoldMs": 686.0
+    },
+    "checks": [
+      {
+        "detail": "expected 0, got 0",
+        "name": "frameCount",
+        "passed": true
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 0, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 0, 'activityCompletedCount': 1}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 0,
+      "activityCompletedCount": 1,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 0,
+      "wakeTimeoutCount": 1
+    },
+    "notes": []
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\SC-04b.yaml",
+    "case_id": "SC-04B-REPEATED-HP",
+    "scenario": "SC-04b",
+    "status": "pass",
+    "passed": true,
+    "wall_ms": 39643,
+    "run_dir": "TickleBoard\\artifacts\\20260520_172458_SC-04B-REPEATED-HP",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "pass",
+    "metrics": {
+      "firstFrameAfLeadMs": null,
+      "firstFrameGateDelayMs": null,
+      "fpInToFpOutLatencyMs": null,
+      "fpInToHpOutLatencyMs": null,
+      "fpPulseWidthMs": null,
+      "frameCount": 0,
+      "frameStartSpacingMs": null,
+      "hpHoldAfterLastFrameMs": null,
+      "hpInToHpOutLatencyMs": 50.0,
+      "hpOutContinuityMs": 686.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 0,
+      "wakeOnlyHoldMs": 686.0
+    },
+    "checks": [
+      {
+        "detail": "expected 0, got 0",
+        "name": "frameCount",
+        "passed": true
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 0, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 2, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 0, 'activityCompletedCount': 0}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 0,
+      "activityCompletedCount": 0,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 2,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 0,
+      "wakeTimeoutCount": 0
+    },
+    "notes": []
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\SC-05.yaml",
+    "case_id": "SC-05-BACK-TO-BACK",
+    "scenario": "SC-05",
+    "status": "pass",
+    "passed": true,
+    "wall_ms": 43627,
+    "run_dir": "TickleBoard\\artifacts\\20260520_172537_SC-05-BACK-TO-BACK",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "pass",
+    "metrics": {
+      "firstFrameAfLeadMs": 952.0,
+      "firstFrameGateDelayMs": 1.0,
+      "fpInToFpOutLatencyMs": 1.0,
+      "fpInToHpOutLatencyMs": -951.0,
+      "fpPulseWidthMs": 99.875,
+      "frameCount": 8,
+      "frameStartSpacingMs": 1285.142857142857,
+      "hpHoldAfterLastFrameMs": -9571.0,
+      "hpInToHpOutLatencyMs": 49.0,
+      "hpOutContinuityMs": 477.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 1,
+      "wakeOnlyHoldMs": null
+    },
+    "checks": [
+      {
+        "detail": "expected 1, got 1",
+        "name": "sequenceCount",
+        "passed": true
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 2, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 2, 'activityCompletedCount': 0}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 2,
+      "activityCompletedCount": 0,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 2,
+      "wakeTimeoutCount": 0
+    },
+    "notes": []
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\SC-05b.yaml",
+    "case_id": "SC-05B-FP-DURING-POST-HOLD",
+    "scenario": "SC-05b",
+    "status": "fail",
+    "passed": false,
+    "wall_ms": 38689,
+    "run_dir": "TickleBoard\\artifacts\\20260520_172621_SC-05B-FP-DURING-POST-HOLD",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "logic_mismatch",
+    "metrics": {
+      "firstFrameAfLeadMs": 952.0,
+      "firstFrameGateDelayMs": 0.0,
+      "fpInToFpOutLatencyMs": 0.0,
+      "fpInToHpOutLatencyMs": -952.0,
+      "fpPulseWidthMs": 100.5,
+      "frameCount": 8,
+      "frameStartSpacingMs": 1171.0,
+      "hpHoldAfterLastFrameMs": -8564.0,
+      "hpInToHpOutLatencyMs": 48.0,
+      "hpOutContinuityMs": 686.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 1,
+      "wakeOnlyHoldMs": null
+    },
+    "checks": [
+      {
+        "detail": "expected 4, got 8",
+        "name": "frameCount",
+        "passed": false
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 2, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 2, 'activityCompletedCount': 0}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 2,
+      "activityCompletedCount": 0,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 2,
+      "wakeTimeoutCount": 0
+    },
+    "notes": []
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\SC-06.yaml",
+    "case_id": "SC-06-COLD-FP",
+    "scenario": "SC-06",
+    "status": "pass",
+    "passed": true,
+    "wall_ms": 31849,
+    "run_dir": "TickleBoard\\artifacts\\20260520_172700_SC-06-COLD-FP",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "pass",
+    "metrics": {
+      "firstFrameAfLeadMs": 441.0,
+      "firstFrameGateDelayMs": 496.0,
+      "fpInToFpOutLatencyMs": 496.0,
+      "fpInToHpOutLatencyMs": 55.0,
+      "fpPulseWidthMs": 98.75,
+      "frameCount": 4,
+      "frameStartSpacingMs": 998.6666666666666,
+      "hpHoldAfterLastFrameMs": -2850.0,
+      "hpInToHpOutLatencyMs": null,
+      "hpOutContinuityMs": 686.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 1,
+      "wakeOnlyHoldMs": null
+    },
+    "checks": [
+      {
+        "detail": "expected 4, got 4",
+        "name": "frameCount",
+        "passed": true
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 1, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 0}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 1,
+      "activityCompletedCount": 0,
+      "coldFpSequenceCount": 1,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 1,
+      "wakeTimeoutCount": 0
+    },
+    "notes": []
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\SC-07.yaml",
+    "case_id": "SC-07-HP-DURING-BURST",
+    "scenario": "SC-07",
+    "status": "pass",
+    "passed": true,
+    "wall_ms": 36623,
+    "run_dir": "TickleBoard\\artifacts\\20260520_172731_SC-07-HP-DURING-BURST",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "pass",
+    "metrics": {
+      "firstFrameAfLeadMs": 950.0,
+      "firstFrameGateDelayMs": 0.0,
+      "fpInToFpOutLatencyMs": 0.0,
+      "fpInToHpOutLatencyMs": -950.0,
+      "fpPulseWidthMs": 99.0,
+      "frameCount": 4,
+      "frameStartSpacingMs": 999.0,
+      "hpHoldAfterLastFrameMs": -3359.0,
+      "hpInToHpOutLatencyMs": 50.0,
+      "hpOutContinuityMs": 687.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 1,
+      "wakeOnlyHoldMs": null
+    },
+    "checks": [
+      {
+        "detail": "expected 4, got 4",
+        "name": "frameCount",
+        "passed": true
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 1, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 0}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 1,
+      "activityCompletedCount": 0,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 1,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 1,
+      "wakeTimeoutCount": 0
+    },
+    "notes": []
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\SC-07b.yaml",
+    "case_id": "SC-07B-HP-DURING-POST-HOLD",
+    "scenario": "SC-07b",
+    "status": "pass",
+    "passed": true,
+    "wall_ms": 41679,
+    "run_dir": "TickleBoard\\artifacts\\20260520_172808_SC-07B-HP-DURING-POST-HOLD",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "pass",
+    "metrics": {
+      "firstFrameAfLeadMs": 951.0,
+      "firstFrameGateDelayMs": 0.0,
+      "fpInToFpOutLatencyMs": 0.0,
+      "fpInToHpOutLatencyMs": -951.0,
+      "fpPulseWidthMs": 99.75,
+      "frameCount": 4,
+      "frameStartSpacingMs": 998.6666666666666,
+      "hpHoldAfterLastFrameMs": -3570.0,
+      "hpInToHpOutLatencyMs": 49.0,
+      "hpOutContinuityMs": 477.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 1,
+      "wakeOnlyHoldMs": null
+    },
+    "checks": [
+      {
+        "detail": "expected 4, got 4",
+        "name": "frameCount",
+        "passed": true
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 0}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 1,
+      "activityCompletedCount": 0,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 1,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 1,
+      "wakeTimeoutCount": 0
+    },
+    "notes": []
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\SC-08.yaml",
+    "case_id": "SC-08-FP-BEFORE-HP",
+    "scenario": "SC-08",
+    "status": "pass",
+    "passed": true,
+    "wall_ms": 38641,
+    "run_dir": "TickleBoard\\artifacts\\20260520_172850_SC-08-FP-BEFORE-HP",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "pass",
+    "metrics": {
+      "firstFrameAfLeadMs": 441.0,
+      "firstFrameGateDelayMs": 491.0,
+      "fpInToFpOutLatencyMs": 491.0,
+      "fpInToHpOutLatencyMs": 50.0,
+      "fpPulseWidthMs": 100.0,
+      "frameCount": 4,
+      "frameStartSpacingMs": 999.0,
+      "hpHoldAfterLastFrameMs": -2851.0,
+      "hpInToHpOutLatencyMs": -150.0,
+      "hpOutContinuityMs": 687.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 1,
+      "wakeOnlyHoldMs": null
+    },
+    "checks": [
+      {
+        "detail": "expected 4, got 4",
+        "name": "frameCount",
+        "passed": true
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 1, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 0}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 1,
+      "activityCompletedCount": 0,
+      "coldFpSequenceCount": 1,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 1,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 1,
+      "wakeTimeoutCount": 0
+    },
+    "notes": []
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\SC-09.yaml",
+    "case_id": "SC-09-SEQUENCE-CAP",
+    "scenario": "SC-09",
+    "status": "fail",
+    "passed": false,
+    "wall_ms": 41867,
+    "run_dir": "TickleBoard\\artifacts\\20260520_172928_SC-09-SEQUENCE-CAP",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "logic_mismatch",
+    "metrics": {
+      "firstFrameAfLeadMs": 951.0,
+      "firstFrameGateDelayMs": 0.0,
+      "fpInToFpOutLatencyMs": 0.0,
+      "fpInToHpOutLatencyMs": -951.0,
+      "fpPulseWidthMs": 100.25,
+      "frameCount": 4,
+      "frameStartSpacingMs": 1833.0,
+      "hpHoldAfterLastFrameMs": 1998.0,
+      "hpInToHpOutLatencyMs": 49.0,
+      "hpOutContinuityMs": 8548.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 1,
+      "wakeOnlyHoldMs": null
+    },
+    "checks": [
+      {
+        "detail": "expected 2, got 4",
+        "name": "frameCount",
+        "passed": false
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 2, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 1, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 2, 'activityCompletedCount': 2}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 2,
+      "activityCompletedCount": 2,
+      "coldFpSequenceCount": 1,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 2,
+      "wakeTimeoutCount": 0
+    },
+    "notes": []
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\SC-10.yaml",
+    "case_id": "SC-10-RECOVERY-AFTER-CAP",
+    "scenario": "SC-10",
+    "status": "pass",
+    "passed": true,
+    "wall_ms": 49492,
+    "run_dir": "TickleBoard\\artifacts\\20260520_173010_SC-10-RECOVERY-AFTER-CAP",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "pass",
+    "metrics": {
+      "firstFrameAfLeadMs": 954.0,
+      "firstFrameGateDelayMs": 0.0,
+      "fpInToFpOutLatencyMs": 0.0,
+      "fpInToHpOutLatencyMs": -954.0,
+      "fpPulseWidthMs": 100.0,
+      "frameCount": 4,
+      "frameStartSpacingMs": 4166.666666666667,
+      "hpHoldAfterLastFrameMs": 1998.0,
+      "hpInToHpOutLatencyMs": 46.0,
+      "hpOutContinuityMs": 15552.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 1,
+      "wakeOnlyHoldMs": null
+    },
+    "checks": [
+      {
+        "detail": "expected 4, got 4",
+        "name": "frameCount",
+        "passed": true
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 2, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 1, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 2, 'activityCompletedCount': 2}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 2,
+      "activityCompletedCount": 2,
+      "coldFpSequenceCount": 1,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 2,
+      "wakeTimeoutCount": 0
+    },
+    "notes": []
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\SC-11.yaml",
+    "case_id": "SC-11-SPACING-VS-T",
+    "scenario": "SC-11",
+    "status": "pass",
+    "passed": true,
+    "wall_ms": 34454,
+    "run_dir": "TickleBoard\\artifacts\\20260520_173100_SC-11-SPACING-VS-T",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "pass",
+    "metrics": {
+      "firstFrameAfLeadMs": 499.0,
+      "firstFrameGateDelayMs": 450.0,
+      "fpInToFpOutLatencyMs": 450.0,
+      "fpInToHpOutLatencyMs": -49.0,
+      "fpPulseWidthMs": 106.75,
+      "frameCount": 4,
+      "frameStartSpacingMs": 999.0,
+      "hpHoldAfterLastFrameMs": -2909.0,
+      "hpInToHpOutLatencyMs": 51.0,
+      "hpOutContinuityMs": 686.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 1,
+      "wakeOnlyHoldMs": null
+    },
+    "checks": [
+      {
+        "detail": "expected 4, got 4",
+        "name": "frameCount",
+        "passed": true
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 1,
+      "activityCompletedCount": 1,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 1,
+      "wakeTimeoutCount": 0
+    },
+    "notes": []
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\SC-12.yaml",
+    "case_id": "SC-12-HP-ONLY-MIN-GAP",
+    "scenario": "SC-12",
+    "status": "pass",
+    "passed": true,
+    "wall_ms": 36455,
+    "run_dir": "TickleBoard\\artifacts\\20260520_173134_SC-12-HP-ONLY-MIN-GAP",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "pass",
+    "metrics": {
+      "firstFrameAfLeadMs": null,
+      "firstFrameGateDelayMs": null,
+      "fpInToFpOutLatencyMs": null,
+      "fpInToHpOutLatencyMs": null,
+      "fpPulseWidthMs": null,
+      "frameCount": 0,
+      "frameStartSpacingMs": null,
+      "hpHoldAfterLastFrameMs": null,
+      "hpInToHpOutLatencyMs": 56.0,
+      "hpOutContinuityMs": 687.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 0,
+      "wakeOnlyHoldMs": 687.0
+    },
+    "checks": [
+      {
+        "detail": "expected 0, got 0",
+        "name": "frameCount",
+        "passed": true
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 0, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 0, 'activityCompletedCount': 1}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 0,
+      "activityCompletedCount": 1,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 0,
+      "wakeTimeoutCount": 1
+    },
+    "notes": []
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\SC-13.yaml",
+    "case_id": "SC-13-BOUNCE-DEBOUNCE",
+    "scenario": "SC-13",
+    "status": "pass",
+    "passed": true,
+    "wall_ms": 33933,
+    "run_dir": "TickleBoard\\artifacts\\20260520_173211_SC-13-BOUNCE-DEBOUNCE",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "pass",
+    "metrics": {
+      "firstFrameAfLeadMs": 1988.0,
+      "firstFrameGateDelayMs": 0.0,
+      "fpInToFpOutLatencyMs": 0.0,
+      "fpInToHpOutLatencyMs": -1988.0,
+      "fpPulseWidthMs": 101.0,
+      "frameCount": 4,
+      "frameStartSpacingMs": 999.0,
+      "hpHoldAfterLastFrameMs": -4496.0,
+      "hpInToHpOutLatencyMs": 12.0,
+      "hpOutContinuityMs": 590.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 1,
+      "wakeOnlyHoldMs": null
+    },
+    "checks": [
+      {
+        "detail": "expected 4, got 4",
+        "name": "frameCount",
+        "passed": true
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 1, 'ignoredFpDuringBurstCount': 1, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 1, 'hpDebounceRejectCount': 1, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 1,
+      "activityCompletedCount": 1,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 1,
+      "hpDebounceRejectCount": 1,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 1,
+      "ignoredFpDuringBurstCount": 1,
+      "ignoredFpDuringGapCount": 1,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 1,
+      "wakeTimeoutCount": 0
+    },
+    "notes": [
+      "dual_classification_expected: gap_and_burst_ignored_fp_incremented"
+    ]
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\SC-14.yaml",
+    "case_id": "SC-14-HELD-VS-PULSED-FP",
+    "scenario": "SC-14",
+    "status": "pass",
+    "passed": true,
+    "wall_ms": 40816,
+    "run_dir": "TickleBoard\\artifacts\\20260520_173245_SC-14-HELD-VS-PULSED-FP",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "pass",
+    "metrics": {
+      "firstFrameAfLeadMs": 990.0,
+      "firstFrameGateDelayMs": 0.0,
+      "fpInToFpOutLatencyMs": 0.0,
+      "fpInToHpOutLatencyMs": -990.0,
+      "fpPulseWidthMs": 101.0,
+      "frameCount": 4,
+      "frameStartSpacingMs": 999.0,
+      "hpHoldAfterLastFrameMs": -3479.0,
+      "hpInToHpOutLatencyMs": 10.0,
+      "hpOutContinuityMs": 609.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 1,
+      "wakeOnlyHoldMs": null
+    },
+    "checks": [
+      {
+        "detail": "expected 4, got 4",
+        "name": "frameCount",
+        "passed": true
+      },
+      {
+        "detail": "expected 100.0 +/- 5.0, got 101.0",
+        "name": "fpPulseWidthMs",
+        "passed": true
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 1,
+      "activityCompletedCount": 1,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 1,
+      "wakeTimeoutCount": 0
+    },
+    "notes": []
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\SC-15.yaml",
+    "case_id": "SC-15-POWER-SAVE-BUDGET",
+    "scenario": "SC-15",
+    "status": "pass",
+    "passed": true,
+    "wall_ms": 33541,
+    "run_dir": "TickleBoard\\artifacts\\20260520_173326_SC-15-POWER-SAVE-BUDGET",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "pass",
+    "metrics": {
+      "firstFrameAfLeadMs": 946.0,
+      "firstFrameGateDelayMs": 0.0,
+      "fpInToFpOutLatencyMs": 0.0,
+      "fpInToHpOutLatencyMs": -946.0,
+      "fpPulseWidthMs": 100.25,
+      "frameCount": 4,
+      "frameStartSpacingMs": 998.6666666666666,
+      "hpHoldAfterLastFrameMs": -3357.0,
+      "hpInToHpOutLatencyMs": 54.0,
+      "hpOutContinuityMs": 686.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 1,
+      "wakeOnlyHoldMs": null
+    },
+    "checks": [
+      {
+        "detail": "expected 4, got 4",
+        "name": "frameCount",
+        "passed": true
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 1,
+      "activityCompletedCount": 1,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 1,
+      "wakeTimeoutCount": 0
+    },
+    "notes": []
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\SC-16.yaml",
+    "case_id": "SC-16-HP-RELEASE-AFTER-FP",
+    "scenario": "SC-16",
+    "status": "pass",
+    "passed": true,
+    "wall_ms": 35708,
+    "run_dir": "TickleBoard\\artifacts\\20260520_173359_SC-16-HP-RELEASE-AFTER-FP",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "pass",
+    "metrics": {
+      "firstFrameAfLeadMs": 551.0,
+      "firstFrameGateDelayMs": 462.0,
+      "fpInToFpOutLatencyMs": 462.0,
+      "fpInToHpOutLatencyMs": -89.0,
+      "fpPulseWidthMs": 89.75,
+      "frameCount": 4,
+      "frameStartSpacingMs": 998.6666666666666,
+      "hpHoldAfterLastFrameMs": -3040.0,
+      "hpInToHpOutLatencyMs": 11.0,
+      "hpOutContinuityMs": 608.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 1,
+      "wakeOnlyHoldMs": null
+    },
+    "checks": [
+      {
+        "detail": "expected 4, got 4",
+        "name": "frameCount",
+        "passed": true
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 1,
+      "activityCompletedCount": 1,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 1,
+      "wakeTimeoutCount": 0
+    },
+    "notes": []
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\SC-17.yaml",
+    "case_id": "SC-17-SHORT-HP-LEAD",
+    "scenario": "SC-17",
+    "status": "pass",
+    "passed": true,
+    "wall_ms": 36733,
+    "run_dir": "TickleBoard\\artifacts\\20260520_173435_SC-17-SHORT-HP-LEAD",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "pass",
+    "metrics": {
+      "firstFrameAfLeadMs": 1929.0,
+      "firstFrameGateDelayMs": 1879.0,
+      "fpInToFpOutLatencyMs": 1879.0,
+      "fpInToHpOutLatencyMs": -50.0,
+      "fpPulseWidthMs": 100.0,
+      "frameCount": 4,
+      "frameStartSpacingMs": 999.0,
+      "hpHoldAfterLastFrameMs": -4339.0,
+      "hpInToHpOutLatencyMs": 50.0,
+      "hpOutContinuityMs": 687.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 1,
+      "wakeOnlyHoldMs": null
+    },
+    "checks": [
+      {
+        "detail": "expected 4, got 4",
+        "name": "frameCount",
+        "passed": true
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 1,
+      "activityCompletedCount": 1,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 1,
+      "wakeTimeoutCount": 0
+    },
+    "notes": []
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\SC-18.yaml",
+    "case_id": "SC-18-HP-CHATTER-BURST",
+    "scenario": "SC-18",
+    "status": "pass",
+    "passed": true,
+    "wall_ms": 39536,
+    "run_dir": "TickleBoard\\artifacts\\20260520_173512_SC-18-HP-CHATTER-BURST",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "pass",
+    "metrics": {
+      "firstFrameAfLeadMs": 1927.0,
+      "firstFrameGateDelayMs": 970.0,
+      "fpInToFpOutLatencyMs": 970.0,
+      "fpInToHpOutLatencyMs": -957.0,
+      "fpPulseWidthMs": 99.25,
+      "frameCount": 4,
+      "frameStartSpacingMs": 999.0,
+      "hpHoldAfterLastFrameMs": -4336.0,
+      "hpInToHpOutLatencyMs": 43.0,
+      "hpOutContinuityMs": 687.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 1,
+      "wakeOnlyHoldMs": null
+    },
+    "checks": [
+      {
+        "detail": "expected 4, got 4",
+        "name": "frameCount",
+        "passed": true
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 2, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 1,
+      "activityCompletedCount": 1,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 2,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 1,
+      "wakeTimeoutCount": 0
+    },
+    "notes": []
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\SC-19.yaml",
+    "case_id": "SC-19-NEW-EVENT-AFTER-RELEASE",
+    "scenario": "SC-19",
+    "status": "pass",
+    "passed": true,
+    "wall_ms": 42620,
+    "run_dir": "TickleBoard\\artifacts\\20260520_173551_SC-19-NEW-EVENT-AFTER-RELEASE",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "pass",
+    "metrics": {
+      "firstFrameAfLeadMs": 995.0,
+      "firstFrameGateDelayMs": 0.0,
+      "fpInToFpOutLatencyMs": 0.0,
+      "fpInToHpOutLatencyMs": -995.0,
+      "fpPulseWidthMs": 100.0,
+      "frameCount": 8,
+      "frameStartSpacingMs": 1930.0,
+      "hpHoldAfterLastFrameMs": -13996.0,
+      "hpInToHpOutLatencyMs": 5.0,
+      "hpOutContinuityMs": 609.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 1,
+      "wakeOnlyHoldMs": null
+    },
+    "checks": [
+      {
+        "detail": "expected 8, got 8",
+        "name": "frameCount",
+        "passed": true
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 2, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 1, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 2, 'activityCompletedCount': 1}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 2,
+      "activityCompletedCount": 1,
+      "coldFpSequenceCount": 1,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 2,
+      "wakeTimeoutCount": 0
+    },
+    "notes": []
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\SC-20.yaml",
+    "case_id": "SC-20-T-GREATER-THAN-Y",
+    "scenario": "SC-20",
+    "status": "pass",
+    "passed": true,
+    "wall_ms": 38503,
+    "run_dir": "TickleBoard\\artifacts\\20260520_173634_SC-20-T-GREATER-THAN-Y",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "pass",
+    "metrics": {
+      "firstFrameAfLeadMs": 1928.0,
+      "firstFrameGateDelayMs": 1880.0,
+      "fpInToFpOutLatencyMs": 1880.0,
+      "fpInToHpOutLatencyMs": -48.0,
+      "fpPulseWidthMs": 99.25,
+      "frameCount": 4,
+      "frameStartSpacingMs": 199.66666666666666,
+      "hpHoldAfterLastFrameMs": -1940.0,
+      "hpInToHpOutLatencyMs": 52.0,
+      "hpOutContinuityMs": 687.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 1,
+      "wakeOnlyHoldMs": null
+    },
+    "checks": [
+      {
+        "detail": "expected 4, got 4",
+        "name": "frameCount",
+        "passed": true
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 1,
+      "activityCompletedCount": 1,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 1,
+      "wakeTimeoutCount": 0
+    },
+    "notes": []
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\AO-BLE-CONNECTED-SC04.yaml",
+    "case_id": "AO-BLE-CONNECTED-SC04",
+    "scenario": "ADDON-BLE-CONNECTED",
+    "status": "pass",
+    "passed": true,
+    "wall_ms": 41593,
+    "run_dir": "TickleBoard\\artifacts\\20260520_173712_AO-BLE-CONNECTED-SC04",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "pass",
+    "metrics": {
+      "firstFrameAfLeadMs": null,
+      "firstFrameGateDelayMs": null,
+      "fpInToFpOutLatencyMs": null,
+      "fpInToHpOutLatencyMs": null,
+      "fpPulseWidthMs": null,
+      "frameCount": 0,
+      "frameStartSpacingMs": null,
+      "hpHoldAfterLastFrameMs": null,
+      "hpInToHpOutLatencyMs": 57.0,
+      "hpOutContinuityMs": 687.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 0,
+      "wakeOnlyHoldMs": 687.0
+    },
+    "checks": [
+      {
+        "detail": "expected 0, got 0",
+        "name": "frameCount",
+        "passed": true
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 0, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 0, 'activityCompletedCount': 1}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 0,
+      "activityCompletedCount": 1,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 0,
+      "wakeTimeoutCount": 1
+    },
+    "notes": []
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\AO-BLE-CONNECTED-SC01.yaml",
+    "case_id": "AO-BLE-CONNECTED-SC01",
+    "scenario": "ADDON-BLE-CONNECTED",
+    "status": "pass",
+    "passed": true,
+    "wall_ms": 32670,
+    "run_dir": "TickleBoard\\artifacts\\20260520_173754_AO-BLE-CONNECTED-SC01",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "pass",
+    "metrics": {
+      "firstFrameAfLeadMs": 1927.0,
+      "firstFrameGateDelayMs": 978.0,
+      "fpInToFpOutLatencyMs": 978.0,
+      "fpInToHpOutLatencyMs": -949.0,
+      "fpPulseWidthMs": 99.75,
+      "frameCount": 4,
+      "frameStartSpacingMs": 199.66666666666666,
+      "hpHoldAfterLastFrameMs": -1939.0,
+      "hpInToHpOutLatencyMs": 51.0,
+      "hpOutContinuityMs": 687.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 1,
+      "wakeOnlyHoldMs": null
+    },
+    "checks": [
+      {
+        "detail": "expected 4, got 4",
+        "name": "frameCount",
+        "passed": true
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 1,
+      "activityCompletedCount": 1,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 1,
+      "wakeTimeoutCount": 0
+    },
+    "notes": []
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\AO-GAP-BOUNDARY-TRIAD.yaml",
+    "case_id": "AO-GAP-BOUNDARY-TRIAD",
+    "scenario": "ADDON-GAP-BOUNDARY",
+    "status": "pass",
+    "passed": true,
+    "wall_ms": 40711,
+    "run_dir": "TickleBoard\\artifacts\\20260520_173827_AO-GAP-BOUNDARY-TRIAD",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "pass",
+    "metrics": {
+      "firstFrameAfLeadMs": 1932.0,
+      "firstFrameGateDelayMs": 972.0,
+      "fpInToFpOutLatencyMs": 972.0,
+      "fpInToHpOutLatencyMs": -960.0,
+      "fpPulseWidthMs": 99.0,
+      "frameCount": 2,
+      "frameStartSpacingMs": 200.0,
+      "hpHoldAfterLastFrameMs": -1545.0,
+      "hpInToHpOutLatencyMs": 40.0,
+      "hpOutContinuityMs": 686.0,
+      "ignoredFpCount": 2,
+      "sequenceCount": 1,
+      "wakeOnlyHoldMs": null
+    },
+    "checks": [
+      {
+        "detail": "expected 2, got 2",
+        "name": "frameCount",
+        "passed": true
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 1, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 2, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 1,
+      "activityCompletedCount": 1,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 1,
+      "rejectedFpAtSequenceCapCount": 2,
+      "sequenceCompletedCount": 1,
+      "wakeTimeoutCount": 0
+    },
+    "notes": []
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\AO-DEFERRED-CONFIG-WRITES.yaml",
+    "case_id": "AO-DEFERRED-CONFIG-WRITES",
+    "scenario": "ADDON-DEFERRED-CONFIG",
+    "status": "pass",
+    "passed": true,
+    "wall_ms": 37637,
+    "run_dir": "TickleBoard\\artifacts\\20260520_173907_AO-DEFERRED-CONFIG-WRITES",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "pass",
+    "metrics": {
+      "firstFrameAfLeadMs": 1920.0,
+      "firstFrameGateDelayMs": 972.0,
+      "fpInToFpOutLatencyMs": 972.0,
+      "fpInToHpOutLatencyMs": -948.0,
+      "fpPulseWidthMs": 101.0,
+      "frameCount": 4,
+      "frameStartSpacingMs": 999.0,
+      "hpHoldAfterLastFrameMs": -4331.0,
+      "hpInToHpOutLatencyMs": 52.0,
+      "hpOutContinuityMs": 687.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 1,
+      "wakeOnlyHoldMs": null
+    },
+    "checks": [
+      {
+        "detail": "expected 4, got 4",
+        "name": "frameCount",
+        "passed": true
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 1,
+      "activityCompletedCount": 1,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 1,
+      "wakeTimeoutCount": 0
+    },
+    "notes": []
+  },
+  {
+    "case_file": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\TickleBoard\\vectors\\scenarios\\AO-FACTORY-RESET-AND-COERCION.yaml",
+    "case_id": "AO-FACTORY-RESET-AND-COERCION",
+    "scenario": "ADDON-FACTORY-RESET",
+    "status": "pass",
+    "passed": true,
+    "wall_ms": 32412,
+    "run_dir": "TickleBoard\\artifacts\\20260520_173945_AO-FACTORY-RESET-AND-COERCION",
+    "attempts": 1,
+    "error": null,
+    "failure_class": "pass",
+    "metrics": {
+      "firstFrameAfLeadMs": 1931.0,
+      "firstFrameGateDelayMs": 984.0,
+      "fpInToFpOutLatencyMs": 984.0,
+      "fpInToHpOutLatencyMs": -947.0,
+      "fpPulseWidthMs": 99.25,
+      "frameCount": 4,
+      "frameStartSpacingMs": 999.0,
+      "hpHoldAfterLastFrameMs": -4340.0,
+      "hpInToHpOutLatencyMs": 53.0,
+      "hpOutContinuityMs": 687.0,
+      "ignoredFpCount": 0,
+      "sequenceCount": 1,
+      "wakeOnlyHoldMs": null
+    },
+    "checks": [
+      {
+        "detail": "expected 4, got 4",
+        "name": "frameCount",
+        "passed": true
+      },
+      {
+        "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1}",
+        "name": "telemetry_delta_sanity",
+        "passed": true
+      }
+    ],
+    "telemetry_deltas": {
+      "acceptedFpCount": 1,
+      "activityCompletedCount": 1,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "rejectedFpAtSequenceCapCount": 0,
+      "sequenceCompletedCount": 1,
+      "wakeTimeoutCount": 0
+    },
+    "notes": []
+  }
+]

@@ -1,0 +1,14 @@
+id: SC-17-SHORT-HP-LEAD
+scenario: SC-17
+description: First frame follows max(FP accept, HP_OUT assert + T)
+tags: [core, af-gate]
+parameters: { enabled: 1, minHalfPressBeforeShutter: 2.0s, StartFrameSpacingMin: 1.0s }
+fixture: { captureAfterLastStimulusMs: 9000 }
+stimulus:
+  - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 100, signal: FP_IN_STIM, state: active, durationMs: 100 }
+expect:
+  fpOut: { pulseCount: 4, frameSpacingMs: 1000 }
+  timing:
+    firstFrameGateDelayMs: { minMs: 1750, maxMs: 2150 }
+metrics: [firstFrameGateDelayMs, frameStartSpacingMs]

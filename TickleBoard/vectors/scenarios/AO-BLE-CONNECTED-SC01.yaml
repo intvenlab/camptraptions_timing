@@ -1,0 +1,14 @@
+id: AO-BLE-CONNECTED-SC01
+scenario: ADDON-BLE-CONNECTED
+description: Re-run SC-01 while BLE remains connected
+tags: [addon, ble-connected]
+parameters: { enabled: 1, FrameCount: 4 }
+fixture: { captureAfterLastStimulusMs: 9000 }
+stimulus:
+  - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 1000, signal: FP_IN_STIM, state: active, durationMs: 100 }
+expect:
+  fpOut: { pulseCount: 4, frameSpacingMs: 1000 }
+  telemetryDeltas:
+    acceptedFpCount: 1
+metrics: [frameCount]

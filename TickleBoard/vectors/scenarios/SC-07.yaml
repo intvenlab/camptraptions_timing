@@ -1,0 +1,15 @@
+id: SC-07-HP-DURING-BURST
+scenario: SC-07
+description: HP activity during burst does not alter frame schedule
+tags: [core, hp-during-burst]
+parameters: { enabled: 1, FrameCount: 4 }
+fixture: { captureAfterLastStimulusMs: 10000 }
+stimulus:
+  - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 1000, signal: FP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 2200, signal: HP_IN_STIM, state: active, durationMs: 100 }
+expect:
+  fpOut: { pulseCount: 4, frameSpacingMs: 1000 }
+  telemetryDeltas:
+    hpIgnoredDuringBurstCount: 1
+metrics: [frameCount, frameStartSpacingMs]

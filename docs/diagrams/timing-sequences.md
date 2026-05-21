@@ -15,7 +15,9 @@ Waveform-style views cross-linked to [scenarios.md](../scenarios.md). Use [param
 | F | [SC-05](../scenarios.md#sc-05--back-to-back-sequence) Back-to-back sequence |
 | G | [SC-07](../scenarios.md#sc-07--hp-during-active-burst) HP during burst *(exception input)* |
 | H | [SC-16](../scenarios.md#sc-16--hp-input-released-immediately-after-fp) HP input release after FP |
-| I | [SC-17](../scenarios.md#sc-17--first-frame-gated-by-short-hp-lead) / [SC-20](../scenarios.md#sc-20--t-greater-than-y-interaction) Short HP lead and T vs Y |
+| I | [SC-17](../scenarios.md#sc-17--first-frame-gated-by-short-hp-lead) Short HP lead |
+| J | [SC-20](../scenarios.md#sc-20--t-greater-than-y-interaction) T greater than Y |
+| K | Additional WaveDrom source coverage (SC-04b, 05b, 07b, 08-10, 12-15, 18-19) |
 
 ## Nominal path (defaults)
 
@@ -67,7 +69,7 @@ sequenceDiagram
 | Frame 4 FP OUT start | 4.0 |
 | HP OUT OFF (after Z) | ~6.0 |
 
-Exception paths: [A wake timeout](#a--sc-04-wake-only-then-timeout), [B cold FP](#b--sc-06-fp-without-prior-wake-cold-start), [G HP input during burst](#g--sc-07-hp-during-burst-no-effect-on-schedule), [H HP input release after FP](#h--sc-16-hp-input-release-after-fp), [I short HP lead](#i--sc-17sc-20-short-hp-lead-and-t-vs-y), mid-burst HP OUT release in [behavior-spec](../behavior-spec.md#exception-path-hp-out-released-mid-burst).
+Exception paths: [A wake timeout](#a--sc-04-wake-only-then-timeout), [B cold FP](#b--sc-06-fp-without-prior-wake-cold-start), [G HP input during burst](#g--sc-07-hp-during-burst-no-effect-on-schedule), [H HP input release after FP](#h--sc-16-hp-input-release-after-fp), [I short HP lead](#i--sc-17-short-hp-lead), [J T greater than Y](#j--sc-20-t-greater-than-y), mid-burst HP OUT release in [behavior-spec](../behavior-spec.md#exception-path-hp-out-released-mid-burst).
 
 ---
 
@@ -251,9 +253,9 @@ sequenceDiagram
     Note over HPo: stays ON through burst and Z
 ```
 
-## I — SC-17/SC-20: Short HP lead and T vs Y
+## I — SC-17: Short HP lead
 
-*Timing interaction — T may delay frame 1, but it is not added between later frames while HP OUT is latched.*
+*Timing interaction — short HP lead delays frame 1, but does not alter later frame cadence while HP OUT is latched.*
 
 ![SC-17 short HP lead](assets/sc17-short-hp-lead.png){ width=6.5in }
 
@@ -264,3 +266,26 @@ max(FP accept time, HP OUT assert time + minHalfPressBeforeShutter)
 ```
 
 After frame 1, `StartFrameSpacingMin` controls the burst cadence as long as HP OUT remains latched. Even when `minHalfPressBeforeShutter > StartFrameSpacingMin` (SC-20), T must not be applied again before frames 2..N.
+
+## J — SC-20: T greater than Y
+
+*Dedicated view for the T>Y edge case. Frame 1 may be delayed by T, but T is not re-applied before frames 2..N.*
+
+![SC-20 T greater than Y](assets/sc20-t-greater-than-y.png){ width=6.5in }
+
+## K — Additional WaveDrom source coverage
+
+The following scenarios now have maintained WaveDrom JSON sources under `docs/diagrams/wavedrom/` for validation and future embedding:
+
+- `sc04b-repeated-wake.json`
+- `sc05b-post-shutter-fp.json`
+- `sc07b-post-burst-hp.json`
+- `sc08-fp-before-hp.json`
+- `sc09-sequence-cap.json`
+- `sc10-recovery-after-cap.json`
+- `sc12-hp-only.json`
+- `sc13-debounce-bounce.json`
+- `sc14-held-vs-pulsed-fp.json`
+- `sc15-power-save-latency.json`
+- `sc18-hp-chatter-burst.json`
+- `sc19-new-event-after-release.json`

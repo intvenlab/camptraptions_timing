@@ -30,7 +30,7 @@ HP may **not** precede FP in every real event (animal can enter narrow FOV quick
 ### Full-press (FP) — shutter request
 
 - The **narrow FOV PIR** (or equivalent) asserts FP when a target is in the capture zone.
-- FP may arrive **before** sufficient HP lead time; the MCU may need to assert HP and **wait** up to `minHalfPressBeforeShutter` before **each** FP output pulse.
+- FP may arrive **before** sufficient HP lead time; the MCU may need to assert HP and **wait** up to `minHalfPressBeforeShutter` before the first FP output pulse (or any later pulse only if HP had been dropped).
 - Each accepted FP event contributes to a **burst schedule** (see [behavior-spec.md](behavior-spec.md)).
 
 ## External vs MCU configuration

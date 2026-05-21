@@ -1,0 +1,8 @@
+name: golden_subset_suite
+description: Stabilization subset SC-01, SC-04, SC-06, SC-11, SC-15
+cases:
+  - ../scenarios/SC-01.yaml
+  - ../scenarios/SC-04.yaml
+  - ../scenarios/SC-06.yaml
+  - ../scenarios/SC-11.yaml
+  - ../scenarios/SC-15.yaml

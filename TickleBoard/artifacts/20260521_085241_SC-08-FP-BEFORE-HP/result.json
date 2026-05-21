@@ -1,0 +1,246 @@
+{
+  "camera_rw": {
+    "mismatches": {},
+    "payload_readback_hex": "02010a050a0a142314040400000000000000011f",
+    "payload_written_hex": "02010a050a0a142314040400000000000000011f",
+    "readback_norm": {
+      "enabled": 1,
+      "minHalfPressBeforeShutter": 5
+    },
+    "requested_norm": {
+      "enabled": 1,
+      "minHalfPressBeforeShutter": 5
+    }
+  },
+  "case_id": "SC-08-FP-BEFORE-HP",
+  "checks": [
+    {
+      "detail": "expected 4, got 4",
+      "name": "frameCount",
+      "passed": true
+    },
+    {
+      "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 1, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 0}",
+      "name": "telemetry_delta_sanity",
+      "passed": true
+    }
+  ],
+  "description": "FP before HP then later HP should keep cold path stable",
+  "fixture_dump": {
+    "edges": [
+      {
+        "signal": "FP_IN",
+        "state": "ACTIVE",
+        "t_ms": 0
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 50
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 100
+      },
+      {
+        "signal": "HP_IN",
+        "state": "ACTIVE",
+        "t_ms": 200
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 300
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 491
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 527
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 527
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 1489
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 1590
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 2488
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 2589
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 3487
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 3588
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 9000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 9000
+      }
+    ],
+    "malformed_lines": [],
+    "run_id": 1,
+    "snapshots": [
+      "SNAPSHOT HP_IN=INACTIVE FP_IN=INACTIVE HP_OUT=INACTIVE FP_OUT=INACTIVE"
+    ],
+    "warnings": []
+  },
+  "metrics": {
+    "firstFrameAfLeadMs": 441.0,
+    "firstFrameGateDelayMs": 491.0,
+    "fpInToFpOutLatencyMs": 491.0,
+    "fpInToHpOutLatencyMs": 50.0,
+    "fpPulseWidthMs": 84.75,
+    "frameCount": 4,
+    "frameStartSpacingMs": 998.6666666666666,
+    "hpHoldAfterLastFrameMs": -3061.0,
+    "hpInToHpOutLatencyMs": -150.0,
+    "hpOutContinuityMs": 477.0,
+    "ignoredFpCount": 0,
+    "sequenceCount": 1,
+    "wakeOnlyHoldMs": null
+  },
+  "passed": true,
+  "scenario": "SC-08",
+  "telemetry_after": {
+    "camera_state": 1,
+    "counters": {
+      "acceptedFpCount": 73,
+      "activityCompletedCount": 125,
+      "coldFpSequenceCount": 13,
+      "fpDebounceRejectCount": 1,
+      "hpDebounceRejectCount": 1,
+      "hpIgnoredDuringBurstCount": 5,
+      "hpRefreshCount": 13,
+      "ignoredFpDuringBurstCount": 11,
+      "ignoredFpDuringGapCount": 12,
+      "rejectedFpAtSequenceCapCount": 3,
+      "sequenceCompletedCount": 73,
+      "version": 1,
+      "wakeTimeoutCount": 100
+    },
+    "flags": 2,
+    "frames_fired_this_sequence": 4,
+    "last_event_code": 7,
+    "last_scenario_hint": 0,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 1379,
+    "sequences_started_this_activity": 1,
+    "version": 1
+  },
+  "telemetry_before": {
+    "camera_state": 0,
+    "counters": {
+      "acceptedFpCount": 72,
+      "activityCompletedCount": 125,
+      "coldFpSequenceCount": 12,
+      "fpDebounceRejectCount": 1,
+      "hpDebounceRejectCount": 1,
+      "hpIgnoredDuringBurstCount": 5,
+      "hpRefreshCount": 12,
+      "ignoredFpDuringBurstCount": 11,
+      "ignoredFpDuringGapCount": 12,
+      "rejectedFpAtSequenceCapCount": 3,
+      "sequenceCompletedCount": 72,
+      "version": 1,
+      "wakeTimeoutCount": 100
+    },
+    "flags": 0,
+    "frames_fired_this_sequence": 0,
+    "last_event_code": 4,
+    "last_scenario_hint": 1,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 0,
+    "sequences_started_this_activity": 0,
+    "version": 1
+  },
+  "telemetry_deltas": {
+    "acceptedFpCount": 1,
+    "activityCompletedCount": 0,
+    "coldFpSequenceCount": 1,
+    "fpDebounceRejectCount": 0,
+    "hpDebounceRejectCount": 0,
+    "hpIgnoredDuringBurstCount": 0,
+    "hpRefreshCount": 1,
+    "ignoredFpDuringBurstCount": 0,
+    "ignoredFpDuringGapCount": 0,
+    "rejectedFpAtSequenceCapCount": 0,
+    "sequenceCompletedCount": 1,
+    "wakeTimeoutCount": 0
+  },
+  "telemetry_notes": [],
+  "vector": {
+    "case_id": "SC-08-FP-BEFORE-HP",
+    "description": "FP before HP then later HP should keep cold path stable",
+    "expect": {
+      "fpOut": {
+        "pulseCount": 4
+      }
+    },
+    "fixture": {
+      "captureAfterLastStimulusMs": 9000
+    },
+    "metrics": [
+      "firstFrameAfLeadMs",
+      "frameStartSpacingMs"
+    ],
+    "parameters": {
+      "enabled": 1,
+      "minHalfPressBeforeShutter": "0.5s"
+    },
+    "scenario": "SC-08",
+    "stimulus": [
+      {
+        "at_ms": 0,
+        "duration_ms": 100,
+        "signal": "FP_IN_STIM",
+        "state": "active"
+      },
+      {
+        "at_ms": 200,
+        "duration_ms": 100,
+        "signal": "HP_IN_STIM",
+        "state": "active"
+      }
+    ],
+    "tags": [
+      "core",
+      "cold-fp"
+    ]
+  }
+}

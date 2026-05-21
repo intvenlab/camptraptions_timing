@@ -1,0 +1,128 @@
+{
+  "camera_rw": {},
+  "case_id": "SC-01-NOMINAL",
+  "checks": [
+    {
+      "detail": "expected 4, got 0",
+      "name": "frameCount",
+      "passed": false
+    },
+    {
+      "detail": "expected 1, got 0",
+      "name": "sequenceCount",
+      "passed": false
+    }
+  ],
+  "description": "Normal wake then shoot",
+  "fixture_dump": {
+    "edges": [
+      {
+        "signal": "HP_IN",
+        "state": "ACTIVE",
+        "t_ms": 0
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 100
+      },
+      {
+        "signal": "FP_IN",
+        "state": "ACTIVE",
+        "t_ms": 1000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 1100
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 8000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 8000
+      }
+    ],
+    "malformed_lines": [],
+    "run_id": 1,
+    "snapshots": [
+      "SNAPSHOT HP_IN=INACTIVE FP_IN=INACTIVE HP_OUT=INACTIVE FP_OUT=INACTIVE"
+    ],
+    "warnings": []
+  },
+  "metrics": {
+    "firstFrameAfLeadMs": null,
+    "firstFrameGateDelayMs": null,
+    "fpInToFpOutLatencyMs": null,
+    "fpInToHpOutLatencyMs": null,
+    "fpPulseWidthMs": null,
+    "frameCount": 0,
+    "frameStartSpacingMs": null,
+    "hpHoldAfterLastFrameMs": null,
+    "hpInToHpOutLatencyMs": null,
+    "hpOutContinuityMs": null,
+    "ignoredFpCount": 0,
+    "sequenceCount": 0,
+    "wakeOnlyHoldMs": null
+  },
+  "passed": false,
+  "scenario": "SC-01",
+  "telemetry_after": null,
+  "telemetry_before": null,
+  "telemetry_deltas": {},
+  "telemetry_notes": [],
+  "vector": {
+    "case_id": "SC-01-NOMINAL",
+    "description": "Normal wake then shoot",
+    "expect": {
+      "fpOut": {
+        "pulseCount": 4,
+        "pulseWidthMs": 100
+      },
+      "sequences": 1
+    },
+    "fixture": {
+      "captureAfterLastStimulusMs": 8000
+    },
+    "metrics": [
+      "hpInToHpOutLatencyMs",
+      "fpPulseWidthMs",
+      "frameStartSpacingMs",
+      "hpHoldAfterLastFrameMs"
+    ],
+    "parameters": {
+      "FrameCount": 4,
+      "MaxSequenceCount": 4,
+      "PostShutterHalfPressHoldTimeExtension": "2.0s",
+      "StartFrameSpacingMin": "1.0s",
+      "enabled": 1,
+      "fullPressIgnoreGap": "3.1s",
+      "minHalfPressBeforeShutter": "0.5s",
+      "shutterPulseDuration": "100ms",
+      "wakeHalfPressHoldTime": "10s"
+    },
+    "scenario": "SC-01",
+    "stimulus": [
+      {
+        "at_ms": 0,
+        "duration_ms": 100,
+        "signal": "HP_IN_STIM",
+        "state": "active"
+      },
+      {
+        "at_ms": 1000,
+        "duration_ms": 100,
+        "signal": "FP_IN_STIM",
+        "state": "active"
+      }
+    ],
+    "tags": [
+      "core",
+      "nominal"
+    ]
+  }
+}

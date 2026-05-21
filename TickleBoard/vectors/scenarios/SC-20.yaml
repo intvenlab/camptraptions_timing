@@ -1,0 +1,14 @@
+id: SC-20-T-GREATER-THAN-Y
+scenario: SC-20
+description: T may delay frame 1 but not add delay to frames 2..N
+tags: [core, timing]
+parameters: { enabled: 1, minHalfPressBeforeShutter: 2.0s, StartFrameSpacingMin: 0.2s, FrameCount: 4 }
+fixture: { captureAfterLastStimulusMs: 9000 }
+stimulus:
+  - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 100, signal: FP_IN_STIM, state: active, durationMs: 100 }
+expect:
+  fpOut: { pulseCount: 4, frameSpacingMs: 200 }
+  timing:
+    firstFrameGateDelayMs: { minMs: 1750, maxMs: 2150 }
+metrics: [firstFrameGateDelayMs, frameStartSpacingMs]

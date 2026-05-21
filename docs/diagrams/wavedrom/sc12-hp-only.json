@@ -1,0 +1,15 @@
+{
+  "config": { "hscale": 3, "vscale": 3 },
+  "head": { "text": "SC-12 - HP only, PIR gap minimum" },
+  "signal": [
+    ["In",
+      { "name": "FP in",  "wave": "0........|." },
+      { "name": "HP in",  "wave": "0.1..1...|." }
+    ],
+    ["Out",
+      { "name": "HP out", "wave": "0.1......|0" },
+      { "name": "FP out", "wave": "0........|." }
+    ]
+  ],
+  "foot": { "text": "Wide-only wake pulses keep HP OUT active per wake policy; no FP output without accepted FP input." }
+}

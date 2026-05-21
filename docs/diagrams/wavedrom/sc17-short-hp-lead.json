@@ -4,12 +4,12 @@
   "signal": [
     ["In",
       { "name": "FP in",  "wave": "0.10..........|." },
-      { "name": "HP in",  "wave": "010...........|." }
+      { "name": "HP in",  "wave": "0.1...........|." }
     ],
     ["Out",
       { "name": "HP out", "wave": "01............|0" },
-      { "name": "FP out", "wave": "0....10.10.10.10" }
+      { "name": "FP out", "wave": "0......10.10.10.10" }
     ]
   ],
-  "foot": { "text": "Short HP lead: first FP OUT starts at max(FP accept, HP OUT assert + T). Frames 2..N remain spaced by StartFrameSpacingMin." }
+  "foot": { "text": "FP arrives before enough HP lead; frame 1 is visibly delayed by T. Frames 2..N still follow StartFrameSpacingMin cadence." }
 }

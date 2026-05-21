@@ -56,7 +56,7 @@ Each defined scenario uses:
 - **Preconditions** — MCU state before inputs
 - **Input timeline** — HP/FP from trigger system
 - **Expected behavior** — camera outputs and counters
-- **Status** — `defined` | `needs decision` | `proposed`
+- **Status** — `defined` | `needs decision`
 
 ---
 
@@ -387,6 +387,7 @@ sequenceDiagram
 
 - HP input may **extend** remaining `wakeHalfPressHoldTime` per `wakeHoldRefreshPolicy = extend` (R1); does **not** schedule frames without FP.
 - FP during this window → SC-05b (R12, R15 on accept).
+- When post-burst hold ends and sequence cap still allows more sequences, firmware returns to wake/AF waiting for the next FP; it does not end solely because wake deadline elapsed during active hold.
 
 **Parameters:** `PostShutterHalfPressHoldTimeExtension`, `wakeHoldRefreshPolicy`
 
@@ -396,7 +397,7 @@ sequenceDiagram
 
 ## SC-08 — FP before HP
 
-**Status:** proposed
+**Status:** defined
 
 **Intent:** Fast animal: narrow beam triggers before wide wake is recognized.
 
@@ -440,7 +441,7 @@ sequenceDiagram
 
 ## SC-10 — Recovery after MaxSequenceCount cap
 
-**Status:** proposed
+**Status:** defined
 
 **Intent:** After a capped activity ends, the next FP should start fresh.
 

@@ -1,0 +1,199 @@
+{
+  "camera_rw": {},
+  "case_id": "SC-09-SEQUENCE-CAP",
+  "check_summary": {
+    "functional_passed": 1,
+    "functional_total": 3,
+    "timing_passed": 1,
+    "timing_total": 1
+  },
+  "checks": [
+    {
+      "category": "functional",
+      "detail": "expected 2, got 2",
+      "name": "frameCount",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "expected 1000.0 +/- 10.0, got 999.0",
+      "name": "frameStartSpacingMs",
+      "passed": true
+    },
+    {
+      "category": "functional",
+      "detail": "expected 1, got 0",
+      "name": "telemetryDelta.acceptedFpCount",
+      "passed": false
+    },
+    {
+      "category": "functional",
+      "detail": "expected 1, got 0",
+      "name": "telemetryDelta.rejectedFpAtSequenceCapCount",
+      "passed": false
+    }
+  ],
+  "description": "Additional FP rejected at MaxSequenceCount cap",
+  "failure_class": "logic_mismatch",
+  "fixture_dump": {
+    "edges": [
+      {
+        "signal": "HP_IN",
+        "state": "ACTIVE",
+        "t_ms": 0
+      },
+      {
+        "signal": "FP_IN",
+        "state": "ACTIVE",
+        "t_ms": 1000
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 1000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 1100
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 1101
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 1999
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 2100
+      },
+      {
+        "signal": "FP_IN",
+        "state": "ACTIVE",
+        "t_ms": 5000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 5100
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 7000
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 10990
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 12000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 12000
+      }
+    ],
+    "malformed_lines": [],
+    "run_id": 1,
+    "snapshots": [
+      "SNAPSHOT HP_IN=INACTIVE FP_IN=INACTIVE HP_OUT=INACTIVE FP_OUT=INACTIVE"
+    ],
+    "warnings": []
+  },
+  "metrics": {
+    "firstFrameAfLeadMs": null,
+    "firstFrameGateDelayMs": 0.0,
+    "fpInToFpOutLatencyMs": 0.0,
+    "fpInToHpOutLatencyMs": null,
+    "fpPulseWidthMs": 101.0,
+    "frameCount": 2,
+    "frameStartSpacingMs": 999.0,
+    "hpHoldAfterLastFrameMs": 8890.0,
+    "hpHoldAfterLastFrameReason": null,
+    "hpInToHpOutLatencyMs": null,
+    "hpInToHpOutLatencyReason": "no_hp_out_active_edges",
+    "hpOutContinuityMs": null,
+    "hpOutPreAssertedBeforeHpIn": false,
+    "hpReleaseBeforeFinalFrameDetected": false,
+    "ignoredFpCount": 0,
+    "interSequenceGapMs": null,
+    "secondSequenceStartDelayMs": null,
+    "sequenceCount": 1,
+    "wakeOnlyHoldMs": null
+  },
+  "passed": false,
+  "scenario": "SC-09",
+  "telemetry_after": null,
+  "telemetry_before": null,
+  "telemetry_deltas": {},
+  "telemetry_notes": [],
+  "vector": {
+    "case_id": "SC-09-SEQUENCE-CAP",
+    "description": "Additional FP rejected at MaxSequenceCount cap",
+    "expect": {
+      "fpOut": {
+        "frameSpacingMs": 1000,
+        "pulseCount": 2
+      },
+      "telemetryDeltas": {
+        "acceptedFpCount": 1,
+        "rejectedFpAtSequenceCapCount": 1
+      }
+    },
+    "fixture": {
+      "captureAfterLastStimulusMs": 12000
+    },
+    "metrics": [
+      "sequenceCount",
+      "ignoredFpCount"
+    ],
+    "parameters": {
+      "FrameCount": 2,
+      "MaxSequenceCount": 1,
+      "enabled": 1,
+      "fpAfterMaxSequenceCountPolicy": 0,
+      "wakeHalfPressHoldTime": "10s"
+    },
+    "scenario": "SC-09",
+    "stimulus": [
+      {
+        "at_ms": 0,
+        "duration_ms": null,
+        "signal": "HP_IN_STIM",
+        "state": "active"
+      },
+      {
+        "at_ms": 1000,
+        "duration_ms": 100,
+        "signal": "FP_IN_STIM",
+        "state": "active"
+      },
+      {
+        "at_ms": 5000,
+        "duration_ms": 100,
+        "signal": "FP_IN_STIM",
+        "state": "active"
+      },
+      {
+        "at_ms": 7000,
+        "duration_ms": null,
+        "signal": "HP_IN_STIM",
+        "state": "inactive"
+      }
+    ],
+    "tags": [
+      "core",
+      "cap"
+    ]
+  }
+}

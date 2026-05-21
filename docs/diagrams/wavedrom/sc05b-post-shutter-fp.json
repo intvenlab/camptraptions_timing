@@ -1,0 +1,15 @@
+{
+  "config": { "hscale": 3, "vscale": 3 },
+  "head": { "text": "SC-05b - FP during post-shutter hold" },
+  "signal": [
+    ["In",
+      { "name": "FP in",  "wave": "0.1....1.|." },
+      { "name": "HP in",  "wave": "0........|." }
+    ],
+    ["Out",
+      { "name": "HP out", "wave": "0.1......|0" },
+      { "name": "FP out", "wave": "0..1010.1010" }
+    ]
+  ],
+  "foot": { "text": "Second FP in post-shutter hold starts a new sequence when R10 cleared and sequence cap allows it." }
+}

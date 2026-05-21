@@ -1,0 +1,15 @@
+{
+  "config": { "hscale": 3, "vscale": 3 },
+  "head": { "text": "SC-07b - HP during post-burst hold" },
+  "signal": [
+    ["In",
+      { "name": "FP in",  "wave": "0.1......|." },
+      { "name": "HP in",  "wave": "0.....1.1|." }
+    ],
+    ["Out",
+      { "name": "HP out", "wave": "0.1......|0" },
+      { "name": "FP out", "wave": "0..1010..|." }
+    ]
+  ],
+  "foot": { "text": "HP input during post-hold may refresh wake hold policy; HP alone does not emit extra FP output." }
+}

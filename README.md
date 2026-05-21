@@ -9,7 +9,7 @@ This repository documents the **inline timing microcontroller** that sits betwee
 | **Customer** — “what will it do in the field?” | [Operational scenarios](docs/scenarios.md) (SC-01–SC-15) |
 | **Developer** — implementing or integrating firmware | [Scenarios](docs/scenarios.md) → [Behavior spec](docs/behavior-spec.md) → [Parameters](docs/parameters.md) |
 | **Integrator** — wiring and PIR setup | [Architecture](docs/architecture.md) → [PIR sensor settings](docs/pir-sensor-settings.md) |
-| **Validator** — fixture or bench acceptance testing | [Validation test plan](docs/validation-test-plan.md) |
+| **Validator** — fixture or bench acceptance testing | [Validation test plan](docs/validation-test-plan.md) + [Test report](docs/validation-test-report.md) |
 
 **Audience**
 
@@ -23,6 +23,7 @@ This repository documents the **inline timing microcontroller** that sits betwee
 | [PIR v4 settings](docs/pir-sensor-settings.md) | Camtraptions menu values | Integrator checklist |
 | [Diagrams](docs/diagrams/) | High-level swim lanes | State flow & timing |
 | [Validation test plan](docs/validation-test-plan.md) | Field acceptance summary | Fixture, metrics, sweeps, reports |
+| [Test report](docs/validation-test-report.md) | Verification outcomes and timing compliance rollups | Per-test pass/fail and performance data |
 
 **Status:** See [parameters.md](docs/parameters.md) for MCU defaults.
 
@@ -34,7 +35,7 @@ From the repo root (requires [Pandoc](https://pandoc.org/), [mermaid-filter](htt
 .\scripts\export-docs.ps1
 ```
 
-Outputs land in `dist/` as `.docx` (Mermaid and WaveDrom diagrams rendered as images). Bundles: `overview`, `scenarios`, `developer` (behavior spec only), `parameters`, `pir`, `diagrams`, or `manual` (all). Example: `.\scripts\export-docs.ps1 -Target parameters`
+Outputs land in `dist/` as `.docx` (Mermaid and WaveDrom diagrams rendered as images). Bundles: `overview`, `scenarios`, `developer` (behavior spec only), `parameters`, `pir`, `validation`, `validationreport`, `diagrams`, or `manual` (all). Example: `.\scripts\export-docs.ps1 -Target validationreport`
 
 With multiple `-Target` values (or `-Target all`), docx builds run **in parallel** — `ForEach-Object -Parallel` on PowerShell 7+ (up to 4 at once), or `Start-Job` on Windows PowerShell 5.1 (all targets at once). Use `-Sequential` if mermaid-filter misbehaves.
 

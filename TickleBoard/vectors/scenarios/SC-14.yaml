@@ -1,0 +1,12 @@
+id: SC-14-HELD-VS-PULSED-FP
+scenario: SC-14
+description: Held FP should count once, not continuous output
+tags: [core, fp-shape]
+parameters: { enabled: 1, FrameCount: 4, shutterPulseDuration: 100ms }
+fixture: { captureAfterLastStimulusMs: 11000 }
+stimulus:
+  - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 1000, signal: FP_IN_STIM, state: active, durationMs: 2000 }
+expect:
+  fpOut: { pulseCount: 4, pulseWidthMs: 100, frameSpacingMs: 1000 }
+metrics: [frameCount, fpPulseWidthMs]

@@ -1,0 +1,14 @@
+id: SC-11-SPACING-VS-T
+scenario: SC-11
+description: Validate T gating frame 1 and Y spacing for later frames
+tags: [core, timing]
+parameters: { enabled: 1, minHalfPressBeforeShutter: 0.5s, StartFrameSpacingMin: 1.0s, FrameCount: 4 }
+fixture: { captureAfterLastStimulusMs: 10000 }
+stimulus:
+  - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 100, signal: FP_IN_STIM, state: active, durationMs: 100 }
+expect:
+  fpOut: { pulseCount: 4, frameSpacingMs: 1000 }
+  timing:
+    firstFrameGateDelayMs: { minMs: 350, maxMs: 650 }
+metrics: [firstFrameAfLeadMs, frameStartSpacingMs]

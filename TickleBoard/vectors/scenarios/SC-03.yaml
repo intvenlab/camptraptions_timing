@@ -1,0 +1,19 @@
+id: SC-03-FP-FLOOD
+scenario: SC-03
+description: FP flood during burst still yields one sequence
+tags: [core, ignore-gap]
+parameters: { enabled: 1, FrameCount: 4, fullPressIgnoreGap: 3.1s }
+fixture: { captureAfterLastStimulusMs: 10000 }
+stimulus:
+  - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 1000, signal: FP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 1200, signal: FP_IN_STIM, state: active, durationMs: 80 }
+  - { atMs: 1400, signal: FP_IN_STIM, state: active, durationMs: 80 }
+  - { atMs: 1600, signal: FP_IN_STIM, state: active, durationMs: 80 }
+expect:
+  fpOut: { pulseCount: 4, frameSpacingMs: 1000 }
+  telemetryDeltas:
+    acceptedFpCount: 1
+    ignoredFpDuringGapCount: 3
+    ignoredFpDuringBurstCount: 3
+metrics: [ignoredFpCount, frameCount]

@@ -26,7 +26,7 @@ On a brief wide-PIR half-press (wake) with no full-press yet, the MCU asserts ca
 
 #### `wakeHoldRefreshPolicy`
 
-Applies when debounced HP **input** arrives during a wake hold **before** any FP has started an activity (SC-04b). Does not change burst scheduling (R14) or R15 sequence extend behavior once shooting has started.
+Applies when debounced HP **input** arrives while wake/hold logic is active (SC-04b, SC-07b, SC-12), including post-burst hold. It does not change burst frame scheduling (R14) or sequence-accept gating.
 
 **Default:** `extend`
 
@@ -34,7 +34,7 @@ Applies when debounced HP **input** arrives during a wake hold **before** any FP
 |-------|----------|
 | `extend` | Each debounced HP pulse **extends** the remaining `wakeHalfPressHoldTime` from that edge. Camera HP OUT stays on; the idle timeout moves later with each wake pulse. |
 | `restart` | Each debounced HP pulse **restarts** a full `wakeHalfPressHoldTime` from zero. Camera HP OUT stays on; the timeout is always the full X seconds from the latest HP edge. |
-| `ignoreWhileActive` | The first HP pulse in a wake episode starts `wakeHalfPressHoldTime`. Further HP pulses are **ignored** for timer refresh until the timer expires or an FP starts an activity. |
+| `ignoreWhileActive` | HP pulses refresh wake hold only before an activity starts; once activity is active, additional HP pulses do not move the deadline. |
 
 #### `minHalfPressBeforeShutter`
 
@@ -102,6 +102,8 @@ Applies for the whole **activity** — from first accepted FP through the last s
 |-------|----------|
 | `holdUntilActivityEnd` | Camera HP OUT must **not** be released solely because `wakeHalfPressHoldTime` expired while the activity is still active (any sequence in progress, between sequences, or waiting for another FP under `MaxSequenceCount`). HP is released when the activity ends (cap reached, no further sequences, and idle/timeout logic completes). |
 
+Only this value is currently implemented. Other policy encodings are reserved and coerced to `holdUntilActivityEnd` on write/load.
+
 #### `fpAfterMaxSequenceCountPolicy`
 
 Applies when `sequencesStartedThisActivity >= MaxSequenceCount` and another debounced FP **input** arrives (SC-09). Separate from R10 (intra-sequence FP ignore during `fullPressIgnoreGap`).
@@ -115,25 +117,25 @@ Applies when `sequencesStartedThisActivity >= MaxSequenceCount` and another debo
 
 #### `inputActivePolarity`
 
-Defines which electrical level on HP/FP **inputs** counts as active (architecture).
+Runtime polarity switching is currently reserved. Firmware runs active-low input semantics and coerces non-default values to active-low on write/load.
 
 **Default:** `active-low`
 
 | Value | Behavior |
 |-------|----------|
-| `active-low` | Input is active when the line is pulled to ground (switch closure to common). Debounce and edge detection use active-low assert/release. |
-| `active-high` | Input is active when the line is high. Debounce and edge detection use active-high assert/release. |
+| `active-low` | Implemented default. Input is active when the line is pulled to ground (switch closure to common). |
+| `active-high` | Reserved/no-op in current firmware build (stored value is coerced back to active-low). |
 
 #### `outputDriveMode`
 
-Defines how HP/FP **outputs** present a “press” to the camera remote port.
+Runtime drive-mode switching is currently reserved. Firmware uses open-drain output behavior in state-machine mode.
 
 **Default:** `open-drain` / opto (field wiring dependent)
 
 | Value | Behavior |
 |-------|----------|
-| `open-drain` | Outputs pull the camera line active (typically to ground) when ON; high-Z when OFF. Matches typical Camtraptions switch-closure interface. |
-| `opto` | Outputs drive opto-isolated switches (galvanic separation). ON/OFF timing same as `open-drain` from the MCU’s scheduling view; external hardware provides isolation. |
+| `open-drain` | Implemented default. Outputs pull the camera line active (typically to ground) when ON; high-Z when OFF. |
+| `opto` | Reserved/no-op in current firmware build (stored value is coerced back to open-drain). |
 
 #### `powerSaveIdleMode`
 

@@ -1,0 +1,21 @@
+id: AO-GAP-BOUNDARY-TRIAD
+scenario: ADDON-GAP-BOUNDARY
+description: fullPressIgnoreGap just-before/exact/just-after checks
+tags: [addon, boundary]
+parameters: { enabled: 1, fullPressIgnoreGap: 3.1s, FrameCount: 2 }
+fixture: { captureAfterLastStimulusMs: 15000 }
+stimulus:
+  - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 1000, signal: FP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 4000, signal: FP_IN_STIM, state: active, durationMs: 80 }
+  - { atMs: 4100, signal: FP_IN_STIM, state: active, durationMs: 80 }
+  - { atMs: 4200, signal: FP_IN_STIM, state: active, durationMs: 80 }
+expect:
+  fpOut: { pulseCount: 2, frameSpacingMs: 200 }
+  timing:
+    firstFrameGateDelayMs: { minMs: 850, maxMs: 1200 }
+  telemetryDeltas:
+    acceptedFpCount: 1
+    ignoredFpDuringGapCount: 1
+    rejectedFpAtSequenceCapCount: 2
+metrics: [ignoredFpCount]

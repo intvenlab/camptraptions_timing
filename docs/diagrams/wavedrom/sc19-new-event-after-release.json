@@ -1,0 +1,15 @@
+{
+  "config": { "hscale": 3, "vscale": 3 },
+  "head": { "text": "SC-19 - new event after HP release" },
+  "signal": [
+    ["In",
+      { "name": "FP in",  "wave": "0.1......1|." },
+      { "name": "HP in",  "wave": "0........|." }
+    ],
+    ["Out",
+      { "name": "HP out", "wave": "0.1....0..1|0" },
+      { "name": "FP out", "wave": "0..1010...10" }
+    ]
+  ],
+  "foot": { "text": "After HP OUT releases and DUT returns idle, next FP is a fresh cold/start event with T gate on frame 1." }
+}

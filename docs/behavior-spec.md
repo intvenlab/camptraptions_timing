@@ -10,10 +10,13 @@ Normative description of what the timing MCU must do. Parameter names refer to [
 | [SC-02](scenarios.md#sc-02--fp-during-sequence-ignored) | FP during `fullPressIgnoreGap` discarded |
 | [SC-03](scenarios.md#sc-03--fp-flood-during-burst-ignored) | Repeated FP during burst; schedule unchanged |
 | [SC-04](scenarios.md#sc-04--wake-timeout-no-fp) | HP only, timeout release |
+| [SC-04b](scenarios.md#sc-04b--repeated-wake-pulses) | Repeated HP wake pulses refresh wake hold |
 | [SC-05](scenarios.md#sc-05--back-to-back-sequence) | New sequence same activity; AF + timing gates |
+| [SC-05b](scenarios.md#sc-05b--fp-during-post-shutter-hp-hold-extension) | FP accepted during post-burst hold starts next sequence |
 | [SC-06](scenarios.md#sc-06--cold-fp-no-prior-wake) | FP without prior HP |
 | [SC-07](scenarios.md#sc-07--hp-during-active-burst) | HP ignored during burst |
-| [SC-08](scenarios.md#sc-08--fp-before-hp) | FP before HP (proposed) |
+| [SC-07b](scenarios.md#sc-07b--hp-during-post-burst-hold) | HP refresh handling during post-burst hold |
+| [SC-08](scenarios.md#sc-08--fp-before-hp) | FP before HP |
 | [SC-09](scenarios.md#sc-09--fp-when-maxsequencecount-reached) | FP at sequence cap |
 | [SC-10](scenarios.md#sc-10--recovery-after-maxsequencecount-cap) | Recovery after cap |
 | [SC-11](scenarios.md#sc-11--startframespacingmin-vs-minhalfpressbeforeshutter) | StartFrameSpacingMin vs T |
@@ -57,12 +60,12 @@ HP **input release** is not mirrored to camera HP OUT in state-machine mode. HP 
 | R1 | HP **input** is wake/prepare only; MCU **latches camera HP ON** on wake and refreshes hold timer on repeated wake pulses per `wakeHoldRefreshPolicy` (default `extend`). |
 | R2 | If no FP arrives before `wakeHalfPressHoldTime` expires, MCU **releases camera HP**. |
 | R3 | FP may arrive **without** prior HP input. |
-| R4 | Before **each** FP **output** pulse (every shutter activation), camera HP must have been active for at least `minHalfPressBeforeShutter`. If not, assert HP and wait the remainder before that pulse. |
+| R4 | Before any FP **output** pulse, camera HP must have been active for at least `minHalfPressBeforeShutter`. In the common latched-HP path, this typically gates frame 1 only; later frames follow `StartFrameSpacingMin` unless HP had been dropped. |
 | R5 | Each FP pulse to the camera lasts `shutterPulseDuration` (no overlapping FP outputs). |
 | R6 | In a sequence, schedule successive FP **output** pulse **starts** at least `StartFrameSpacingMin` apart (rising edge to rising edge). Spacing is **start-to-start** and does **not** include `shutterPulseDuration`; actual interval may be longer if R4 or HP release delays the next start. |
 | R7 | During a sequence burst, **keep camera HP OUT asserted** between frames; do not release HP because of trigger activations (original §4b). |
 | R9 | During burst, **do not drop HP** merely because another FP input arrives (HP latch is independent of ignored FP). |
-| R10 | From **sequence start** (accepted FP that schedules the burst), ignore all FP **inputs** for `fullPressIgnoreGap` — no second sequence, no counter changes, no extra frames in that window. Covers PIR retrigger flood when PIR **Gap = minimum**. Set **≥** typical burst length; default estimate `(FrameCount - 1) × StartFrameSpacingMin + shutterPulseDuration`. |
+| R10 | From **sequence start** (accepted FP that schedules the burst), ignore all FP **inputs** for `fullPressIgnoreGap` — no second sequence and no extra frames in that window. Telemetry reject counters may still increment for those ignored inputs. Covers PIR retrigger flood when PIR **Gap = minimum**. Set **≥** typical burst length; default estimate `(FrameCount - 1) × StartFrameSpacingMin + shutterPulseDuration`. |
 | R10b | An FP **input** is accepted and **starts a new sequence** only when the burst schedule is not in progress, `fullPressIgnoreGap` has elapsed since that sequence’s start, `sequencesStartedThisActivity < MaxSequenceCount`, and R4/R12 gates pass. |
 | R11 | After the last frame of a sequence’s burst schedule, hold HP for `PostShutterHalfPressHoldTimeExtension`. If another sequence may still start (under `MaxSequenceCount`), HP may remain latched; release HP only when activity ends. |
 | R12 | A new **sequence** begins when an FP is accepted after the prior sequence’s burst **schedule** is complete, within the same activity, until `MaxSequenceCount` is reached. R4 applies before the first FP output of that sequence. |

@@ -1,0 +1,15 @@
+{
+  "config": { "hscale": 3, "vscale": 3 },
+  "head": { "text": "SC-04b - repeated wake pulses" },
+  "signal": [
+    ["In",
+      { "name": "FP in",  "wave": "0........|." },
+      { "name": "HP in",  "wave": "0.1..1..1|." }
+    ],
+    ["Out",
+      { "name": "HP out", "wave": "0.1......|0" },
+      { "name": "FP out", "wave": "0........|." }
+    ]
+  ],
+  "foot": { "text": "Repeated HP wake edges extend/restart hold per wakeHoldRefreshPolicy; no FP output." }
+}

@@ -1,0 +1,15 @@
+id: SC-06-COLD-FP
+scenario: SC-06
+description: FP before HP triggers cold path with AF lead
+tags: [core, cold-fp]
+parameters: { enabled: 1, minHalfPressBeforeShutter: 0.5s, FrameCount: 4 }
+fixture: { captureAfterLastStimulusMs: 9000 }
+stimulus:
+  - { atMs: 0, signal: FP_IN_STIM, state: active, durationMs: 100 }
+expect:
+  fpOut: { pulseCount: 4, frameSpacingMs: 1000 }
+  timing:
+    firstFrameGateDelayMs: { minMs: 450, maxMs: 650 }
+  telemetryDeltas:
+    coldFpSequenceCount: 1
+metrics: [fpInToHpOutLatencyMs, firstFrameAfLeadMs]
