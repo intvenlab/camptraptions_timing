@@ -5,6 +5,13 @@ from dataclasses import asdict, replace
 from pathlib import Path
 from typing import Any
 import json
+import threading
+import time
+
+try:
+    import serial
+except ImportError:  # pragma: no cover
+    serial = None  # type: ignore[assignment]
 
 from .artifacts import create_run_dir, write_json, write_text
 from .ble_adapter import DutBleAdapter, DutBleSession
@@ -14,6 +21,28 @@ from .fixture_client import FixtureClient
 from .metrics import aggregate_stats, extract_metrics
 from .telemetry import diff_counters, parse_payload, validate_delta_rules
 from .vector_schema import TestVector
+
+DEFAULT_CASE_CAMERA_PARAMS: dict[str, Any] = {
+    "enabled": 1,
+    "wakeHalfPressHoldTime": "10s",
+    "minHalfPressBeforeShutter": "0.5s",
+    "shutterPulseDuration": "100ms",
+    "StartFrameSpacingMin": "1.0s",
+    "PostShutterHalfPressHoldTimeExtension": "2.0s",
+    "halfPressInputDebounce": "35ms",
+    "fullPressInputDebounce": "20ms",
+    "FrameCount": 4,
+    "MaxSequenceCount": 4,
+    "wakeHoldRefreshPolicy": 0,
+    "halfPressDuringBurstPolicy": 0,
+    "fullPressWithoutPriorHpPolicy": 0,
+    "activityHalfPressHoldPolicy": 0,
+    "fpAfterMaxSequenceCountPolicy": 0,
+    "inputActivePolarity": 0,
+    "outputDriveMode": 0,
+    "powerSaveIdleMode": 1,
+    "fullPressIgnoreGap": "3.1s",
+}
 
 
 def _signal_token(signal: str) -> str:
@@ -25,8 +54,74 @@ def _signal_token(signal: str) -> str:
     raise ValueError(f"unsupported signal token: {signal}")
 
 
-def run_vector_on_fixture(fixture: FixtureClient, vector: TestVector, run_id: str = "unknown") -> dict[str, Any]:
+def _capture_dut_serial(stop_event: threading.Event, out_lines: list[str], port: str, baud: int) -> None:
+    if serial is None:
+        raise RuntimeError("pyserial is not installed. Run: pip install -r TickleBoard/scripts/requirements.txt")
+    ser = serial.Serial(port, baudrate=baud, timeout=0.2)
+    start = time.time()
+    try:
+        ser.reset_input_buffer()
+        while not stop_event.is_set():
+            raw = ser.readline()
+            if not raw:
+                continue
+            txt = raw.decode("utf-8", errors="replace").rstrip("\r\n")
+            ts_ms = int((time.time() - start) * 1000)
+            out_lines.append(f"{ts_ms} {txt}")
+    finally:
+        ser.close()
+
+
+def _telemetry_is_idle(snapshot: Any) -> bool:
+    flags = int(getattr(snapshot, "flags", 0))
+    cam_state = int(getattr(snapshot, "camera_state", 0))
+    return cam_state == 0 and (flags & 0x03) == 0
+
+
+def _wait_for_idle_ble(active_ble: DutBleSession, *, timeout_s: float, run_id: str) -> None:
+    deadline = time.time() + timeout_s
+    last_snapshot = None
+    while time.time() < deadline:
+        snap = parse_payload(active_ble.read_telemetry_payload())
+        last_snapshot = snap
+        if _telemetry_is_idle(snap):
+            return
+        time.sleep(0.2)
+    if last_snapshot is not None:
+        debug_log(
+            run_id=run_id,
+            hypothesis_id="H3_parameter_or_readback_mismatch",
+            location="runner.py:wait_idle_timeout",
+            message="Timed out waiting for idle baseline",
+            data={
+                "camera_state": last_snapshot.camera_state,
+                "flags": last_snapshot.flags,
+                "ms_until_wake_deadline": last_snapshot.ms_until_wake_deadline,
+                "ms_until_fp_ignore_clear": last_snapshot.ms_until_fp_ignore_clear,
+                "ms_until_next_frame": last_snapshot.ms_until_next_frame,
+                "ms_until_post_hold_end": last_snapshot.ms_until_post_hold_end,
+            },
+        )
+
+
+def run_vector_on_fixture(
+    fixture: FixtureClient,
+    vector: TestVector,
+    run_id: str = "unknown",
+    dut_serial_port: str | None = None,
+    dut_serial_baud: int = 115200,
+) -> dict[str, Any]:
     capture_ms = int(vector.fixture.get("captureAfterLastStimulusMs", 8000))
+    dut_serial_lines: list[str] = []
+    serial_stop = threading.Event()
+    serial_thread: threading.Thread | None = None
+    if dut_serial_port:
+        serial_thread = threading.Thread(
+            target=_capture_dut_serial,
+            args=(serial_stop, dut_serial_lines, dut_serial_port, dut_serial_baud),
+            daemon=True,
+        )
+        serial_thread.start()
     fixture.command_ok("RESET")
     fixture.command_ok("MAP HP_IN=5 FP_IN=4 HP_OUT=3 FP_OUT=2 POL=ACTIVE_LOW")
     fixture.command_ok(f"ARM {capture_ms}")
@@ -39,8 +134,11 @@ def run_vector_on_fixture(fixture: FixtureClient, vector: TestVector, run_id: st
             fixture.command_ok(f"LEVEL {sig} {step.at_ms} {state}")
     fixture.command_ok("RUN", total_timeout_s=(capture_ms / 1000.0) + 6.0)
     dump = fixture.dump()
+    if serial_thread is not None:
+        serial_stop.set()
+        serial_thread.join(timeout=2.0)
     metrics = extract_metrics(dump.edges, run_id=run_id)
-    return {"dump": dump, "metrics": metrics}
+    return {"dump": dump, "metrics": metrics, "dut_serial_lines": dut_serial_lines}
 
 
 def run_case(
@@ -50,6 +148,8 @@ def run_case(
     ble_address: str | None = None,
     ble_session: DutBleSession | None = None,
     strict_camera_readback: bool = True,
+    dut_serial_port: str | None = None,
+    dut_serial_baud: int = 115200,
 ) -> dict[str, Any]:
     case_dir = create_run_dir(artifacts_root, vector.case_id)
     fixture = FixtureClient(fixture_port)
@@ -90,11 +190,24 @@ def run_case(
                     },
                 )
                 # endregion
+                # Ensure each case starts from a true idle baseline so short-lead and
+                # wake-hold assertions are not contaminated by prior-case activity.
+                _wait_for_idle_ble(active_ble, timeout_s=15.0, run_id=vector.case_id)
                 before_payload = active_ble.read_telemetry_payload()
                 before_tel = parse_payload(before_payload)
-                camera_rw = active_ble.write_camera_config_params(vector.parameters, strict=strict_camera_readback)
+                # Start every case from a known baseline so omitted vector params
+                # do not inherit stale values from prior scenarios.
+                requested_params = dict(DEFAULT_CASE_CAMERA_PARAMS)
+                requested_params.update(vector.parameters)
+                camera_rw = active_ble.write_camera_config_params(requested_params, strict=strict_camera_readback)
 
-            result = run_vector_on_fixture(fixture, vector, run_id=vector.case_id)
+            result = run_vector_on_fixture(
+                fixture,
+                vector,
+                run_id=vector.case_id,
+                dut_serial_port=dut_serial_port,
+                dut_serial_baud=dut_serial_baud,
+            )
 
             if ble_address and active_ble is not None:
                 after_payload = active_ble.read_telemetry_payload()
@@ -152,6 +265,8 @@ def run_case(
         }
         write_json(case_dir / "result.json", payload)
         write_text(case_dir / "raw_edges.log", "\n".join([f"{e.t_ms} {e.signal} {e.state}" for e in result["dump"].edges]) + "\n")
+        if result.get("dut_serial_lines"):
+            write_text(case_dir / "dut_serial.log", "\n".join(result["dut_serial_lines"]) + "\n")
         return {
             "run_dir": str(case_dir),
             "case_id": vector.case_id,

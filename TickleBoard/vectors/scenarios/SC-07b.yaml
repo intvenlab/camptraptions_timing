@@ -1,8 +1,8 @@
 id: SC-07B-HP-DURING-POST-HOLD
 scenario: SC-07b
-description: HP during post-hold may extend hold but not fire FP
+description: HP during post-hold does not move wake hold and does not fire FP
 tags: [variant, hp-during-burst]
-parameters: { enabled: 1, wakeHoldRefreshPolicy: 0 }
+parameters: { enabled: 1, wakeHoldRefreshPolicy: 0 }  # legacy/no-op field retained for compatibility
 fixture: { captureAfterLastStimulusMs: 13000 }
 stimulus:
   - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }

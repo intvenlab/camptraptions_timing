@@ -1,0 +1,16 @@
+id: AO-LATENCY-FP-IN-TO-FP-OUT
+scenario: ADDON-LATENCY
+description: Measure FP_IN to FP_OUT latency with HP lead pre-satisfied
+tags: [addon, latency, fp]
+parameters: { enabled: 1, FrameCount: 1, minHalfPressBeforeShutter: 0.2s, StartFrameSpacingMin: 1.0s }
+fixture: { captureAfterLastStimulusMs: 2500 }
+stimulus:
+  - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 600, signal: FP_IN_STIM, state: active, durationMs: 100 }
+expect:
+  fpOut: { pulseCount: 1 }
+  telemetryDeltas:
+    acceptedFpCount: 1
+  timing:
+    fpInToFpOutLatencyMs: { minMs: 0, maxMs: 200 }
+metrics: [fpInToFpOutLatencyMs, fpInToHpOutLatencyMs, firstFrameGateDelayMs]

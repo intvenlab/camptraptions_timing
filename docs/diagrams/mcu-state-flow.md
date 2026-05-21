@@ -11,7 +11,7 @@ stateDiagram-v2
     [*] --> Idle
 
     Idle --> WakeAfActive: HP wake SC04
-    WakeAfActive --> WakeAfActive: HP wake refresh SC04b
+    WakeAfActive --> WakeAfActive: HP pulse observed deadline unchanged SC04b
     WakeAfActive --> Idle: wake timeout SC04
 
     Idle --> ColdFpWait: FP cold SC06

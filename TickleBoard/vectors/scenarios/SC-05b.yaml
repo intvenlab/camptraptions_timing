@@ -2,7 +2,7 @@ id: SC-05B-FP-DURING-POST-HOLD
 scenario: SC-05b
 description: FP during post-shutter hold can start next sequence
 tags: [variant, multi-sequence]
-parameters: { enabled: 1, FrameCount: 4, MaxSequenceCount: 4, PostShutterHalfPressHoldTimeExtension: 2.0s }
+parameters: { enabled: 1, wakeHalfPressHoldTime: 10s, FrameCount: 4, MaxSequenceCount: 4, PostShutterHalfPressHoldTimeExtension: 2.0s }
 fixture: { captureAfterLastStimulusMs: 14000 }
 stimulus:
   - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
@@ -14,9 +14,11 @@ expect:
   holdExpect:
     noHpReleaseBeforeFinalFrame: true
     requirePostFinalFrameHpRelease: true
+    dropTimeRule:
+      wakeHoldMs: 10000
+      postFinalFrameHoldMs: 2000
   timing:
     interSequenceGapMs: { minMs: 1800, maxMs: 2600 }
-    hpHoldAfterLastFrameMs: { minMs: 1800 }
   telemetryDeltas:
     acceptedFpCount: 2
     sequenceCompletedCount: 2

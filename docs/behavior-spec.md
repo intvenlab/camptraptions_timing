@@ -10,12 +10,12 @@ Normative description of what the timing MCU must do. Parameter names refer to [
 | [SC-02](scenarios.md#sc-02--fp-during-sequence-ignored) | FP during `fullPressIgnoreGap` discarded |
 | [SC-03](scenarios.md#sc-03--fp-flood-during-burst-ignored) | Repeated FP during burst; schedule unchanged |
 | [SC-04](scenarios.md#sc-04--wake-timeout-no-fp) | HP only, timeout release |
-| [SC-04b](scenarios.md#sc-04b--repeated-wake-pulses) | Repeated HP wake pulses refresh wake hold |
+| [SC-04b](scenarios.md#sc-04b--repeated-wake-pulses) | Repeated HP wake pulses do not refresh wake hold |
 | [SC-05](scenarios.md#sc-05--back-to-back-sequence) | New sequence same activity; AF + timing gates |
 | [SC-05b](scenarios.md#sc-05b--fp-during-post-shutter-hp-hold-extension) | FP accepted during post-burst hold starts next sequence |
 | [SC-06](scenarios.md#sc-06--cold-fp-no-prior-wake) | FP without prior HP |
 | [SC-07](scenarios.md#sc-07--hp-during-active-burst) | HP ignored during burst |
-| [SC-07b](scenarios.md#sc-07b--hp-during-post-burst-hold) | HP refresh handling during post-burst hold |
+| [SC-07b](scenarios.md#sc-07b--hp-during-post-burst-hold) | HP input during post-burst hold does not refresh wake hold |
 | [SC-08](scenarios.md#sc-08--fp-before-hp) | FP before HP |
 | [SC-09](scenarios.md#sc-09--fp-when-maxsequencecount-reached) | FP at sequence cap |
 | [SC-10](scenarios.md#sc-10--recovery-after-maxsequencecount-cap) | Recovery after cap |
@@ -40,14 +40,14 @@ Normative description of what the timing MCU must do. Parameter names refer to [
 
 `MaxSequenceCount` limits how many sequences may run **per activity**, not how many frames per sequence (`FrameCount` does that).
 
-Each accepted sequence typically **extends** how long camera HP stays valid: the full-press cycle runs longer than a wake-only timeout, so `wakeHalfPressHoldTime` is refreshed while activity continues (R13, R15). Total activity length is **not** capped by a global seconds limit — it is bounded by `MaxSequenceCount` and per-sequence timing (`FrameCount`, `StartFrameSpacingMin`, `PostShutterHalfPressHoldTimeExtension`).
+Accepted sequences do not refresh `wakeHalfPressHoldTime`. Final HP release follows: `max(initial HP assert + wakeHalfPressHoldTime, final frame release + PostShutterHalfPressHoldTimeExtension)`.
 
 ## Activity (wake-to-sleep)
 
 An **activity** begins when the MCU first asserts camera HP for a wake or cold FP path, and ends when:
 
 - HP is released after the last sequence’s post-burst hold (and no further sequence is started), **and**
-- `wakeHalfPressHoldTime` expires with no new wake/accepted FP, per policy — applies to wake-without-shoot timeout only, not a maximum activity duration.
+- `wakeHalfPressHoldTime` expires from the initial HP assert point (not refreshed by accepted FP), combined with post-frame hold rule.
 
 `MaxSequenceCount` applies **per activity**. Extra FP inputs within `fullPressIgnoreGap` after each sequence start are ignored (R10). PIR **Gap** is set to **minimum** ([pir-sensor-settings.md](pir-sensor-settings.md)); MCU `fullPressIgnoreGap` handles burst retrigger.
 
@@ -57,7 +57,7 @@ HP **input release** is not mirrored to camera HP OUT in state-machine mode. HP 
 
 | # | Rule |
 |----|--------------------------------------------------------|
-| R1 | HP **input** is wake/prepare only; MCU **latches camera HP ON** on wake and refreshes hold timer on repeated wake pulses per `wakeHoldRefreshPolicy` (default `extend`). |
+| R1 | HP **input** is wake/prepare only; MCU **latches camera HP ON** on wake. Repeated HP pulses while already latched do not refresh wake deadline. |
 | R2 | If no FP arrives before `wakeHalfPressHoldTime` expires, MCU **releases camera HP**. |
 | R3 | FP may arrive **without** prior HP input. |
 | R4 | Before any FP **output** pulse, camera HP must have been active for at least `minHalfPressBeforeShutter`. In the common latched-HP path, this typically gates frame 1 only; later frames follow `StartFrameSpacingMin` unless HP had been dropped. |
@@ -66,12 +66,12 @@ HP **input release** is not mirrored to camera HP OUT in state-machine mode. HP 
 | R7 | During a sequence burst, **keep camera HP OUT asserted** between frames; do not release HP because of trigger activations (original §4b). |
 | R9 | During burst, **do not drop HP** merely because another FP input arrives (HP latch is independent of ignored FP). |
 | R10 | From **sequence start** (accepted FP that schedules the burst), ignore all FP **inputs** for `fullPressIgnoreGap` — no second sequence and no extra frames in that window. Telemetry reject counters may still increment for those ignored inputs. Covers PIR retrigger flood when PIR **Gap = minimum**. Set **≥** typical burst length; default estimate `(FrameCount - 1) × StartFrameSpacingMin + shutterPulseDuration`. |
-| R10b | An FP **input** is accepted and **starts a new sequence** only when the burst schedule is not in progress, `fullPressIgnoreGap` has elapsed since that sequence’s start, `sequencesStartedThisActivity < MaxSequenceCount`, and R4/R12 gates pass. |
+| R10b | An FP **input** is accepted and **starts a new sequence** only when the burst schedule is not in progress, `fullPressIgnoreGap` has elapsed since that sequence’s start, `sequencesStartedThisActivity < MaxSequenceCount`, and R4/R12 gates pass. A retrigger while HP is still latched is taken as soon as these gates clear. |
 | R11 | After the last frame of a sequence’s burst schedule, hold HP for `PostShutterHalfPressHoldTimeExtension`. If another sequence may still start (under `MaxSequenceCount`), HP may remain latched; release HP only when activity ends. |
 | R12 | A new **sequence** begins when an FP is accepted after the prior sequence’s burst **schedule** is complete, within the same activity, until `MaxSequenceCount` is reached. R4 applies before the first FP output of that sequence. |
 | R13 | While activity is active (any sequence in progress, between sequences, or post-burst with sequences remaining), camera HP must not be released solely because `wakeHalfPressHoldTime` expired (`activityHalfPressHoldPolicy = holdUntilActivityEnd`). |
 | R14 | HP **input** during an active burst does not change `remainingFrames`, does not emit FP, and does not release camera HP (`halfPressDuringBurstPolicy = independent`). |
-| R15 | Each **accepted sequence** **extends** remaining `wakeHalfPressHoldTime` from FP accept so the wake hold does not expire mid-activity while sequences continue. |
+| R15 | Final HP release time is `max(initial HP assert + wakeHalfPressHoldTime, final frame release + PostShutterHalfPressHoldTimeExtension)`. Accepted FP/sequence starts do not refresh wake deadline. |
 
 ## Half-press without full-press (timeout path)
 
@@ -182,7 +182,7 @@ The **actual** gap since the previous frame may be **longer than** `StartFrameSp
 1. **Motion detected (wide area):** camera wakes and autofocuses; if nothing worth a photo appears within the configured hold time, the camera goes back to sleep.
 2. **Subject in frame (narrow area):** camera takes a configured number of photos per trigger event, spaced by `StartFrameSpacingMin`.
 3. **Retriggers during a sequence:** extra full-press signals for `fullPressIgnoreGap` after sequence start are **ignored** (PIR Gap minimum; MCU R10) so the burst is not reset or extended.
-4. **Another pass after a sequence:** a new full-press after the prior sequence’s burst completes can start another sequence in the same activity (subject to AF timing and `MaxSequenceCount`).
+4. **Another pass after a sequence:** a new full-press after the prior sequence’s burst completes can start another sequence in the same activity (subject to `fullPressIgnoreGap`, AF timing, and `MaxSequenceCount`).
 5. **Short HP trigger pulses:** once the MCU latches camera HP, releasing the trigger's HP input does not release camera HP during a shoot.
 
 ## Sequence boundaries (SC-05, SC-05b)

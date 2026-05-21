@@ -258,3 +258,92 @@
 - Metrics extraction now computes sequence-aware fields: `sequenceCount` from FP_OUT sequence boundaries, `interSequenceGapMs`, and `secondSequenceStartDelayMs`.
 - Runner/report rollups now emit timing/functional assertion counts and classify failures as `pass`, `timing_tolerance`, or `logic_mismatch`.
 - Local validation commands for this workspace should use `C:\\Python314\\python.exe` (Microsoft Store alias `python` may fail).
+
+## Test execution preferences 2026-05-21
+- User requirement: always run validation cases with BLE enabled; non-BLE runs are non-authoritative.
+- Added optional DUT serial pin-transition logging in `Camtraptions_Firmware.ino` behind `DEBUG_CAMERA_LOGIC_PINS` (state-machine HP/FP output transitions with timestamps and context).
+- `tickle_cli.py run-case`/`run-suite` now support DUT serial capture for artifacting: `--dut-serial-port COMx --dut-serial-baud 115200`, writing `dut_serial.log` per case.
+
+## SC-04 100ms HP sampling diagnostic 2026-05-21
+- Added debug-only 100ms sampler in firmware (`[DBG_HP_SAMPLE]`) reporting `hpOutPin`, `hpOutAsserted`, `camState`, `logicActive`, `activityActive`, and `msUntilWakeDeadline`.
+- SC-04 rerun with BLE + DUT serial capture (`20260521_121549_SC-04-WAKE-TIMEOUT`) confirms divergence: pin is low initially, then flips high around ~49471ms while firmware still reports `hpOutAsserted=1` and `CAM_WAKE_AF` until timeout release.
+- Same run captured `configureRuntimeIo` transition (`configureRuntimeIo.outputsInput`) at ~49407ms where `hpOutPin` changed to released/high, indicating a runtime IO reconfiguration path is still occurring in the failing window.
+
+## Deferred runtime IO reconfigure fix 2026-05-21
+- Firmware updated so BLE callbacks no longer call `configureRuntimeIo()` directly; they only set `runtimeIoReconfigurePending`.
+- Main-loop gate (`applyPendingCamCfgIfIdle`) now applies pending camera config and runtime IO reconfigure only when `cameraActivityInProgress()==false`.
+- Verification run `SC-04` with BLE + DUT serial capture (`20260521_123058_SC-04-WAKE-TIMEOUT`) now passes: `HP_OUT` stayed asserted for ~10s and `configureRuntimeIo` logged only after `endActivity`.
+
+## SC-01 capture observability update 2026-05-21
+- Increased `TickleBoard/vectors/scenarios/SC-01.yaml` capture window to `captureAfterLastStimulusMs: 12000` so `HP_OUT INACTIVE` is captured.
+- Rerun (`20260521_123949_SC-01-NOMINAL`) shows measurable `hpHoldAfterLastFrameMs=6892ms`; only remaining SC-01 failure is expectation mismatch vs current target `2000 +/- 20`.
+
+## SC-01 max-hold rule check update 2026-05-21
+- Added new evaluator hold check `hold.dropTimeRule` implementing `HP_OUT drop = max(hp_assert + X, last_frame_end + Z)` using metrics `hpOutContinuityMs` and `hpAssertToFinalFrameReleaseMs`.
+- Updated `SC-01` expectation to use `holdExpect.dropTimeRule` (`wakeHoldMs: 10000`, `postFinalFrameHoldMs: 2000`) and removed fixed `timing.hpHoldAfterLastFrameMs` target.
+- Rerun (`20260521_125037_SC-01-NOMINAL`) fails `hold.dropTimeRule`: expected ~10000ms continuity, measured ~10977ms, indicating wake hold is still being extended beyond the quoted requirement.
+
+## SC-01 BLE settle-delay experiment 2026-05-21
+- Added temporary 500ms delay after BLE config write/readback in runner (`tickleboard/runner.py`) before fixture stimulus.
+- SC-01 rerun with DUT serial capture (`20260521_131525_SC-01-NOMINAL`) still holds HP around ~10.96s (`releaseHpOut durMs~10973`), so delay does not resolve the over-hold behavior.
+
+## Requirement alignment patch 2026-05-21
+- Updated firmware wake-hold behavior to stop moving `wakeHoldDeadlineMs` on HP refresh events while HP is already latched; release now follows customer rule target `max(initial HP assert + X, final frame release + Z)`.
+- Removed temporary 500ms BLE settle delay from runner; it was diagnostic only.
+- Updated docs (`behavior-spec.md`, `parameters.md`, `scenarios.md`, `validation-test-plan.md`, `diagrams/timing-sequences.md`, `pir-sensor-settings.md`) to remove sequence/HP-refresh hold extension wording and document the max-rule release behavior.
+- Updated vectors for rule-consistent expectations: `SC-04b`, `SC-05`, `SC-05b`, `SC-16`.
+- Verification after flash:
+  - `SC-01` pass (`20260521_132923_SC-01-NOMINAL`), with `HP_OUT` continuity ~9989ms and DUT debug `releaseHpOut durMs=10000`.
+  - `SC-04b` pass (`20260521_133000_SC-04B-REPEATED-HP`), repeated HP pulses no longer extending hold (`HP_OUT INACTIVE` ~9953ms).
+
+## Full BLE suite rerun 2026-05-21
+- Command run: `C:\Python314\python.exe TickleBoard\scripts\tickle_cli.py run-suite TickleBoard\vectors\suites\full_validation_suite.yaml --port COM7 --ble C9:E0:7E:27:B2:4A`.
+- Latest rollup files now at:
+  - `TickleBoard/artifacts/suite_rollup.json`
+  - `TickleBoard/artifacts/suite_rollup.csv`
+- Report regenerated from latest rollup:
+  - Markdown: `docs/validation-test-report.md`
+  - DOCX export: `dist/Camptraptions-Timing-Test-Report.docx`
+- Outcome summary from latest full-suite run: 28 executed, 10 passed, 18 failed.
+- Failure classes: `timing_tolerance`=16, `logic_mismatch`=2.
+- Failing cases: `SC-01`, `SC-04`, `SC-05`, `SC-05b`, `SC-06`, `SC-08`, `SC-09`, `SC-10`, `SC-11`, `SC-12`, `SC-13`, `SC-16`, `SC-17`, `SC-19`, `AO-BLE-CONNECTED-SC04`, `AO-BLE-CONNECTED-SC01`, `AO-GAP-BOUNDARY-TRIAD`, `AO-DEFERRED-CONFIG-WRITES`.
+
+## Validation report structure correction 2026-05-21
+- User expects the rich narrative report structure in `docs/validation-test-report.md` (Executive Summary, Master Results Table, Results Statistics, and Detailed Test Results sections), not the compact rollup-only markdown format.
+- Rebuilt `docs/validation-test-report.md` in the expected detailed structure using latest per-case `result.json` artifacts from `TickleBoard/artifacts/suite_rollup.json`, then re-exported `dist/Camptraptions-Timing-Test-Report.docx`.
+
+## Documentation alignment pass 2026-05-21
+- Resolved stale contradiction in `docs/scenarios.md` SC-12: repeated HP pulses no longer described as extending wake hold.
+- Clarified immediate retrigger wording in `docs/behavior-spec.md` so "take immediately" is explicitly gated by `fullPressIgnoreGap` / sequence gates.
+- Updated `docs/diagrams/mcu-state-flow.md` label from "HP wake refresh" to "deadline unchanged" wording to match firmware behavior.
+- Updated `docs/pir-sensor-settings.md` to keep 0.5 s PIR Gap as baseline recommendation while allowing longer operational values (for example 5–8 s) per deployment intent.
+- Fixed firmware source link path in `docs/validation-test-plan.md` to `../Camtraptions_Firmware/Camtraptions_Firmware.ino`.
+
+## Docs + validation mapping pass 2026-05-21
+- Harmonized remaining stale wording in `Camtraptions_Firmware/firmware_editing_guide.md`, `docs/android-client-handoff.md`, and `docs/validation-test-report.md` so wake-hold behavior is consistently "HP refresh pulses do not move wake deadline" (legacy policy bytes retained for compatibility only).
+- Updated `TickleBoard/vectors/scenarios/SC-07b.yaml` description to remove outdated "may extend hold" wording.
+- Reviewed all 28 scenario/add-on vectors in `TickleBoard/vectors/scenarios/` and all suite manifests under `TickleBoard/vectors/suites/` for requirement traceability coverage.
+- Coverage assessment: SC-01..SC-20 plus mandatory add-ons are present in `full_validation_suite.yaml`; mapping is broad-complete, but several current failures in `docs/validation-test-report.md` are attributable to metric extraction/assertion issues (not missing vectors), e.g. missing `wakeOnlyHoldMs` and first-frame gate delay checks reading 0 ms despite cold/short-lead vectors.
+
+## TickleBoard metric pipeline hardening 2026-05-21
+- `runner.py`: added BLE idle-baseline gate before each case (`_wait_for_idle_ble`) so scenarios begin from `CAM_IDLE`/HP not pre-latched; prevents prior-case state bleed into short-lead/wake-timeout checks.
+- `metrics.py`: hardened HP metric extraction for captures that miss initial `HP_OUT ACTIVE` edge by inferring start time from earliest related edge; now populates `wakeOnlyHoldMs`, `firstFrameAfLeadMs`, `hpOutContinuityMs`, `hpAssertToFinalFrameReleaseMs`, and latency fallbacks more reliably.
+- Verified Python syntax via `C:\\Python314\\python.exe -m compileall TickleBoard/scripts` (success).
+
+## Failed-subset rerun 2026-05-21
+- Re-ran only previously failing cases with BLE enabled on `COM7` and DUT `C9:E0:7E:27:B2:4A`:
+  - PASS: `SC-05b`, `SC-10`, `SC-19`, `AO-BLE-CONNECTED-SC01`
+  - FAIL: `SC-13` (logic_mismatch), `SC-16` (timing_tolerance)
+- `SC-13` current mismatch: telemetry debounce reject counters remain 0 while expected 1/1 for FP/HP bounce.
+- `SC-16` current mismatch: `firstFrameGateDelayMs` measured ~394 ms vs expected range 450–650 ms (T=0.5s minus measured HP assert latency ~53 ms suggests expected gate window should likely be shifted to ~350–550 ms for this stimulus definition).
+
+## Suite stdout progress update 2026-05-21
+- `TickleBoard/scripts/tickle_cli.py` `run-suite` now prints live stdout progress with per-case start and completion lines.
+- Completion lines now include cumulative totals (`X passed, Y failed`) and a final suite summary line with rollup path.
+
+## Latency add-ons 2026-05-21
+- Added dedicated latency measurement vectors:
+  - `AO-LATENCY-HP-IN-TO-HP-OUT` for direct `hpInToHpOutLatencyMs`.
+  - `AO-LATENCY-FP-IN-TO-FP-OUT` for direct `fpInToFpOutLatencyMs` with HP lead pre-satisfied.
+- Included both in `TickleBoard/vectors/suites/full_validation_suite.yaml` and `TickleBoard/vectors/suites/mandatory_addons_suite.yaml`.
+- Both vectors are intended for BLE-enabled authoritative runs (per project preference).

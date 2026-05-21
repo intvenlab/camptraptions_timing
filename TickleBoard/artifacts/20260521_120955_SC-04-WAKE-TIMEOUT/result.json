@@ -1,0 +1,231 @@
+{
+  "camera_rw": {
+    "mismatches": {},
+    "payload_readback_hex": "02010a050a0a142314040400000000000000011f",
+    "payload_written_hex": "02010a050a0a142314040400000000000000011f",
+    "readback_norm": {
+      "enabled": 1,
+      "wakeHalfPressHoldTime": 10
+    },
+    "requested_norm": {
+      "enabled": 1,
+      "wakeHalfPressHoldTime": 10
+    }
+  },
+  "case_id": "SC-04-WAKE-TIMEOUT",
+  "check_summary": {
+    "functional_passed": 3,
+    "functional_total": 3,
+    "timing_passed": 1,
+    "timing_total": 2
+  },
+  "checks": [
+    {
+      "category": "functional",
+      "detail": "expected 0, got 0",
+      "name": "frameCount",
+      "passed": true
+    },
+    {
+      "category": "functional",
+      "detail": "expected 1, got 1",
+      "name": "telemetryDelta.wakeTimeoutCount",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "expected 10000.0 +/- 100.0, got 477.0",
+      "name": "wakeOnlyHoldMs",
+      "passed": false
+    },
+    {
+      "category": "timing",
+      "detail": "expected >= 0 when measurable, got 51.0",
+      "name": "hpInToHpOutLatencyMs_non_negative",
+      "passed": true
+    },
+    {
+      "category": "functional",
+      "detail": "deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 0, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 0, 'activityCompletedCount': 1}",
+      "name": "telemetry_delta_sanity",
+      "passed": true
+    }
+  ],
+  "description": "HP only path should timeout with no FP",
+  "failure_class": "timing_tolerance",
+  "fixture_dump": {
+    "edges": [
+      {
+        "signal": "HP_IN",
+        "state": "ACTIVE",
+        "t_ms": 0
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 51
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 100
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 528
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 12000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 12000
+      }
+    ],
+    "malformed_lines": [],
+    "run_id": 1,
+    "snapshots": [
+      "SNAPSHOT HP_IN=INACTIVE FP_IN=INACTIVE HP_OUT=INACTIVE FP_OUT=INACTIVE"
+    ],
+    "warnings": []
+  },
+  "metrics": {
+    "firstFrameAfLeadMs": null,
+    "firstFrameGateDelayMs": null,
+    "fpInToFpOutLatencyMs": null,
+    "fpInToHpOutLatencyMs": null,
+    "fpPulseWidthMs": null,
+    "frameCount": 0,
+    "frameStartSpacingMs": null,
+    "hpHoldAfterLastFrameMs": null,
+    "hpHoldAfterLastFrameReason": "no_fp_out_release_edges",
+    "hpInToHpOutLatencyMs": 51.0,
+    "hpInToHpOutLatencyReason": null,
+    "hpOutContinuityMs": 477.0,
+    "hpOutPreAssertedBeforeHpIn": false,
+    "hpReleaseBeforeFinalFrameDetected": false,
+    "ignoredFpCount": 0,
+    "interSequenceGapMs": null,
+    "secondSequenceStartDelayMs": null,
+    "sequenceCount": 0,
+    "wakeOnlyHoldMs": 477.0
+  },
+  "passed": false,
+  "scenario": "SC-04",
+  "telemetry_after": {
+    "camera_state": 0,
+    "counters": {
+      "acceptedFpCount": 87,
+      "activityCompletedCount": 166,
+      "coldFpSequenceCount": 16,
+      "fpDebounceRejectCount": 1,
+      "hpDebounceRejectCount": 1,
+      "hpIgnoredDuringBurstCount": 5,
+      "hpRefreshCount": 21,
+      "ignoredFpDuringBurstCount": 11,
+      "ignoredFpDuringGapCount": 12,
+      "rejectedFpAtSequenceCapCount": 7,
+      "sequenceCompletedCount": 87,
+      "version": 1,
+      "wakeTimeoutCount": 141
+    },
+    "flags": 0,
+    "frames_fired_this_sequence": 0,
+    "last_event_code": 4,
+    "last_scenario_hint": 1,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 0,
+    "sequences_started_this_activity": 0,
+    "version": 1
+  },
+  "telemetry_before": {
+    "camera_state": 0,
+    "counters": {
+      "acceptedFpCount": 87,
+      "activityCompletedCount": 165,
+      "coldFpSequenceCount": 16,
+      "fpDebounceRejectCount": 1,
+      "hpDebounceRejectCount": 1,
+      "hpIgnoredDuringBurstCount": 5,
+      "hpRefreshCount": 21,
+      "ignoredFpDuringBurstCount": 11,
+      "ignoredFpDuringGapCount": 12,
+      "rejectedFpAtSequenceCapCount": 7,
+      "sequenceCompletedCount": 87,
+      "version": 1,
+      "wakeTimeoutCount": 140
+    },
+    "flags": 0,
+    "frames_fired_this_sequence": 0,
+    "last_event_code": 4,
+    "last_scenario_hint": 1,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 0,
+    "sequences_started_this_activity": 0,
+    "version": 1
+  },
+  "telemetry_deltas": {
+    "acceptedFpCount": 0,
+    "activityCompletedCount": 1,
+    "coldFpSequenceCount": 0,
+    "fpDebounceRejectCount": 0,
+    "hpDebounceRejectCount": 0,
+    "hpIgnoredDuringBurstCount": 0,
+    "hpRefreshCount": 0,
+    "ignoredFpDuringBurstCount": 0,
+    "ignoredFpDuringGapCount": 0,
+    "rejectedFpAtSequenceCapCount": 0,
+    "sequenceCompletedCount": 0,
+    "wakeTimeoutCount": 1
+  },
+  "telemetry_notes": [],
+  "vector": {
+    "case_id": "SC-04-WAKE-TIMEOUT",
+    "description": "HP only path should timeout with no FP",
+    "expect": {
+      "fpOut": {
+        "pulseCount": 0
+      },
+      "telemetryDeltas": {
+        "wakeTimeoutCount": 1
+      },
+      "timing": {
+        "wakeOnlyHoldMs": {
+          "targetMs": 10000
+        }
+      }
+    },
+    "fixture": {
+      "captureAfterLastStimulusMs": 12000
+    },
+    "metrics": [
+      "wakeOnlyHoldMs",
+      "hpInToHpOutLatencyMs"
+    ],
+    "parameters": {
+      "enabled": 1,
+      "wakeHalfPressHoldTime": "10s"
+    },
+    "scenario": "SC-04",
+    "stimulus": [
+      {
+        "at_ms": 0,
+        "duration_ms": 100,
+        "signal": "HP_IN_STIM",
+        "state": "active"
+      }
+    ],
+    "tags": [
+      "core",
+      "wake-only"
+    ]
+  }
+}

@@ -148,9 +148,9 @@ static void resetLogs(void) {
 static void applyPinModes(void) {
   pinMode(pinMap.hpStimPin, OUTPUT);
   pinMode(pinMap.fpStimPin, OUTPUT);
-  // Monitor pins track DUT open-drain outputs and must keep pull-ups enabled.
-  pinMode(pinMap.hpMonPin, INPUT_PULLUP);  // Uno D3 for HP_OUT
-  pinMode(pinMap.fpMonPin, INPUT_PULLUP);  // Uno D2 for FP_OUT
+  // Monitor pins track DUT outputs without enabling Uno internal pull-ups.
+  pinMode(pinMap.hpMonPin, INPUT);  // Uno D3 for HP_OUT
+  pinMode(pinMap.fpMonPin, INPUT);  // Uno D2 for FP_OUT
 
   // Idle stimulus is inactive (released) regardless of polarity.
   digitalWrite(pinMap.hpStimPin, levelForActive(false));

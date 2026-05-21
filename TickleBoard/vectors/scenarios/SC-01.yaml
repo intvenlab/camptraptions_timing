@@ -13,7 +13,7 @@ parameters:
   shutterPulseDuration: 100ms
   fullPressIgnoreGap: 3.1s
 fixture:
-  captureAfterLastStimulusMs: 8000
+  captureAfterLastStimulusMs: 12000
 stimulus:
   - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
   - { atMs: 1000, signal: FP_IN_STIM, state: active, durationMs: 100 }
@@ -23,8 +23,9 @@ expect:
   holdExpect:
     noHpReleaseBeforeFinalFrame: true
     requirePostFinalFrameHpRelease: true
-  timing:
-    hpHoldAfterLastFrameMs: { targetMs: 2000 }
+    dropTimeRule:
+      wakeHoldMs: 10000
+      postFinalFrameHoldMs: 2000
   telemetryDeltas:
     acceptedFpCount: 1
     sequenceCompletedCount: 1

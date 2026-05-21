@@ -1,0 +1,288 @@
+{
+  "camera_rw": {
+    "mismatches": {},
+    "payload_readback_hex": "02010a140a02142314040100000000000000011f",
+    "payload_written_hex": "02010a140a02142314040100000000000000011f",
+    "readback_norm": {
+      "FrameCount": 4,
+      "StartFrameSpacingMin": 2,
+      "enabled": 1,
+      "minHalfPressBeforeShutter": 20
+    },
+    "requested_norm": {
+      "FrameCount": 4,
+      "StartFrameSpacingMin": 2,
+      "enabled": 1,
+      "minHalfPressBeforeShutter": 20
+    }
+  },
+  "case_id": "SC-20-T-GREATER-THAN-Y",
+  "check_summary": {
+    "functional_passed": 2,
+    "functional_total": 2,
+    "timing_passed": 3,
+    "timing_total": 3
+  },
+  "checks": [
+    {
+      "category": "functional",
+      "detail": "expected 4, got 4",
+      "name": "frameCount",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "expected 200.0 +/- 5.0, got 200.0",
+      "name": "frameStartSpacingMs",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "expected range [1750.0, 2150.0], got 1911.0",
+      "name": "firstFrameGateDelayMs",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "expected >= 0 when measurable, got 13.0",
+      "name": "hpInToHpOutLatencyMs_non_negative",
+      "passed": true
+    },
+    {
+      "category": "functional",
+      "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 0}",
+      "name": "telemetry_delta_sanity",
+      "passed": true
+    }
+  ],
+  "description": "T may delay frame 1 but not add delay to frames 2..N",
+  "failure_class": "pass",
+  "fixture_dump": {
+    "edges": [
+      {
+        "signal": "HP_IN",
+        "state": "ACTIVE",
+        "t_ms": 0
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 13
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 100
+      },
+      {
+        "signal": "FP_IN",
+        "state": "ACTIVE",
+        "t_ms": 100
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 200
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 2011
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 2111
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 2211
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 2311
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 2411
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 2510
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 2611
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 2710
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 9000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 9000
+      }
+    ],
+    "malformed_lines": [],
+    "run_id": 1,
+    "snapshots": [
+      "SNAPSHOT HP_IN=INACTIVE FP_IN=INACTIVE HP_OUT=ACTIVE FP_OUT=INACTIVE"
+    ],
+    "warnings": []
+  },
+  "metrics": {
+    "firstFrameAfLeadMs": 1998.0,
+    "firstFrameGateDelayMs": 1911.0,
+    "fpInToFpOutLatencyMs": 1911.0,
+    "fpInToHpOutLatencyMs": -87.0,
+    "fpPulseWidthMs": 99.5,
+    "frameCount": 4,
+    "frameStartSpacingMs": 200.0,
+    "hpAssertToFinalFrameReleaseMs": 2697.0,
+    "hpHoldAfterLastFrameMs": null,
+    "hpHoldAfterLastFrameReason": "no_hp_release_after_final_fp_release",
+    "hpInToHpOutLatencyMs": 13.0,
+    "hpInToHpOutLatencyReason": null,
+    "hpOutContinuityMs": null,
+    "hpOutPreAssertedBeforeHpIn": false,
+    "hpReleaseBeforeFinalFrameDetected": false,
+    "ignoredFpCount": 0,
+    "interSequenceGapMs": null,
+    "secondSequenceStartDelayMs": null,
+    "sequenceCount": 1,
+    "wakeOnlyHoldMs": null
+  },
+  "passed": true,
+  "scenario": "SC-20",
+  "telemetry_after": {
+    "camera_state": 1,
+    "counters": {
+      "acceptedFpCount": 129,
+      "activityCompletedCount": 221,
+      "coldFpSequenceCount": 20,
+      "fpDebounceRejectCount": 1,
+      "hpDebounceRejectCount": 2,
+      "hpIgnoredDuringBurstCount": 9,
+      "hpRefreshCount": 49,
+      "ignoredFpDuringBurstCount": 17,
+      "ignoredFpDuringGapCount": 18,
+      "rejectedFpAtSequenceCapCount": 8,
+      "sequenceCompletedCount": 129,
+      "version": 1,
+      "wakeTimeoutCount": 196
+    },
+    "flags": 2,
+    "frames_fired_this_sequence": 4,
+    "last_event_code": 7,
+    "last_scenario_hint": 0,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 898,
+    "sequences_started_this_activity": 1,
+    "version": 1
+  },
+  "telemetry_before": {
+    "camera_state": 0,
+    "counters": {
+      "acceptedFpCount": 128,
+      "activityCompletedCount": 221,
+      "coldFpSequenceCount": 20,
+      "fpDebounceRejectCount": 1,
+      "hpDebounceRejectCount": 2,
+      "hpIgnoredDuringBurstCount": 9,
+      "hpRefreshCount": 49,
+      "ignoredFpDuringBurstCount": 17,
+      "ignoredFpDuringGapCount": 18,
+      "rejectedFpAtSequenceCapCount": 8,
+      "sequenceCompletedCount": 128,
+      "version": 1,
+      "wakeTimeoutCount": 196
+    },
+    "flags": 0,
+    "frames_fired_this_sequence": 0,
+    "last_event_code": 4,
+    "last_scenario_hint": 1,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 0,
+    "sequences_started_this_activity": 0,
+    "version": 1
+  },
+  "telemetry_deltas": {
+    "acceptedFpCount": 1,
+    "activityCompletedCount": 0,
+    "coldFpSequenceCount": 0,
+    "fpDebounceRejectCount": 0,
+    "hpDebounceRejectCount": 0,
+    "hpIgnoredDuringBurstCount": 0,
+    "hpRefreshCount": 0,
+    "ignoredFpDuringBurstCount": 0,
+    "ignoredFpDuringGapCount": 0,
+    "rejectedFpAtSequenceCapCount": 0,
+    "sequenceCompletedCount": 1,
+    "wakeTimeoutCount": 0
+  },
+  "telemetry_notes": [],
+  "vector": {
+    "case_id": "SC-20-T-GREATER-THAN-Y",
+    "description": "T may delay frame 1 but not add delay to frames 2..N",
+    "expect": {
+      "fpOut": {
+        "frameSpacingMs": 200,
+        "pulseCount": 4
+      },
+      "timing": {
+        "firstFrameGateDelayMs": {
+          "maxMs": 2150,
+          "minMs": 1750
+        }
+      }
+    },
+    "fixture": {
+      "captureAfterLastStimulusMs": 9000
+    },
+    "metrics": [
+      "firstFrameGateDelayMs",
+      "frameStartSpacingMs"
+    ],
+    "parameters": {
+      "FrameCount": 4,
+      "StartFrameSpacingMin": "0.2s",
+      "enabled": 1,
+      "minHalfPressBeforeShutter": "2.0s"
+    },
+    "scenario": "SC-20",
+    "stimulus": [
+      {
+        "at_ms": 0,
+        "duration_ms": 100,
+        "signal": "HP_IN_STIM",
+        "state": "active"
+      },
+      {
+        "at_ms": 100,
+        "duration_ms": 100,
+        "signal": "FP_IN_STIM",
+        "state": "active"
+      }
+    ],
+    "tags": [
+      "core",
+      "timing"
+    ]
+  }
+}

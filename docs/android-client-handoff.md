@@ -49,7 +49,7 @@ Firmware constants:
 | 8 | `fpDebounceMs` | ms |
 | 9 | `frameCount` | count |
 | 10 | `maxSequenceCount` | count |
-| 11 | `wakeHoldRefreshPolicy` | `0 extend`, `1 restart`, `2 ignoreWhileActive` |
+| 11 | `wakeHoldRefreshPolicy` | Legacy encoding (`0/1/2`) retained for compatibility; current firmware behavior does not move wake deadline from HP refresh pulses |
 | 12 | `halfPressDuringBurstPolicy` | currently only `0` supported |
 | 13 | `fullPressWithoutHpPolicy` | `0 assertHpThenWait`, `1 ignoreFP` |
 | 14 | `activityHalfPressHoldPolicy` | currently coerced to `0` |

@@ -1,0 +1,204 @@
+{
+  "camera_rw": {},
+  "case_id": "SC-05B-FP-DURING-POST-HOLD",
+  "check_summary": {
+    "functional_passed": 0,
+    "functional_total": 4,
+    "timing_passed": 1,
+    "timing_total": 4
+  },
+  "checks": [
+    {
+      "category": "functional",
+      "detail": "expected 8, got 0",
+      "name": "frameCount",
+      "passed": false
+    },
+    {
+      "category": "functional",
+      "detail": "expected 2, got 0",
+      "name": "sequenceCount",
+      "passed": false
+    },
+    {
+      "category": "functional",
+      "detail": "expected 2, got 0",
+      "name": "telemetryDelta.acceptedFpCount",
+      "passed": false
+    },
+    {
+      "category": "functional",
+      "detail": "expected 2, got 0",
+      "name": "telemetryDelta.sequenceCompletedCount",
+      "passed": false
+    },
+    {
+      "category": "timing",
+      "detail": "missing metric interSequenceGapMs",
+      "name": "interSequenceGapMs",
+      "passed": false
+    },
+    {
+      "category": "timing",
+      "detail": "missing metric hpHoldAfterLastFrameMs",
+      "name": "hpHoldAfterLastFrameMs",
+      "passed": false
+    },
+    {
+      "category": "timing",
+      "detail": "expected False, got False",
+      "name": "hold.noHpReleaseBeforeFinalFrame",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "hpHoldAfterLastFrameMs=None reason=no_fp_out_release_edges",
+      "name": "hold.requirePostFinalFrameHpRelease",
+      "passed": false
+    }
+  ],
+  "description": "FP during post-shutter hold can start next sequence",
+  "failure_class": "timing_tolerance",
+  "fixture_dump": {
+    "edges": [
+      {
+        "signal": "HP_IN",
+        "state": "ACTIVE",
+        "t_ms": 0
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 100
+      },
+      {
+        "signal": "FP_IN",
+        "state": "ACTIVE",
+        "t_ms": 1000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 1100
+      },
+      {
+        "signal": "FP_IN",
+        "state": "ACTIVE",
+        "t_ms": 6200
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 6300
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 14000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 14000
+      }
+    ],
+    "malformed_lines": [],
+    "run_id": 1,
+    "snapshots": [
+      "SNAPSHOT HP_IN=INACTIVE FP_IN=INACTIVE HP_OUT=ACTIVE FP_OUT=INACTIVE"
+    ],
+    "warnings": []
+  },
+  "metrics": {
+    "firstFrameAfLeadMs": null,
+    "firstFrameGateDelayMs": null,
+    "fpInToFpOutLatencyMs": null,
+    "fpInToHpOutLatencyMs": null,
+    "fpPulseWidthMs": null,
+    "frameCount": 0,
+    "frameStartSpacingMs": null,
+    "hpHoldAfterLastFrameMs": null,
+    "hpHoldAfterLastFrameReason": "no_fp_out_release_edges",
+    "hpInToHpOutLatencyMs": null,
+    "hpInToHpOutLatencyReason": "no_hp_out_active_edges",
+    "hpOutContinuityMs": null,
+    "hpOutPreAssertedBeforeHpIn": false,
+    "hpReleaseBeforeFinalFrameDetected": false,
+    "ignoredFpCount": 1,
+    "interSequenceGapMs": null,
+    "secondSequenceStartDelayMs": null,
+    "sequenceCount": 0,
+    "wakeOnlyHoldMs": null
+  },
+  "passed": false,
+  "scenario": "SC-05b",
+  "telemetry_after": null,
+  "telemetry_before": null,
+  "telemetry_deltas": {},
+  "telemetry_notes": [],
+  "vector": {
+    "case_id": "SC-05B-FP-DURING-POST-HOLD",
+    "description": "FP during post-shutter hold can start next sequence",
+    "expect": {
+      "fpOut": {
+        "pulseCount": 8
+      },
+      "holdExpect": {
+        "noHpReleaseBeforeFinalFrame": true,
+        "requirePostFinalFrameHpRelease": true
+      },
+      "sequences": 2,
+      "telemetryDeltas": {
+        "acceptedFpCount": 2,
+        "sequenceCompletedCount": 2
+      },
+      "timing": {
+        "hpHoldAfterLastFrameMs": {
+          "minMs": 1800
+        },
+        "interSequenceGapMs": {
+          "maxMs": 2600,
+          "minMs": 1800
+        }
+      }
+    },
+    "fixture": {
+      "captureAfterLastStimulusMs": 14000
+    },
+    "metrics": [
+      "sequenceCount",
+      "hpHoldAfterLastFrameMs"
+    ],
+    "parameters": {
+      "FrameCount": 4,
+      "MaxSequenceCount": 4,
+      "PostShutterHalfPressHoldTimeExtension": "2.0s",
+      "enabled": 1
+    },
+    "scenario": "SC-05b",
+    "stimulus": [
+      {
+        "at_ms": 0,
+        "duration_ms": 100,
+        "signal": "HP_IN_STIM",
+        "state": "active"
+      },
+      {
+        "at_ms": 1000,
+        "duration_ms": 100,
+        "signal": "FP_IN_STIM",
+        "state": "active"
+      },
+      {
+        "at_ms": 6200,
+        "duration_ms": 100,
+        "signal": "FP_IN_STIM",
+        "state": "active"
+      }
+    ],
+    "tags": [
+      "variant",
+      "multi-sequence"
+    ]
+  }
+}

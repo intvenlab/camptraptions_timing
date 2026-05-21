@@ -1,0 +1,319 @@
+{
+  "camera_rw": {
+    "mismatches": {},
+    "payload_readback_hex": "02010a050a0a142314040100000000000000011f",
+    "payload_written_hex": "02010a050a0a142314040100000000000000011f",
+    "readback_norm": {
+      "PostShutterHalfPressHoldTimeExtension": 20,
+      "enabled": 1,
+      "minHalfPressBeforeShutter": 5,
+      "wakeHalfPressHoldTime": 10
+    },
+    "requested_norm": {
+      "PostShutterHalfPressHoldTimeExtension": 20,
+      "enabled": 1,
+      "minHalfPressBeforeShutter": 5,
+      "wakeHalfPressHoldTime": 10
+    }
+  },
+  "case_id": "SC-16-HP-RELEASE-AFTER-FP",
+  "check_summary": {
+    "functional_passed": 2,
+    "functional_total": 2,
+    "timing_passed": 5,
+    "timing_total": 6
+  },
+  "checks": [
+    {
+      "category": "functional",
+      "detail": "expected 4, got 4",
+      "name": "frameCount",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "expected 1000.0 +/- 10.0, got 998.7",
+      "name": "frameStartSpacingMs",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "expected range [450.0, 650.0], got 392.0",
+      "name": "firstFrameGateDelayMs",
+      "passed": false
+    },
+    {
+      "category": "timing",
+      "detail": "expected >= 0 when measurable, got 51.0",
+      "name": "hpInToHpOutLatencyMs_non_negative",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "expected False, got False",
+      "name": "hold.noHpReleaseBeforeFinalFrame",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "hpHoldAfterLastFrameMs=6385.0 reason=None",
+      "name": "hold.requirePostFinalFrameHpRelease",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "expected HP_OUT continuity by rule max(10000.0, 3537.0+2000.0) = 10000.0 +/- 100.0, got 9922.0",
+      "name": "hold.dropTimeRule",
+      "passed": true
+    },
+    {
+      "category": "functional",
+      "detail": "deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1}",
+      "name": "telemetry_delta_sanity",
+      "passed": true
+    }
+  ],
+  "description": "HP release after FP should not drop HP_OUT continuity",
+  "failure_class": "timing_tolerance",
+  "fixture_dump": {
+    "edges": [
+      {
+        "signal": "HP_IN",
+        "state": "ACTIVE",
+        "t_ms": 0
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 51
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 100
+      },
+      {
+        "signal": "FP_IN",
+        "state": "ACTIVE",
+        "t_ms": 100
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 200
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 492
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 591
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 1491
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 1590
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 2489
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 2589
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 3488
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 3588
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 9973
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 12000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 12000
+      }
+    ],
+    "malformed_lines": [],
+    "run_id": 1,
+    "snapshots": [
+      "SNAPSHOT HP_IN=INACTIVE FP_IN=INACTIVE HP_OUT=INACTIVE FP_OUT=INACTIVE"
+    ],
+    "warnings": []
+  },
+  "metrics": {
+    "firstFrameAfLeadMs": 441.0,
+    "firstFrameGateDelayMs": 392.0,
+    "fpInToFpOutLatencyMs": 392.0,
+    "fpInToHpOutLatencyMs": -49.0,
+    "fpPulseWidthMs": 99.5,
+    "frameCount": 4,
+    "frameStartSpacingMs": 998.6666666666666,
+    "hpAssertToFinalFrameReleaseMs": 3537.0,
+    "hpHoldAfterLastFrameMs": 6385.0,
+    "hpHoldAfterLastFrameReason": null,
+    "hpInToHpOutLatencyMs": 51.0,
+    "hpInToHpOutLatencyReason": null,
+    "hpOutContinuityMs": 9922.0,
+    "hpOutPreAssertedBeforeHpIn": false,
+    "hpReleaseBeforeFinalFrameDetected": false,
+    "ignoredFpCount": 0,
+    "interSequenceGapMs": null,
+    "secondSequenceStartDelayMs": null,
+    "sequenceCount": 1,
+    "wakeOnlyHoldMs": null
+  },
+  "passed": false,
+  "scenario": "SC-16",
+  "telemetry_after": {
+    "camera_state": 0,
+    "counters": {
+      "acceptedFpCount": 152,
+      "activityCompletedCount": 265,
+      "coldFpSequenceCount": 23,
+      "fpDebounceRejectCount": 2,
+      "hpDebounceRejectCount": 2,
+      "hpIgnoredDuringBurstCount": 10,
+      "hpRefreshCount": 61,
+      "ignoredFpDuringBurstCount": 22,
+      "ignoredFpDuringGapCount": 24,
+      "rejectedFpAtSequenceCapCount": 13,
+      "sequenceCompletedCount": 152,
+      "version": 1,
+      "wakeTimeoutCount": 240
+    },
+    "flags": 0,
+    "frames_fired_this_sequence": 0,
+    "last_event_code": 4,
+    "last_scenario_hint": 1,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 0,
+    "sequences_started_this_activity": 0,
+    "version": 1
+  },
+  "telemetry_before": {
+    "camera_state": 0,
+    "counters": {
+      "acceptedFpCount": 151,
+      "activityCompletedCount": 264,
+      "coldFpSequenceCount": 23,
+      "fpDebounceRejectCount": 2,
+      "hpDebounceRejectCount": 2,
+      "hpIgnoredDuringBurstCount": 10,
+      "hpRefreshCount": 61,
+      "ignoredFpDuringBurstCount": 22,
+      "ignoredFpDuringGapCount": 24,
+      "rejectedFpAtSequenceCapCount": 13,
+      "sequenceCompletedCount": 151,
+      "version": 1,
+      "wakeTimeoutCount": 239
+    },
+    "flags": 0,
+    "frames_fired_this_sequence": 0,
+    "last_event_code": 4,
+    "last_scenario_hint": 1,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 0,
+    "sequences_started_this_activity": 0,
+    "version": 1
+  },
+  "telemetry_deltas": {
+    "acceptedFpCount": 1,
+    "activityCompletedCount": 1,
+    "coldFpSequenceCount": 0,
+    "fpDebounceRejectCount": 0,
+    "hpDebounceRejectCount": 0,
+    "hpIgnoredDuringBurstCount": 0,
+    "hpRefreshCount": 0,
+    "ignoredFpDuringBurstCount": 0,
+    "ignoredFpDuringGapCount": 0,
+    "rejectedFpAtSequenceCapCount": 0,
+    "sequenceCompletedCount": 1,
+    "wakeTimeoutCount": 1
+  },
+  "telemetry_notes": [],
+  "vector": {
+    "case_id": "SC-16-HP-RELEASE-AFTER-FP",
+    "description": "HP release after FP should not drop HP_OUT continuity",
+    "expect": {
+      "fpOut": {
+        "frameSpacingMs": 1000,
+        "pulseCount": 4
+      },
+      "holdExpect": {
+        "dropTimeRule": {
+          "postFinalFrameHoldMs": 2000,
+          "wakeHoldMs": 10000
+        },
+        "noHpReleaseBeforeFinalFrame": true,
+        "requirePostFinalFrameHpRelease": true
+      },
+      "timing": {
+        "firstFrameGateDelayMs": {
+          "maxMs": 650,
+          "minMs": 450
+        }
+      }
+    },
+    "fixture": {
+      "captureAfterLastStimulusMs": 12000
+    },
+    "metrics": [
+      "hpOutContinuityMs",
+      "firstFrameGateDelayMs"
+    ],
+    "parameters": {
+      "PostShutterHalfPressHoldTimeExtension": "2.0s",
+      "enabled": 1,
+      "minHalfPressBeforeShutter": "0.5s",
+      "wakeHalfPressHoldTime": "10s"
+    },
+    "scenario": "SC-16",
+    "stimulus": [
+      {
+        "at_ms": 0,
+        "duration_ms": 100,
+        "signal": "HP_IN_STIM",
+        "state": "active"
+      },
+      {
+        "at_ms": 100,
+        "duration_ms": 100,
+        "signal": "FP_IN_STIM",
+        "state": "active"
+      }
+    ],
+    "tags": [
+      "core",
+      "hp-continuity"
+    ]
+  }
+}

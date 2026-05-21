@@ -46,7 +46,7 @@ Values below are what we want on a deployed unit. Menu names match the PIR v4 sc
 
 | Menu / item | Manual ref. | Value | Notes |
 |-------------|-------------|-------|-------|
-| **Gap** (Gap Time) | Global → Gap Time | **Minimum (0.5 s)** | Manual range 0.5 s–1 min; default 1 s. Use **lowest** value. Retrigger spacing during a burst is handled by MCU `fullPressIgnoreGap`, not PIR gap. |
+| **Gap** (Gap Time) | Global → Gap Time | **Minimum (0.5 s) recommended** | Manual range 0.5 s–1 min; default 1 s. Recommended baseline is **0.5 s** with retrigger spacing handled by MCU `fullPressIgnoreGap`. Operationally, longer values (for example 5–8 s) are acceptable when reducing rapid re-triggers is more important than fastest re-arming. |
 | **Wake** (Wake Time) | Global → Wake Time | **OFF** | Hold Up/Down >2 s until OFF. Global wake delay is for slow cameras **without** our MCU; wide **Wake** mode + MCU HP latch replace this. |
 | **Wireless Channel** | Global → Wireless Channel | **Same number as camera trap system** | Set to the trap’s **system number** (1–15). Must match the wireless receiver (and any other gear) on that trap — e.g. system **7** → channel **7**. Hold Up/Down >2 s → **OFF** only if wireless is not used on that unit. |
 | **EXT WAKE** (Periodic External Wake) | Global → External Wake | **OFF** | Hold Up/Down >2 s until OFF. MCU + wide wake keep the camera responsive; periodic wake wastes power. |
@@ -73,7 +73,7 @@ Access: Home → hold **Left + Right** >2 s → C VAR menu. Leave at factory def
 | C Var | Name (manual) | Value | Notes |
 |-------|----------------|-------|-------|
 | **0** | Sampling frequency / adaptive sensitivity | **8** | Default. Hold Up/Down >2 s: **Adaptive OFF** unless wind/vegetation false triggers persist. |
-| **1** | Half-press length (before full press) | **OFF** | Default. MCU extends HP on camera side; keep PIR HP stub short unless testing AF-on-PIR without MCU. |
+| **1** | Half-press length (before full press) | **OFF** | Default. MCU latches HP independently on camera side; keep PIR HP stub short unless testing AF-on-PIR without MCU. |
 | **2** | Half-press length (after full press) | **OFF** | Default. |
 | **3** | Full-press duration (still) — override | **OFF** (disabled) | Do not enable; would fight MCU `shutterPulseDuration`. |
 | **4** | Gap between full-press signals (still) | **OFF** (disabled) | Do not enable; would fight MCU `StartFrameSpacingMin`. |
@@ -91,7 +91,7 @@ Access: Home → hold **Left + Right** >2 s → C VAR menu. Leave at factory def
 2. **NUM** = **1**; confirm **FPS** does not matter.
 3. **Wide** = **Wake** + tune sensitivity.
 4. **Far** = **Normal** + tune sensitivity.
-5. **Gap** = **0.5 s** (minimum).
+5. **Gap** = **0.5 s** baseline recommendation (or a longer operational value such as 5–8 s when desired).
 6. **Wake** (global) = **OFF**.
 7. **Wireless Channel** = **camera trap system number** (receiver on same channel).
 8. **EXT WAKE** = **OFF**.

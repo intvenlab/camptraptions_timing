@@ -18,6 +18,29 @@ from tickleboard.telemetry import format_snapshot, parse_payload
 from tickleboard.vector_schema import load_suite, load_vector
 
 
+def _print_suite_progress(
+    case_id: str,
+    idx: int,
+    total: int,
+    *,
+    started: bool,
+    passed: bool | None = None,
+    run_dir: str | None = None,
+    passed_count: int | None = None,
+    failed_count: int | None = None,
+) -> None:
+    prefix = f"[{idx}/{total}] {case_id}"
+    if started:
+        print(f"{prefix}: started...", flush=True)
+        return
+    outcome = "PASSED" if passed else "FAILED"
+    print(
+        f"{prefix}: {outcome} run_dir={run_dir} "
+        f"(totals: {passed_count} passed, {failed_count} failed)",
+        flush=True,
+    )
+
+
 def _resolve_port(port: str | None) -> str:
     resolved = port or FixtureClient.pick_default_port()
     if not resolved:
@@ -52,6 +75,8 @@ def cmd_run_case(args: argparse.Namespace) -> int:
         artifacts_root=args.artifacts,
         ble_address=args.ble,
         strict_camera_readback=not args.non_strict_camera,
+        dut_serial_port=args.dut_serial_port,
+        dut_serial_baud=args.dut_serial_baud,
     )
     print(json.dumps(rec, indent=2))
     return 0
@@ -61,11 +86,16 @@ def cmd_run_suite(args: argparse.Namespace) -> int:
     suite_paths = load_suite(args.suite)
     records: list[dict] = []
     fixture_port = _resolve_port(args.port)
+    total = len(suite_paths)
+    passed_count = 0
+    failed_count = 0
+    print(f"Starting suite with {total} case(s)...", flush=True)
     if args.ble:
         adapter = DutBleAdapter(args.ble)
         with adapter.open_session() as ble_session:
-            for p in suite_paths:
+            for idx, p in enumerate(suite_paths, start=1):
                 v = load_vector(p)
+                _print_suite_progress(v.case_id, idx, total, started=True)
                 rec = run_case(
                     vector=v,
                     fixture_port=fixture_port,
@@ -73,26 +103,62 @@ def cmd_run_suite(args: argparse.Namespace) -> int:
                     ble_address=args.ble,
                     ble_session=ble_session,
                     strict_camera_readback=not args.non_strict_camera,
+                    dut_serial_port=args.dut_serial_port,
+                    dut_serial_baud=args.dut_serial_baud,
                 )
                 records.append(rec)
-                print(f"{rec['case_id']} passed={rec['passed']} run_dir={rec['run_dir']}")
+                if rec["passed"]:
+                    passed_count += 1
+                else:
+                    failed_count += 1
+                _print_suite_progress(
+                    rec["case_id"],
+                    idx,
+                    total,
+                    started=False,
+                    passed=bool(rec["passed"]),
+                    run_dir=str(rec["run_dir"]),
+                    passed_count=passed_count,
+                    failed_count=failed_count,
+                )
     else:
-        for p in suite_paths:
+        for idx, p in enumerate(suite_paths, start=1):
             v = load_vector(p)
+            _print_suite_progress(v.case_id, idx, total, started=True)
             rec = run_case(
                 vector=v,
                 fixture_port=fixture_port,
                 artifacts_root=args.artifacts,
                 ble_address=None,
                 strict_camera_readback=not args.non_strict_camera,
+                dut_serial_port=args.dut_serial_port,
+                dut_serial_baud=args.dut_serial_baud,
             )
             records.append(rec)
-            print(f"{rec['case_id']} passed={rec['passed']} run_dir={rec['run_dir']}")
+            if rec["passed"]:
+                passed_count += 1
+            else:
+                failed_count += 1
+            _print_suite_progress(
+                rec["case_id"],
+                idx,
+                total,
+                started=False,
+                passed=bool(rec["passed"]),
+                run_dir=str(rec["run_dir"]),
+                passed_count=passed_count,
+                failed_count=failed_count,
+            )
 
     rollup = args.artifacts / "suite_rollup.json"
     write_json(rollup, records)
     write_markdown_report(args.artifacts / "suite_rollup.md", title="TickleBoard Suite Report", records=records)
     write_csv_rollup(args.artifacts / "suite_rollup.csv", records=records)
+    print(
+        f"Suite complete: {passed_count} passed, {failed_count} failed, {total} total. "
+        f"Rollup: {rollup}",
+        flush=True,
+    )
     return 0 if all(r["passed"] for r in records) else 3
 
 
@@ -287,12 +353,16 @@ def main() -> int:
     rcp.add_argument("--port", default=None)
     rcp.add_argument("--ble", default=None)
     rcp.add_argument("--non-strict-camera", action="store_true", help="Allow readback mismatches")
+    rcp.add_argument("--dut-serial-port", default=None, help="Optional DUT USB serial port for debug log capture")
+    rcp.add_argument("--dut-serial-baud", type=int, default=115200, help="Baud rate for DUT serial capture")
 
     rsp = sub.add_parser("run-suite", help="Run suite YAML")
     rsp.add_argument("suite", type=Path)
     rsp.add_argument("--port", default=None)
     rsp.add_argument("--ble", default=None)
     rsp.add_argument("--non-strict-camera", action="store_true")
+    rsp.add_argument("--dut-serial-port", default=None, help="Optional DUT USB serial port for debug log capture")
+    rsp.add_argument("--dut-serial-baud", type=int, default=115200, help="Baud rate for DUT serial capture")
 
     rep = sub.add_parser("report", help="Render markdown+csv report from rollup JSON")
     rep.add_argument("input", type=Path)

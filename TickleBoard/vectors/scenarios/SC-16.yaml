@@ -2,8 +2,8 @@ id: SC-16-HP-RELEASE-AFTER-FP
 scenario: SC-16
 description: HP release after FP should not drop HP_OUT continuity
 tags: [core, hp-continuity]
-parameters: { enabled: 1, minHalfPressBeforeShutter: 0.5s }
-fixture: { captureAfterLastStimulusMs: 9000 }
+parameters: { enabled: 1, wakeHalfPressHoldTime: 10s, minHalfPressBeforeShutter: 0.5s, PostShutterHalfPressHoldTimeExtension: 2.0s }
+fixture: { captureAfterLastStimulusMs: 12000 }
 stimulus:
   - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
   - { atMs: 100, signal: FP_IN_STIM, state: active, durationMs: 100 }
@@ -12,7 +12,9 @@ expect:
   holdExpect:
     noHpReleaseBeforeFinalFrame: true
     requirePostFinalFrameHpRelease: true
+    dropTimeRule:
+      wakeHoldMs: 10000
+      postFinalFrameHoldMs: 2000
   timing:
     firstFrameGateDelayMs: { minMs: 450, maxMs: 650 }
-    hpHoldAfterLastFrameMs: { targetMs: 2000 }
 metrics: [hpOutContinuityMs, firstFrameGateDelayMs]

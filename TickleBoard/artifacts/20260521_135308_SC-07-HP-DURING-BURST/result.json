@@ -1,0 +1,289 @@
+{
+  "camera_rw": {
+    "mismatches": {},
+    "payload_readback_hex": "02010a050a0a142314040400000000000000011f",
+    "payload_written_hex": "02010a050a0a142314040400000000000000011f",
+    "readback_norm": {
+      "FrameCount": 4,
+      "enabled": 1
+    },
+    "requested_norm": {
+      "FrameCount": 4,
+      "enabled": 1
+    }
+  },
+  "case_id": "SC-07-HP-DURING-BURST",
+  "check_summary": {
+    "functional_passed": 3,
+    "functional_total": 3,
+    "timing_passed": 1,
+    "timing_total": 1
+  },
+  "checks": [
+    {
+      "category": "functional",
+      "detail": "expected 4, got 4",
+      "name": "frameCount",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "expected 1000.0 +/- 10.0, got 999.0",
+      "name": "frameStartSpacingMs",
+      "passed": true
+    },
+    {
+      "category": "functional",
+      "detail": "expected 1, got 1",
+      "name": "telemetryDelta.hpIgnoredDuringBurstCount",
+      "passed": true
+    },
+    {
+      "category": "functional",
+      "detail": "deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 1, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1}",
+      "name": "telemetry_delta_sanity",
+      "passed": true
+    }
+  ],
+  "description": "HP activity during burst does not alter frame schedule",
+  "failure_class": "pass",
+  "fixture_dump": {
+    "edges": [
+      {
+        "signal": "HP_IN",
+        "state": "ACTIVE",
+        "t_ms": 0
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 100
+      },
+      {
+        "signal": "FP_IN",
+        "state": "ACTIVE",
+        "t_ms": 1000
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 1000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 1100
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 1100
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 1999
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 2099
+      },
+      {
+        "signal": "HP_IN",
+        "state": "ACTIVE",
+        "t_ms": 2200
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 2300
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 2998
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 3098
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 3997
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 4097
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 6095
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 10000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 10000
+      }
+    ],
+    "malformed_lines": [],
+    "run_id": 1,
+    "snapshots": [
+      "SNAPSHOT HP_IN=INACTIVE FP_IN=INACTIVE HP_OUT=INACTIVE FP_OUT=INACTIVE"
+    ],
+    "warnings": []
+  },
+  "metrics": {
+    "firstFrameAfLeadMs": null,
+    "firstFrameGateDelayMs": 0.0,
+    "fpInToFpOutLatencyMs": 0.0,
+    "fpInToHpOutLatencyMs": null,
+    "fpPulseWidthMs": 100.0,
+    "frameCount": 4,
+    "frameStartSpacingMs": 999.0,
+    "hpAssertToFinalFrameReleaseMs": null,
+    "hpHoldAfterLastFrameMs": 1998.0,
+    "hpHoldAfterLastFrameReason": null,
+    "hpInToHpOutLatencyMs": null,
+    "hpInToHpOutLatencyReason": "no_hp_out_active_edges",
+    "hpOutContinuityMs": null,
+    "hpOutPreAssertedBeforeHpIn": false,
+    "hpReleaseBeforeFinalFrameDetected": false,
+    "ignoredFpCount": 0,
+    "interSequenceGapMs": null,
+    "secondSequenceStartDelayMs": null,
+    "sequenceCount": 1,
+    "wakeOnlyHoldMs": null
+  },
+  "passed": true,
+  "scenario": "SC-07",
+  "telemetry_after": {
+    "camera_state": 0,
+    "counters": {
+      "acceptedFpCount": 112,
+      "activityCompletedCount": 206,
+      "coldFpSequenceCount": 18,
+      "fpDebounceRejectCount": 1,
+      "hpDebounceRejectCount": 1,
+      "hpIgnoredDuringBurstCount": 6,
+      "hpRefreshCount": 34,
+      "ignoredFpDuringBurstCount": 15,
+      "ignoredFpDuringGapCount": 16,
+      "rejectedFpAtSequenceCapCount": 7,
+      "sequenceCompletedCount": 112,
+      "version": 1,
+      "wakeTimeoutCount": 181
+    },
+    "flags": 0,
+    "frames_fired_this_sequence": 0,
+    "last_event_code": 4,
+    "last_scenario_hint": 1,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 0,
+    "sequences_started_this_activity": 0,
+    "version": 1
+  },
+  "telemetry_before": {
+    "camera_state": 1,
+    "counters": {
+      "acceptedFpCount": 111,
+      "activityCompletedCount": 205,
+      "coldFpSequenceCount": 18,
+      "fpDebounceRejectCount": 1,
+      "hpDebounceRejectCount": 1,
+      "hpIgnoredDuringBurstCount": 5,
+      "hpRefreshCount": 33,
+      "ignoredFpDuringBurstCount": 15,
+      "ignoredFpDuringGapCount": 16,
+      "rejectedFpAtSequenceCapCount": 7,
+      "sequenceCompletedCount": 111,
+      "version": 1,
+      "wakeTimeoutCount": 180
+    },
+    "flags": 2,
+    "frames_fired_this_sequence": 0,
+    "last_event_code": 1,
+    "last_scenario_hint": 0,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 5830,
+    "sequences_started_this_activity": 0,
+    "version": 1
+  },
+  "telemetry_deltas": {
+    "acceptedFpCount": 1,
+    "activityCompletedCount": 1,
+    "coldFpSequenceCount": 0,
+    "fpDebounceRejectCount": 0,
+    "hpDebounceRejectCount": 0,
+    "hpIgnoredDuringBurstCount": 1,
+    "hpRefreshCount": 1,
+    "ignoredFpDuringBurstCount": 0,
+    "ignoredFpDuringGapCount": 0,
+    "rejectedFpAtSequenceCapCount": 0,
+    "sequenceCompletedCount": 1,
+    "wakeTimeoutCount": 1
+  },
+  "telemetry_notes": [],
+  "vector": {
+    "case_id": "SC-07-HP-DURING-BURST",
+    "description": "HP activity during burst does not alter frame schedule",
+    "expect": {
+      "fpOut": {
+        "frameSpacingMs": 1000,
+        "pulseCount": 4
+      },
+      "telemetryDeltas": {
+        "hpIgnoredDuringBurstCount": 1
+      }
+    },
+    "fixture": {
+      "captureAfterLastStimulusMs": 10000
+    },
+    "metrics": [
+      "frameCount",
+      "frameStartSpacingMs"
+    ],
+    "parameters": {
+      "FrameCount": 4,
+      "enabled": 1
+    },
+    "scenario": "SC-07",
+    "stimulus": [
+      {
+        "at_ms": 0,
+        "duration_ms": 100,
+        "signal": "HP_IN_STIM",
+        "state": "active"
+      },
+      {
+        "at_ms": 1000,
+        "duration_ms": 100,
+        "signal": "FP_IN_STIM",
+        "state": "active"
+      },
+      {
+        "at_ms": 2200,
+        "duration_ms": 100,
+        "signal": "HP_IN_STIM",
+        "state": "active"
+      }
+    ],
+    "tags": [
+      "core",
+      "hp-during-burst"
+    ]
+  }
+}

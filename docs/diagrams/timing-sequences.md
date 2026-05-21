@@ -30,7 +30,7 @@ Waveform-style views cross-linked to [scenarios.md](../scenarios.md). Use [param
 | `FrameCount` (N) | 4 | Shutter pulses per sequence |
 | `PostShutterHalfPressHoldTimeExtension` (Z) | 2.0 s | HP hold after last frame |
 | `shutterPulseDuration` | 100 ms | FP OUT pulse width |
-| `wakeHalfPressHoldTime` (X) | 10 s | Wake-only timeout (extended by R15 during shoot) |
+| `wakeHalfPressHoldTime` (X) | 10 s | Wake timeout anchored to initial HP assert; final HP release uses R15 max-rule |
 
 **SC-01 timeline:** HP wake t=0, FP accepted t=1.0 s (HP lead already ≥ T). **Camera HP OUT goes ON once** and stays latched through burst + Z. **No** extra T-wait between frames 2…N.
 

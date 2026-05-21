@@ -16,6 +16,9 @@
 
 using namespace Adafruit_LittleFS_Namespace;
 
+// Uncomment to emit state-machine pin transition logs over USB serial.
+#define DEBUG_CAMERA_LOGIC_PINS
+
 // ─── Pins ────────────────────────────────────────────────────────────────────
 #define BATTERY_PIN          A0  // D0/A0 – Internal CR2032 power-supply ADC input
 #define DEVICE_BATTERY_PIN   A1  // D1/A1 – Device/camera battery ADC input (primary gauge)
@@ -247,7 +250,11 @@ static uint32_t    postShutterHoldUntilMs   = 0;
 static uint32_t    fullPressIgnoreUntilMs   = 0;  // reject FP triggers during R10 window
 static uint32_t    hpOutRecoveryCount       = 0;  // guard count for unexpected HP_OUT drops while active
 static bool        pendingCamCfgApply       = false;
+static volatile bool runtimeIoReconfigurePending = false;
 static CameraConfig pendingCamCfg;
+#ifdef DEBUG_CAMERA_LOGIC_PINS
+static uint32_t    nextHpSampleLogMs         = 0;
+#endif
 
 // ─── Forward declarations ─────────────────────────────────────────────────────
 void loadSettings();
@@ -283,6 +290,8 @@ void assertPin(int pin);
 void releasePin(int pin);
 void assertHpOut(uint32_t now);
 void releaseHpOut();
+void assertFpOut(uint32_t now, const char* reason);
+void releaseFpOut(uint32_t now, const char* reason);
 bool timeReached(uint32_t now, uint32_t target);
 uint32_t minHalfPressMs();
 uint32_t shutterPulseMs();
@@ -322,10 +331,88 @@ bool cameraActivityInProgress();
 void applyPendingCamCfgIfIdle();
 void refreshWakeHoldFromHp(uint32_t now);
 
+#ifdef DEBUG_CAMERA_LOGIC_PINS
+static void dbgLogPinTransition(
+  const char* sig,
+  bool active,
+  uint32_t now,
+  const char* reason,
+  int32_t durationMs
+) {
+  if (!Serial) return;
+  Serial.print("[DBG_PIN] t=");
+  Serial.print(now);
+  Serial.print(" sig=");
+  Serial.print(sig);
+  Serial.print(" state=");
+  Serial.print(active ? "ACTIVE" : "INACTIVE");
+  Serial.print(" reason=");
+  Serial.print(reason ? reason : "n/a");
+  if (durationMs >= 0) {
+    Serial.print(" durMs=");
+    Serial.print(durationMs);
+  }
+  Serial.print(" camState=");
+  Serial.print((int)cameraState);
+  Serial.print(" hpOutAsserted=");
+  Serial.println(hpOutAsserted ? 1 : 0);
+}
+
+static void dbgLogRuntimeIo(const char* stage) {
+  if (!Serial) return;
+  Serial.print("[DBG_IO] t=");
+  Serial.print(millis());
+  Serial.print(" stage=");
+  Serial.print(stage ? stage : "n/a");
+  Serial.print(" deviceType=");
+  Serial.print((int)cfg.deviceType);
+  Serial.print(" camEnabled=");
+  Serial.print((int)camCfg.enabled);
+  Serial.print(" camState=");
+  Serial.print((int)cameraState);
+  Serial.print(" logicActive=");
+  Serial.print(cameraLogicActive ? 1 : 0);
+  Serial.print(" activityActive=");
+  Serial.print(activityActive ? 1 : 0);
+  Serial.print(" hpOutAsserted=");
+  Serial.print(hpOutAsserted ? 1 : 0);
+  Serial.print(" hpOutPin=");
+  Serial.print(digitalRead(HP_OUT_PIN));
+  Serial.print(" fpOutPin=");
+  Serial.println(digitalRead(FP_OUT_PIN));
+}
+
+static void dbgLogHpSample(uint32_t now) {
+  if (!Serial) return;
+  Serial.print("[DBG_HP_SAMPLE] t=");
+  Serial.print(now);
+  Serial.print(" hpOutPin=");
+  Serial.print(digitalRead(HP_OUT_PIN));
+  Serial.print(" hpOutAsserted=");
+  Serial.print(hpOutAsserted ? 1 : 0);
+  Serial.print(" camState=");
+  Serial.print((int)cameraState);
+  Serial.print(" logicActive=");
+  Serial.print(cameraLogicActive ? 1 : 0);
+  Serial.print(" activityActive=");
+  Serial.print(activityActive ? 1 : 0);
+  Serial.print(" msUntilWakeDeadline=");
+  Serial.println(remainingMs(now, wakeHoldDeadlineMs));
+}
+#endif
+
 // ═════════════════════════════════════════════════════════════════════════════
 // setup()
 // ═════════════════════════════════════════════════════════════════════════════
 void setup() {
+#ifdef DEBUG_CAMERA_LOGIC_PINS
+  Serial.begin(115200);
+  uint32_t serialWaitStart = millis();
+  while (!Serial && millis() - serialWaitStart < 1000) {
+    delay(5);
+  }
+#endif
+
   // Battery ADC pins
   pinMode(BATTERY_PIN,        INPUT);
   pinMode(DEVICE_BATTERY_PIN, INPUT);
@@ -561,11 +648,17 @@ bool cameraActivityInProgress() {
 }
 
 void configureRuntimeIo() {
+#ifdef DEBUG_CAMERA_LOGIC_PINS
+  dbgLogRuntimeIo("configureRuntimeIo.enter");
+#endif
   detachInterrupt(digitalPinToInterrupt(FP_IN_PIN));
   detachInterrupt(digitalPinToInterrupt(HP_IN_PIN));
 
   pinMode(FP_OUT_PIN, INPUT);
   pinMode(HP_OUT_PIN, INPUT);
+#ifdef DEBUG_CAMERA_LOGIC_PINS
+  dbgLogRuntimeIo("configureRuntimeIo.outputsInput");
+#endif
 
   if (cfg.deviceType == 1 /* CAMERA */) {
     pinMode(FP_IN_PIN, INPUT_PULLUP);
@@ -576,6 +669,9 @@ void configureRuntimeIo() {
       attachInterrupt(digitalPinToInterrupt(HP_IN_PIN), onHpPulse,      FALLING);
       pinMode(FP_OUT_PIN, INPUT);
       pinMode(HP_OUT_PIN, INPUT);
+#ifdef DEBUG_CAMERA_LOGIC_PINS
+      dbgLogRuntimeIo("configureRuntimeIo.cameraStateMachine");
+#endif
     } else {
       pinMode(FP_OUT_PIN, OUTPUT);
       digitalWrite(FP_OUT_PIN, digitalRead(FP_IN_PIN));
@@ -583,6 +679,9 @@ void configureRuntimeIo() {
       digitalWrite(HP_OUT_PIN, digitalRead(HP_IN_PIN));
       attachInterrupt(digitalPinToInterrupt(FP_IN_PIN), onFpPassthrough, CHANGE);
       attachInterrupt(digitalPinToInterrupt(HP_IN_PIN), onHpPassthrough, CHANGE);
+#ifdef DEBUG_CAMERA_LOGIC_PINS
+      dbgLogRuntimeIo("configureRuntimeIo.cameraPassthrough");
+#endif
     }
     return;
   }
@@ -590,41 +689,35 @@ void configureRuntimeIo() {
   pinMode(FP_IN_PIN, INPUT_PULLUP);
   pinMode(HP_IN_PIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(FP_IN_PIN), onShutterPulse, FALLING);
+#ifdef DEBUG_CAMERA_LOGIC_PINS
+  dbgLogRuntimeIo("configureRuntimeIo.nonCamera");
+#endif
 }
 
 void applyPendingCamCfgIfIdle() {
-  if (!pendingCamCfgApply) return;
   if (cameraActivityInProgress()) return;
 
-  camCfg = pendingCamCfg;
-  sanitizeCameraConfig(camCfg);
-  saveCameraSettings();
-  populateCameraCharacteristics();
-  configureRuntimeIo();
-  pendingCamCfgApply = false;
+  if (pendingCamCfgApply) {
+    camCfg = pendingCamCfg;
+    sanitizeCameraConfig(camCfg);
+    saveCameraSettings();
+    populateCameraCharacteristics();
+    pendingCamCfgApply = false;
+    runtimeIoReconfigurePending = true;
+  }
+
+  if (runtimeIoReconfigurePending) {
+    configureRuntimeIo();
+    runtimeIoReconfigurePending = false;
+  }
 }
 
 void refreshWakeHoldFromHp(uint32_t now) {
+  (void)now;
   telCounters.hpRefreshCount++;
   markTelemetryChanged(TEL_EVT_HP_REFRESH, TEL_SC_NONE, false);
-
-  switch (camCfg.wakeHoldRefreshPolicy) {
-    case 0:
-      wakeHoldDeadlineMs += wakeHalfPressHoldMs();
-      break;   // extend by one hold interval
-    case 1:
-      wakeHoldDeadlineMs = now + wakeHalfPressHoldMs();
-      break;   // restart full hold from this edge
-    case 2:
-      if (!activityActive) {
-        wakeHoldDeadlineMs = now + wakeHalfPressHoldMs();
-      }
-      break;   // ignoreWhileActive
-    default:
-      camCfg.wakeHoldRefreshPolicy = 0;
-      wakeHoldDeadlineMs += wakeHalfPressHoldMs();
-      break;
-  }
+  // Customer requirement: HP_OUT release is based on max(initial HP assert + X, last frame + Z).
+  // Therefore, repeated HP input pulses must not move wakeHoldDeadlineMs.
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -955,7 +1048,7 @@ void onDevTypeWrite(uint16_t h, BLECharacteristic* c, uint8_t* d, uint16_t l) {
   if (cameraActivityInProgress()) {
     endActivity();
   }
-  configureRuntimeIo();
+  runtimeIoReconfigurePending = true;
   markConfigured();
   saveSettings();
   populateCharacteristics();
@@ -999,9 +1092,9 @@ void onFactoryWrite(uint16_t h, BLECharacteristic* c, uint8_t* d, uint16_t l) {
   resetCameraToDefaults();
   resetTelemetryCounters();
   pendingCamCfgApply = false;
+  runtimeIoReconfigurePending = true;
   InternalFS.remove(CAMERA_SETTINGS_FILE);
   InternalFS.remove(TELEMETRY_FILE);
-  configureRuntimeIo();
   populateCharacteristics();
   populateCameraCharacteristics();
   populateTelemetryCharacteristic();
@@ -1020,13 +1113,14 @@ void onCamCfgWrite(uint16_t h, BLECharacteristic* c, uint8_t* d, uint16_t l) {
   if (cameraActivityInProgress()) {
     pendingCamCfg = incoming;
     pendingCamCfgApply = true;
+    runtimeIoReconfigurePending = true;
     return;
   }
 
   camCfg = incoming;
   saveCameraSettings();
   populateCameraCharacteristics();
-  configureRuntimeIo();
+  runtimeIoReconfigurePending = true;
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -1105,16 +1199,43 @@ void releasePin(int pin) {
 }
 
 void assertHpOut(uint32_t now) {
-  if (!hpOutAsserted) {
+  bool transitioningActive = !hpOutAsserted;
+  if (transitioningActive) {
     hpAssertedMs = now;
   }
   assertPin(HP_OUT_PIN);
   hpOutAsserted = true;
+#ifdef DEBUG_CAMERA_LOGIC_PINS
+  if (transitioningActive) {
+    dbgLogPinTransition("HP_OUT", true, now, "assertHpOut", -1);
+  }
+#endif
 }
 
 void releaseHpOut() {
+  uint32_t now = millis();
+  int32_t holdMs = hpOutAsserted ? (int32_t)(now - hpAssertedMs) : -1;
   releasePin(HP_OUT_PIN);
   hpOutAsserted = false;
+#ifdef DEBUG_CAMERA_LOGIC_PINS
+  dbgLogPinTransition("HP_OUT", false, now, "releaseHpOut", holdMs);
+#endif
+}
+
+void assertFpOut(uint32_t now, const char* reason) {
+  assertPin(FP_OUT_PIN);
+  lastFpOutStartMs = now;
+#ifdef DEBUG_CAMERA_LOGIC_PINS
+  dbgLogPinTransition("FP_OUT", true, now, reason, -1);
+#endif
+}
+
+void releaseFpOut(uint32_t now, const char* reason) {
+  int32_t pulseMs = (lastFpOutStartMs != 0) ? (int32_t)(now - lastFpOutStartMs) : -1;
+  releasePin(FP_OUT_PIN);
+#ifdef DEBUG_CAMERA_LOGIC_PINS
+  dbgLogPinTransition("FP_OUT", false, now, reason, pulseMs);
+#endif
 }
 
 bool timeReached(uint32_t now, uint32_t target) {
@@ -1194,7 +1315,6 @@ void startSequence(uint32_t now) {
 
   sequenceStartMs = now;
   fullPressIgnoreUntilMs = now + fullPressIgnoreGapMs();
-  wakeHoldDeadlineMs = now + wakeHalfPressHoldMs();
 
   framesFired = 0;
   fpOutReleaseMs = 0;
@@ -1207,7 +1327,7 @@ void startSequence(uint32_t now) {
 void endActivity() {
   bool hadActivity = activityActive || hpOutAsserted || cameraState != CAM_IDLE;
 
-  releasePin(FP_OUT_PIN);
+  releaseFpOut(millis(), "endActivity");
   releaseHpOut();
   activityActive = false;
   coldFpAcceptPending = false;
@@ -1241,7 +1361,7 @@ void handleFpAfterCap() {
 
 void runBurstScheduler(uint32_t now) {
   if (fpOutReleaseMs != 0 && timeReached(now, fpOutReleaseMs)) {
-    releasePin(FP_OUT_PIN);
+    releaseFpOut(now, "burstPulseComplete");
     fpOutReleaseMs = 0;
   }
 
@@ -1257,8 +1377,7 @@ void runBurstScheduler(uint32_t now) {
       return;
     }
 
-    assertPin(FP_OUT_PIN);
-    lastFpOutStartMs = now;
+    assertFpOut(now, "burstFrameFire");
     fpOutReleaseMs = now + shutterPulseMs();
     framesFired++;
     nextFrameMs = now + startFrameSpacingMs();
@@ -1277,6 +1396,13 @@ void runBurstScheduler(uint32_t now) {
 // ═════════════════════════════════════════════════════════════════════════════
 void processCameraLogic() {
   uint32_t now = millis();
+
+#ifdef DEBUG_CAMERA_LOGIC_PINS
+  if (timeReached(now, nextHpSampleLogMs)) {
+    dbgLogHpSample(now);
+    nextHpSampleLogMs = now + 100;
+  }
+#endif
 
   // Consume ISR flags atomically
   bool hpTrig = false, fpTrig = false;

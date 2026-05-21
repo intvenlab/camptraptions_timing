@@ -1,0 +1,281 @@
+{
+  "camera_rw": {
+    "mismatches": {},
+    "payload_readback_hex": "02010a140a0a142314040100000000000000011f",
+    "payload_written_hex": "02010a140a0a142314040100000000000000011f",
+    "readback_norm": {
+      "FrameCount": 4,
+      "StartFrameSpacingMin": 10,
+      "enabled": 1
+    },
+    "requested_norm": {
+      "FrameCount": 4,
+      "StartFrameSpacingMin": 10,
+      "enabled": 1
+    }
+  },
+  "case_id": "AO-DEFERRED-CONFIG-WRITES",
+  "check_summary": {
+    "functional_passed": 3,
+    "functional_total": 3,
+    "timing_passed": 2,
+    "timing_total": 2
+  },
+  "checks": [
+    {
+      "category": "functional",
+      "detail": "expected 4, got 4",
+      "name": "frameCount",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "expected 1000.0 +/- 10.0, got 999.0",
+      "name": "frameStartSpacingMs",
+      "passed": true
+    },
+    {
+      "category": "functional",
+      "detail": "expected 1, got 1",
+      "name": "telemetryDelta.acceptedFpCount",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "expected >= 0 when measurable, got 54.0",
+      "name": "hpInToHpOutLatencyMs_non_negative",
+      "passed": true
+    },
+    {
+      "category": "functional",
+      "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 0}",
+      "name": "telemetry_delta_sanity",
+      "passed": true
+    }
+  ],
+  "description": "Write config during active flow and verify defer/reject behavior",
+  "failure_class": "pass",
+  "fixture_dump": {
+    "edges": [
+      {
+        "signal": "HP_IN",
+        "state": "ACTIVE",
+        "t_ms": 0
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 54
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 100
+      },
+      {
+        "signal": "FP_IN",
+        "state": "ACTIVE",
+        "t_ms": 1000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 1100
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 1981
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 2082
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 2980
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 3081
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 3979
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 4080
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 4978
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 5079
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 9000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 9000
+      }
+    ],
+    "malformed_lines": [],
+    "run_id": 1,
+    "snapshots": [
+      "SNAPSHOT HP_IN=INACTIVE FP_IN=INACTIVE HP_OUT=ACTIVE FP_OUT=INACTIVE"
+    ],
+    "warnings": []
+  },
+  "metrics": {
+    "firstFrameAfLeadMs": 1927.0,
+    "firstFrameGateDelayMs": 981.0,
+    "fpInToFpOutLatencyMs": 981.0,
+    "fpInToHpOutLatencyMs": -946.0,
+    "fpPulseWidthMs": 101.0,
+    "frameCount": 4,
+    "frameStartSpacingMs": 999.0,
+    "hpAssertToFinalFrameReleaseMs": 5025.0,
+    "hpHoldAfterLastFrameMs": null,
+    "hpHoldAfterLastFrameReason": "no_hp_release_after_final_fp_release",
+    "hpInToHpOutLatencyMs": 54.0,
+    "hpInToHpOutLatencyReason": null,
+    "hpOutContinuityMs": null,
+    "hpOutPreAssertedBeforeHpIn": false,
+    "hpReleaseBeforeFinalFrameDetected": false,
+    "ignoredFpCount": 0,
+    "interSequenceGapMs": null,
+    "secondSequenceStartDelayMs": null,
+    "sequenceCount": 1,
+    "wakeOnlyHoldMs": null
+  },
+  "passed": true,
+  "scenario": "ADDON-DEFERRED-CONFIG",
+  "telemetry_after": {
+    "camera_state": 1,
+    "counters": {
+      "acceptedFpCount": 160,
+      "activityCompletedCount": 280,
+      "coldFpSequenceCount": 24,
+      "fpDebounceRejectCount": 2,
+      "hpDebounceRejectCount": 2,
+      "hpIgnoredDuringBurstCount": 12,
+      "hpRefreshCount": 62,
+      "ignoredFpDuringBurstCount": 22,
+      "ignoredFpDuringGapCount": 25,
+      "rejectedFpAtSequenceCapCount": 16,
+      "sequenceCompletedCount": 160,
+      "version": 1,
+      "wakeTimeoutCount": 255
+    },
+    "flags": 2,
+    "frames_fired_this_sequence": 4,
+    "last_event_code": 7,
+    "last_scenario_hint": 0,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 868,
+    "sequences_started_this_activity": 1,
+    "version": 1
+  },
+  "telemetry_before": {
+    "camera_state": 0,
+    "counters": {
+      "acceptedFpCount": 159,
+      "activityCompletedCount": 280,
+      "coldFpSequenceCount": 24,
+      "fpDebounceRejectCount": 2,
+      "hpDebounceRejectCount": 2,
+      "hpIgnoredDuringBurstCount": 12,
+      "hpRefreshCount": 62,
+      "ignoredFpDuringBurstCount": 22,
+      "ignoredFpDuringGapCount": 25,
+      "rejectedFpAtSequenceCapCount": 16,
+      "sequenceCompletedCount": 159,
+      "version": 1,
+      "wakeTimeoutCount": 255
+    },
+    "flags": 0,
+    "frames_fired_this_sequence": 0,
+    "last_event_code": 4,
+    "last_scenario_hint": 1,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 0,
+    "sequences_started_this_activity": 0,
+    "version": 1
+  },
+  "telemetry_deltas": {
+    "acceptedFpCount": 1,
+    "activityCompletedCount": 0,
+    "coldFpSequenceCount": 0,
+    "fpDebounceRejectCount": 0,
+    "hpDebounceRejectCount": 0,
+    "hpIgnoredDuringBurstCount": 0,
+    "hpRefreshCount": 0,
+    "ignoredFpDuringBurstCount": 0,
+    "ignoredFpDuringGapCount": 0,
+    "rejectedFpAtSequenceCapCount": 0,
+    "sequenceCompletedCount": 1,
+    "wakeTimeoutCount": 0
+  },
+  "telemetry_notes": [],
+  "vector": {
+    "case_id": "AO-DEFERRED-CONFIG-WRITES",
+    "description": "Write config during active flow and verify defer/reject behavior",
+    "expect": {
+      "fpOut": {
+        "frameSpacingMs": 1000,
+        "pulseCount": 4
+      },
+      "telemetryDeltas": {
+        "acceptedFpCount": 1
+      }
+    },
+    "fixture": {
+      "captureAfterLastStimulusMs": 9000
+    },
+    "metrics": [
+      "frameCount"
+    ],
+    "parameters": {
+      "FrameCount": 4,
+      "StartFrameSpacingMin": "1.0s",
+      "enabled": 1
+    },
+    "scenario": "ADDON-DEFERRED-CONFIG",
+    "stimulus": [
+      {
+        "at_ms": 0,
+        "duration_ms": 100,
+        "signal": "HP_IN_STIM",
+        "state": "active"
+      },
+      {
+        "at_ms": 1000,
+        "duration_ms": 100,
+        "signal": "FP_IN_STIM",
+        "state": "active"
+      }
+    ],
+    "tags": [
+      "addon",
+      "config-write"
+    ]
+  }
+}

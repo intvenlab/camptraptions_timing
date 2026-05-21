@@ -11,18 +11,18 @@ Primary specification artifact for timing behavior. Each scenario has a stable I
 | SC-01 | Normal wake then shoot | `wakeHalfPressHoldTime`, `FrameCount`, `StartFrameSpacingMin`, `PostShutterHalfPressHoldTimeExtension` | R1, R4–R7, R11, R13, R15 |
 | SC-02 | FP during sequence ignored | `fullPressIgnoreGap`, `FrameCount`, `StartFrameSpacingMin` | R9, R10, R10b, R13 |
 | SC-03 | FP flood during burst ignored | `fullPressIgnoreGap`, `FrameCount`, `StartFrameSpacingMin` | R10, R10b, R13 |
-| SC-04 | Wake timeout | `wakeHalfPressHoldTime`, `wakeHoldRefreshPolicy` | R2 |
-| SC-04b | Repeated wake pulses | `wakeHoldRefreshPolicy` | R1 |
+| SC-04 | Wake timeout | `wakeHalfPressHoldTime` | R2 |
+| SC-04b | Repeated wake pulses | `wakeHalfPressHoldTime` | R1 |
 | SC-05 | Back-to-back sequence | `MaxSequenceCount`, `PostShutterHalfPressHoldTimeExtension` | R4, R12, R15 |
 | SC-05b | FP during post-shutter HP hold extension | `PostShutterHalfPressHoldTimeExtension` | R11, R12, R15 |
 | SC-06 | Cold FP (no prior wake) | `minHalfPressBeforeShutter`, `fullPressWithoutPriorHpPolicy` | R3, R4 |
 | SC-07 | HP during burst | `halfPressDuringBurstPolicy` | R13, R14 |
-| SC-07b | HP during post-burst hold | `wakeHoldRefreshPolicy` | R1, R11 |
+| SC-07b | HP during post-burst hold | `PostShutterHalfPressHoldTimeExtension` | R1, R11 |
 | SC-08 | FP before HP | `minHalfPressBeforeShutter`, `fullPressWithoutPriorHpPolicy` | R3, R4 |
 | SC-09 | FP at MaxSequenceCount cap | `MaxSequenceCount`, `fpAfterMaxSequenceCountPolicy` | R10b, R13 |
 | SC-10 | Recovery after cap | `fpAfterMaxSequenceCountPolicy` | R12 |
 | SC-11 | StartFrameSpacingMin vs T (Y) | `StartFrameSpacingMin`, `minHalfPressBeforeShutter` | R4, R6, R7 |
-| SC-12 | HP only (PIR Gap minimum) | `wakeHalfPressHoldTime`, `wakeHoldRefreshPolicy` | R1, R2, R13 |
+| SC-12 | HP only (PIR Gap minimum) | `wakeHalfPressHoldTime` | R1, R2, R13 |
 | SC-13 | Input line bounce (debounce) | `halfPressInputDebounce`, `fullPressInputDebounce` | R1, R10b |
 | SC-14 | Held vs pulsed FP input | `fullPressInputDebounce` | R10b |
 | SC-15 | Power-save performance budget | `powerSaveIdleMode` | R4 |
@@ -79,7 +79,7 @@ Each defined scenario uses:
 **Expected behavior**
 
 1. On HP: assert camera HP ON; start `wakeHalfPressHoldTime` (R1, R13).
-2. At t=1.0 s: HP lead ≥ `minHalfPressBeforeShutter` → **sequence 1** starts; schedule `FrameCount` frames (R4, R10b); **extend** remaining `wakeHalfPressHoldTime` from FP accept (R15).
+2. At t=1.0 s: HP lead ≥ `minHalfPressBeforeShutter` → **sequence 1** starts; schedule `FrameCount` frames (R4, R10b). Accepted FP does not refresh wake timer (R15).
 3. Fire frames on `StartFrameSpacingMin` schedule (rising-edge to rising-edge on FP OUT starts, R6) with `shutterPulseDuration` each (R5); HP latched throughout (R7); `minHalfPressBeforeShutter` only gates frame 1 if needed (see behavior-spec burst scheduling).
 4. After last frame: hold HP for `PostShutterHalfPressHoldTimeExtension` (R11). Activity ends; release HP → idle.
 
@@ -235,16 +235,16 @@ sequenceDiagram
 
 **Intent:** Glitchy wide PIR keeps pulsing HP input while waiting for subject.
 
-**Preconditions:** Idle or wake-active, no FP yet (wake hold only — before activity / R15 sequence extends).
+**Preconditions:** Idle or wake-active, no FP yet (wake hold only).
 
 **Input timeline:** HP pulses at irregular intervals within the hold window.
 
 **Expected behavior**
 
-- Registry default `wakeHoldRefreshPolicy = extend`: each debounced HP pulse **extends** remaining `wakeHalfPressHoldTime` from that edge; camera HP OUT stays on.
-- Other allowed values (`restart`, `ignoreWhileActive`) and per-value behavior: [parameters.md § `wakeHoldRefreshPolicy`](parameters.md#wakeholdrefreshpolicy).
+- Repeated HP pulses while HP is already latched do not extend wake timeout.
+- HP release timing remains governed by initial wake timeout and post-frame hold rule (R15).
 
-**Parameters:** `wakeHoldRefreshPolicy`, `wakeHalfPressHoldTime`, `halfPressInputDebounce`
+**Parameters:** `wakeHalfPressHoldTime`, `halfPressInputDebounce` (`wakeHoldRefreshPolicy` is a legacy/no-op compatibility field)
 
 **Rules:** R1
 
@@ -254,7 +254,7 @@ sequenceDiagram
 
 **Status:** defined
 
-**Intent:** First sequence finishes; another FP arrives soon after. Same **activity** (HP often still latched); must respect AF (R4) and sequence boundary (R12). Each sequence extends wake/HP hold (R15).
+**Intent:** First sequence finishes; another FP arrives soon after. Same **activity** (HP often still latched); must respect AF (R4) and sequence boundary (R12). FP acceptance does not refresh wake timeout (R15).
 
 **Preconditions:** Sequence 1 burst complete; `sequencesStartedThisActivity = 1`; `MaxSequenceCount ≥ 2`.
 
@@ -271,7 +271,7 @@ sequenceDiagram
 2. Before first FP **output** of sequence 2 (R12, R4):
    - Sequence 1 burst schedule **complete**; `fullPressIgnoreGap` elapsed (R10 ended)
    - `minHalfPressBeforeShutter` satisfied (often already met if HP never dropped)
-3. On sequence 2 FP accept, **extend** remaining `wakeHalfPressHoldTime` (R15).
+3. On sequence 2 FP accept, do not refresh wake timeout; release still follows max-rule timing (R15).
 4. Sequence 2 runs `FrameCount` frames; R10 ignore applies for `fullPressIgnoreGap` on sequence 2.
 
 **Parameters:** `minHalfPressBeforeShutter`, `MaxSequenceCount`, `FrameCount`, `PostShutterHalfPressHoldTimeExtension`, `StartFrameSpacingMin`
@@ -310,7 +310,7 @@ sequenceDiagram
 
 - Treat as **start of new sequence** (R12) in same activity if under `MaxSequenceCount`.
 - Prior sequence must be **complete** (R10 cleared).
-- On FP accept, **extend** remaining `wakeHalfPressHoldTime` (R15). May shorten remainder of post-burst hold when next sequence is accepted.
+- On FP accept, do not refresh wake timeout (R15). HP release remains governed by the max-rule hold boundary.
 
 **Parameters:** `PostShutterHalfPressHoldTimeExtension`, `minHalfPressBeforeShutter`
 
@@ -332,7 +332,7 @@ sequenceDiagram
 
 1. Assert camera HP immediately (R3; `fullPressWithoutPriorHpPolicy = assertHpThenWait` — see [parameters.md § `fullPressWithoutPriorHpPolicy`](parameters.md#fullpresswithoutpriorhppolicy)).
 2. Wait `minHalfPressBeforeShutter` (R4).
-3. Run burst per `FrameCount` (R5–R6); on accept, **extend** `wakeHalfPressHoldTime` (R15).
+3. Run burst per `FrameCount` (R5–R6); accepted FP does not refresh wake timeout (R15).
 
 **Parameters:** `minHalfPressBeforeShutter`, `fullPressWithoutPriorHpPolicy`, `FrameCount`
 
@@ -385,11 +385,11 @@ sequenceDiagram
 
 **Expected behavior**
 
-- HP input may **extend** remaining `wakeHalfPressHoldTime` per `wakeHoldRefreshPolicy = extend` (R1); does **not** schedule frames without FP.
+- HP input alone does not schedule frames and does not refresh wake timeout while HP is already latched (R1, R15).
 - FP during this window → SC-05b (R12, R15 on accept).
 - When post-burst hold ends and sequence cap still allows more sequences, firmware returns to wake/AF waiting for the next FP; it does not end solely because wake deadline elapsed during active hold.
 
-**Parameters:** `PostShutterHalfPressHoldTimeExtension`, `wakeHoldRefreshPolicy`
+**Parameters:** `PostShutterHalfPressHoldTimeExtension` (`wakeHoldRefreshPolicy` is a legacy/no-op compatibility field)
 
 **Rules:** R1, R11
 
@@ -505,7 +505,7 @@ Use `wakeHalfPressHoldTime` = 10 s (illustrative default) unless testing a short
 **Expected behavior**
 
 1. First debounced HP: assert camera HP OUT; start `wakeHalfPressHoldTime` (R1).
-2. Further debounced HP pulses before any accepted FP: refresh hold per `wakeHoldRefreshPolicy` (default `extend` — SC-04b); HP OUT stays on (R13 does not apply yet — no activity until first accepted FP).
+2. Further debounced HP pulses before any accepted FP: do not move the wake deadline while HP is already latched; HP OUT stays on until timeout from the initial assert (R1, SC-04b).
 3. No FP IN → no FP OUT, `sequencesStartedThisActivity` stays 0 (R10b never starts a sequence).
 4. When `wakeHalfPressHoldTime` expires with no accepted FP: release HP OUT → idle (R2).
 
@@ -519,7 +519,7 @@ Use `wakeHalfPressHoldTime` = 10 s (illustrative default) unless testing a short
 
 **Note:** If narrow PIR **does** fire during a later SC-01-style shoot, retriggers during a burst are covered by SC-02 / SC-03 (`fullPressIgnoreGap`, R10) — not part of this HP-only test.
 
-**Parameters:** PIR Gap minimum, `wakeHalfPressHoldTime`, `wakeHoldRefreshPolicy`, `halfPressInputDebounce`
+**Parameters:** PIR Gap minimum, `wakeHalfPressHoldTime`, `halfPressInputDebounce`
 
 **Rules:** R1, R2, R13
 
@@ -742,7 +742,7 @@ Record debounce settings, temperature, and supply voltage in the log. Outliers f
 **Expected behavior**
 
 1. HP pulse asserts camera HP OUT and starts the wake hold (R1).
-2. FP is accepted and starts sequence 1 if gates pass; accepting the sequence extends `wakeHalfPressHoldTime` from FP accept (R15).
+2. FP is accepted and starts sequence 1 if gates pass; accepted FP does not refresh wake timeout (R15).
 3. Camera HP OUT remains asserted through the burst and `PostShutterHalfPressHoldTimeExtension` even though HP input is released (R7, R13).
 4. If the HP lead at FP accept is shorter than `minHalfPressBeforeShutter`, frame 1 waits until HP OUT has been active for T (R4).
 5. Frames 2..N follow `StartFrameSpacingMin`; no extra T wait is inserted while HP OUT remains latched.

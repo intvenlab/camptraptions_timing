@@ -119,7 +119,7 @@ struct CameraConfig {
   uint8_t fpDebounceMs;                 // FP input debounce
   uint8_t frameCount;                   // N frames per sequence (1-8)
   uint8_t maxSequenceCount;             // Max sequences per activity (1-8)
-  uint8_t wakeHoldRefreshPolicy;        // 0=extend, 1=restart, 2=ignore
+  uint8_t wakeHoldRefreshPolicy;        // legacy encoded field; currently no-op for wake deadline timing
   uint8_t halfPressDuringBurstPolicy;   // Reserved (0)
   uint8_t fullPressWithoutHpPolicy;     // 0=assertHp, 1=ignoreFP
   uint8_t activityHalfPressHoldPolicy;  // Reserved (0)
@@ -166,10 +166,10 @@ struct CameraConfig {
 **Exit to CAM_IDLE:** Wake timeout with no accepted FP
 
 **Actions:**
-- HP trigger refreshes timer per `wakeHoldRefreshPolicy`
+- HP trigger records refresh telemetry only; wake deadline remains anchored to initial HP assert
 - Timeout check: `timeReached(now, wakeHoldDeadlineMs)` before activity
 - FP accept calls `startSequence()`, increments `sequencesStartedThisActivity`
-- Sequence accept sets `fullPressIgnoreUntilMs` and extends wake hold (R15)
+- Sequence accept sets `fullPressIgnoreUntilMs`; accepted FP does not move wake hold deadline (R15)
 
 ### CAM_COLD_FP_WAIT
 **Purpose:** FP arrived before HP; firmware asserts HP and waits T  
@@ -204,7 +204,7 @@ struct CameraConfig {
 **Actions:**
 - Keep HP_OUT asserted through the activity (R7/R13)
 - Accept FP during Z if the prior sequence is complete, R10 elapsed, and under cap (SC-05b)
-- HP pulses in post-burst hold can refresh wake policy timers (SC-07b)
+- HP pulses in post-burst hold do not move wake hold timing (SC-07b)
 - Do not end solely because wake timeout elapsed while post-burst hold is still active
 
 ## Interrupt Service Routines
@@ -613,7 +613,7 @@ Print pin states periodically:
 ### Camera Logic Tests
 - [ ] HP trigger enters `CAM_WAKE_AF` and does not shoot without FP
 - [ ] Cold FP enters `CAM_COLD_FP_WAIT`, asserts HP, waits T, then fires burst
-- [ ] FP trigger in wake state starts one sequence and extends wake hold
+- [ ] FP trigger in wake state starts one sequence and does not move wake hold deadline
 - [ ] Burst fires correct number of frames
 - [ ] Frame spacing is start-to-start (`StartFrameSpacingMin`)
 - [ ] Post-shutter HP hold accepts another FP after R10 if under cap

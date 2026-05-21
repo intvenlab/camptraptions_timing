@@ -5,7 +5,7 @@
 | Parameter | AKA | Default | Units |
 |-----------|-----|---------|-------|
 | `wakeHalfPressHoldTime` | X | 10 | s |
-| `wakeHoldRefreshPolicy` | — | `extend` | enum |
+| `wakeHoldRefreshPolicy` | — | `legacy-no-op` | enum |
 | `minHalfPressBeforeShutter` | T | 0.5 | s |
 | `fullPressIgnoreGap` | — | 3.1 | s |
 | `FrameCount` | N | 4 | frames |
@@ -22,19 +22,19 @@ Half press is not dropped because of trigger activations during a burst (origina
 
 #### `wakeHalfPressHoldTime`
 
-On a brief wide-PIR half-press (wake) with no full-press yet, the MCU asserts camera HP for this duration (SC-04). Each accepted sequence **extends** the remaining `wakeHalfPressHoldTime` from FP accept (R15). This is **not** a cap on total activity length — activity length is bounded by `MaxSequenceCount`, `FrameCount`, `StartFrameSpacingMin`, `PostShutterHalfPressHoldTimeExtension`, and sequence logic.
+On a brief wide-PIR half-press (wake) with no full-press yet, the MCU asserts camera HP for this duration (SC-04). Trigger activations do not refresh or extend this wake timer. HP release follows the rule: `max(initial HP assert + wakeHalfPressHoldTime, final frame release + PostShutterHalfPressHoldTimeExtension)`.
 
 #### `wakeHoldRefreshPolicy`
 
-Applies when debounced HP **input** arrives while wake/hold logic is active (SC-04b, SC-07b, SC-12), including post-burst hold. It does not change burst frame scheduling (R14) or sequence-accept gating.
+Legacy field retained for backward compatibility. In current requirement-aligned behavior, debounced HP input does not move wake hold timing while HP is already asserted.
 
-**Default:** `extend`
+**Default:** `legacy-no-op`
 
 | Value | Behavior |
 |-------|----------|
-| `extend` | Each debounced HP pulse **extends** the remaining `wakeHalfPressHoldTime` from that edge. Camera HP OUT stays on; the idle timeout moves later with each wake pulse. |
-| `restart` | Each debounced HP pulse **restarts** a full `wakeHalfPressHoldTime` from zero. Camera HP OUT stays on; the timeout is always the full X seconds from the latest HP edge. |
-| `ignoreWhileActive` | HP pulses refresh wake hold only before an activity starts; once activity is active, additional HP pulses do not move the deadline. |
+| `extend` | Reserved legacy encoding. Current firmware behavior does not move wake hold deadline from HP refresh pulses. |
+| `restart` | Reserved legacy encoding. Current firmware behavior does not move wake hold deadline from HP refresh pulses. |
+| `ignoreWhileActive` | Reserved legacy encoding. Current firmware behavior does not move wake hold deadline from HP refresh pulses. |
 
 #### `minHalfPressBeforeShutter`
 
@@ -58,7 +58,7 @@ Maximum number of full-press **sequences** per activity. Limits by count, not wa
 
 #### `PostShutterHalfPressHoldTimeExtension`
 
-After the last shutter in a sequence, **extend** camera HP hold by this duration (R11). HP may stay latched for another sequence; accepting the next sequence may shorten the remainder (R15).
+After the last shutter in a sequence, hold camera HP for this duration (R11). Final HP release is the later of wake timeout or this post-final-frame extension window.
 
 #### `shutterPulseDuration`
 
@@ -156,7 +156,7 @@ PIR v4 menu values (wide/far modes, gap, NUM, C Vars, etc.) live in **[pir-senso
 
 | Parameter | Primary scenarios |
 |-----------|-------------------|
-| `wakeHalfPressHoldTime` | SC-04, SC-12; extended per sequence (R15) |
+| `wakeHalfPressHoldTime` | SC-04, SC-12; fixed from initial HP assert |
 | `wakeHoldRefreshPolicy` | SC-04b, SC-07b, SC-12 |
 | `minHalfPressBeforeShutter` | SC-01, SC-05, SC-06, SC-08 |
 | `fullPressIgnoreGap` | SC-02, SC-03 |

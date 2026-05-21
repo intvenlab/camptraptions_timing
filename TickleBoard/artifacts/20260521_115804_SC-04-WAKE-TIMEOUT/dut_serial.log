@@ -1,0 +1,2 @@
+9907 [DBG_PIN] t=509246 sig=FP_OUT state=INACTIVE reason=endActivity camState=1 hpOutAsserted=1
+9908 [DBG_PIN] t=509246 sig=HP_OUT state=INACTIVE reason=releaseHpOut durMs=10000 camState=1 hpOutAsserted=0

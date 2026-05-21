@@ -1,0 +1,340 @@
+{
+  "camera_rw": {
+    "mismatches": {},
+    "payload_readback_hex": "02010a140a02142314020100000000000000011f",
+    "payload_written_hex": "02010a140a02142314020100000000000000011f",
+    "readback_norm": {
+      "FrameCount": 2,
+      "enabled": 1,
+      "fullPressIgnoreGap": 31
+    },
+    "requested_norm": {
+      "FrameCount": 2,
+      "enabled": 1,
+      "fullPressIgnoreGap": 31
+    }
+  },
+  "case_id": "AO-GAP-BOUNDARY-TRIAD",
+  "check_summary": {
+    "functional_passed": 5,
+    "functional_total": 5,
+    "timing_passed": 3,
+    "timing_total": 3
+  },
+  "checks": [
+    {
+      "category": "functional",
+      "detail": "expected 2, got 2",
+      "name": "frameCount",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "expected 200.0 +/- 5.0, got 199.0",
+      "name": "frameStartSpacingMs",
+      "passed": true
+    },
+    {
+      "category": "functional",
+      "detail": "expected 1, got 1",
+      "name": "telemetryDelta.acceptedFpCount",
+      "passed": true
+    },
+    {
+      "category": "functional",
+      "detail": "expected 1, got 1",
+      "name": "telemetryDelta.ignoredFpDuringGapCount",
+      "passed": true
+    },
+    {
+      "category": "functional",
+      "detail": "expected 2, got 2",
+      "name": "telemetryDelta.rejectedFpAtSequenceCapCount",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "expected range [850.0, 1200.0], got 960.0",
+      "name": "firstFrameGateDelayMs",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "expected >= 0 when measurable, got 39.0",
+      "name": "hpInToHpOutLatencyMs_non_negative",
+      "passed": true
+    },
+    {
+      "category": "functional",
+      "detail": "deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 1, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 2, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1}",
+      "name": "telemetry_delta_sanity",
+      "passed": true
+    }
+  ],
+  "description": "fullPressIgnoreGap just-before/exact/just-after checks",
+  "failure_class": "pass",
+  "fixture_dump": {
+    "edges": [
+      {
+        "signal": "HP_IN",
+        "state": "ACTIVE",
+        "t_ms": 0
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 39
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 100
+      },
+      {
+        "signal": "FP_IN",
+        "state": "ACTIVE",
+        "t_ms": 1000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 1100
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 1960
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 2059
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 2159
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 2259
+      },
+      {
+        "signal": "FP_IN",
+        "state": "ACTIVE",
+        "t_ms": 4000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 4080
+      },
+      {
+        "signal": "FP_IN",
+        "state": "ACTIVE",
+        "t_ms": 4100
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 4180
+      },
+      {
+        "signal": "FP_IN",
+        "state": "ACTIVE",
+        "t_ms": 4200
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 4280
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 9951
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 15000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 15000
+      }
+    ],
+    "malformed_lines": [],
+    "run_id": 1,
+    "snapshots": [
+      "SNAPSHOT HP_IN=INACTIVE FP_IN=INACTIVE HP_OUT=INACTIVE FP_OUT=INACTIVE"
+    ],
+    "warnings": []
+  },
+  "metrics": {
+    "firstFrameAfLeadMs": 1921.0,
+    "firstFrameGateDelayMs": 960.0,
+    "fpInToFpOutLatencyMs": 960.0,
+    "fpInToHpOutLatencyMs": -961.0,
+    "fpPulseWidthMs": 99.5,
+    "frameCount": 2,
+    "frameStartSpacingMs": 199.0,
+    "hpAssertToFinalFrameReleaseMs": 2220.0,
+    "hpHoldAfterLastFrameMs": 7692.0,
+    "hpHoldAfterLastFrameReason": null,
+    "hpInToHpOutLatencyMs": 39.0,
+    "hpInToHpOutLatencyReason": null,
+    "hpOutContinuityMs": 9912.0,
+    "hpOutPreAssertedBeforeHpIn": false,
+    "hpReleaseBeforeFinalFrameDetected": false,
+    "ignoredFpCount": 2,
+    "interSequenceGapMs": null,
+    "secondSequenceStartDelayMs": null,
+    "sequenceCount": 1,
+    "wakeOnlyHoldMs": null
+  },
+  "passed": true,
+  "scenario": "ADDON-GAP-BOUNDARY",
+  "telemetry_after": {
+    "camera_state": 0,
+    "counters": {
+      "acceptedFpCount": 159,
+      "activityCompletedCount": 279,
+      "coldFpSequenceCount": 24,
+      "fpDebounceRejectCount": 2,
+      "hpDebounceRejectCount": 2,
+      "hpIgnoredDuringBurstCount": 12,
+      "hpRefreshCount": 62,
+      "ignoredFpDuringBurstCount": 22,
+      "ignoredFpDuringGapCount": 25,
+      "rejectedFpAtSequenceCapCount": 16,
+      "sequenceCompletedCount": 159,
+      "version": 1,
+      "wakeTimeoutCount": 254
+    },
+    "flags": 0,
+    "frames_fired_this_sequence": 0,
+    "last_event_code": 4,
+    "last_scenario_hint": 1,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 0,
+    "sequences_started_this_activity": 0,
+    "version": 1
+  },
+  "telemetry_before": {
+    "camera_state": 0,
+    "counters": {
+      "acceptedFpCount": 158,
+      "activityCompletedCount": 278,
+      "coldFpSequenceCount": 24,
+      "fpDebounceRejectCount": 2,
+      "hpDebounceRejectCount": 2,
+      "hpIgnoredDuringBurstCount": 12,
+      "hpRefreshCount": 62,
+      "ignoredFpDuringBurstCount": 22,
+      "ignoredFpDuringGapCount": 24,
+      "rejectedFpAtSequenceCapCount": 14,
+      "sequenceCompletedCount": 158,
+      "version": 1,
+      "wakeTimeoutCount": 253
+    },
+    "flags": 0,
+    "frames_fired_this_sequence": 0,
+    "last_event_code": 4,
+    "last_scenario_hint": 1,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 0,
+    "sequences_started_this_activity": 0,
+    "version": 1
+  },
+  "telemetry_deltas": {
+    "acceptedFpCount": 1,
+    "activityCompletedCount": 1,
+    "coldFpSequenceCount": 0,
+    "fpDebounceRejectCount": 0,
+    "hpDebounceRejectCount": 0,
+    "hpIgnoredDuringBurstCount": 0,
+    "hpRefreshCount": 0,
+    "ignoredFpDuringBurstCount": 0,
+    "ignoredFpDuringGapCount": 1,
+    "rejectedFpAtSequenceCapCount": 2,
+    "sequenceCompletedCount": 1,
+    "wakeTimeoutCount": 1
+  },
+  "telemetry_notes": [],
+  "vector": {
+    "case_id": "AO-GAP-BOUNDARY-TRIAD",
+    "description": "fullPressIgnoreGap just-before/exact/just-after checks",
+    "expect": {
+      "fpOut": {
+        "frameSpacingMs": 200,
+        "pulseCount": 2
+      },
+      "telemetryDeltas": {
+        "acceptedFpCount": 1,
+        "ignoredFpDuringGapCount": 1,
+        "rejectedFpAtSequenceCapCount": 2
+      },
+      "timing": {
+        "firstFrameGateDelayMs": {
+          "maxMs": 1200,
+          "minMs": 850
+        }
+      }
+    },
+    "fixture": {
+      "captureAfterLastStimulusMs": 15000
+    },
+    "metrics": [
+      "ignoredFpCount"
+    ],
+    "parameters": {
+      "FrameCount": 2,
+      "enabled": 1,
+      "fullPressIgnoreGap": "3.1s"
+    },
+    "scenario": "ADDON-GAP-BOUNDARY",
+    "stimulus": [
+      {
+        "at_ms": 0,
+        "duration_ms": 100,
+        "signal": "HP_IN_STIM",
+        "state": "active"
+      },
+      {
+        "at_ms": 1000,
+        "duration_ms": 100,
+        "signal": "FP_IN_STIM",
+        "state": "active"
+      },
+      {
+        "at_ms": 4000,
+        "duration_ms": 80,
+        "signal": "FP_IN_STIM",
+        "state": "active"
+      },
+      {
+        "at_ms": 4100,
+        "duration_ms": 80,
+        "signal": "FP_IN_STIM",
+        "state": "active"
+      },
+      {
+        "at_ms": 4200,
+        "duration_ms": 80,
+        "signal": "FP_IN_STIM",
+        "state": "active"
+      }
+    ],
+    "tags": [
+      "addon",
+      "boundary"
+    ]
+  }
+}

@@ -19,7 +19,7 @@ This plan validates the timing MCU behavior described by [scenarios.md](scenario
 | [parameters.md](parameters.md) | Parameter names, defaults, units, and enum behavior |
 | [diagrams/timing-sequences.md](diagrams/timing-sequences.md) | Canonical timing examples and reference waveforms |
 | [pir-sensor-settings.md](pir-sensor-settings.md) | Field PIR setup assumptions, especially PIR Gap minimum |
-| [../firmware/Camtraptions_Firmware.ino](../firmware/Camtraptions_Firmware.ino) | Implemented scaling, defaults, and persisted camera settings |
+| [../Camtraptions_Firmware/Camtraptions_Firmware.ino](../Camtraptions_Firmware/Camtraptions_Firmware.ino) | Implemented scaling, defaults, and persisted camera settings |
 
 ## Validation levels
 
@@ -113,7 +113,7 @@ The Windows client should treat DUT configuration as an adapter layer. The valid
 | `fullPressInputDebounce` | `fpDebounceMs` x 1 ms |
 | `FrameCount` | `frameCount` |
 | `MaxSequenceCount` | `maxSequenceCount` |
-| `wakeHoldRefreshPolicy` | `wakeHoldRefreshPolicy` enum (0 extend / 1 restart / 2 ignoreWhileActive) |
+| `wakeHoldRefreshPolicy` | legacy compatibility enum; current behavior does not move wake deadline on HP refresh pulses |
 | `halfPressDuringBurstPolicy` | `halfPressDuringBurstPolicy` enum (only 0 currently active) |
 | `fullPressWithoutPriorHpPolicy` | `fullPressWithoutHpPolicy` enum |
 | `activityHalfPressHoldPolicy` | `activityHalfPressHoldPolicy` enum (currently fixed/coerced) |
@@ -170,13 +170,13 @@ expect:
   holdExpect:
     noHpReleaseBeforeFinalFrame: true
     requirePostFinalFrameHpRelease: true
+    dropTimeRule:
+      wakeHoldMs: 10000
+      postFinalFrameHoldMs: 2000
   timing:
     firstFrameGateDelayMs:
       minMs: 450
       maxMs: 550
-    hpHoldAfterLastFrameMs:
-      targetMs: 2000
-      toleranceMs: 20
     wakeOnlyHoldMs:
       targetMs: 10000
     interSequenceGapMs:
@@ -198,6 +198,7 @@ If tolerance is not specified in a vector, use this plan's metric-specific defau
 
 - `noHpReleaseBeforeFinalFrame: true` -> fail if any `HP_OUT INACTIVE` edge occurs before the final `FP_OUT INACTIVE` edge in that case/activity.
 - `requirePostFinalFrameHpRelease: true` -> fail if no `HP_OUT INACTIVE` edge is observed after the final frame release.
+- `dropTimeRule` -> assert `HP_OUT` continuity matches `max(wakeHoldMs, hpAssertToFinalFrameReleaseMs + postFinalFrameHoldMs)` within tolerance.
 
 ## Required captured metrics
 
@@ -342,7 +343,7 @@ Use this set unless a scenario or sweep overrides it.
 | Parameter | Value |
 |-----------|-------|
 | `wakeHalfPressHoldTime` | 10 s |
-| `wakeHoldRefreshPolicy` | `extend` |
+| `wakeHoldRefreshPolicy` | `legacy-no-op` |
 | `minHalfPressBeforeShutter` | 0.5 s |
 | `fullPressIgnoreGap` | 3.1 s |
 | `FrameCount` | 4 |
@@ -362,12 +363,12 @@ Use this set unless a scenario or sweep overrides it.
 | SC-02 | Extra FP during sequence | Frame count, ignored FP behavior | Extra FP does not add frames, restart schedule, or drop HP |
 | SC-03 | FP flood during burst | Frame count, ignored FP behavior | Continuous/repeated FP still produces exactly one sequence |
 | SC-04 | HP only, no FP | Wake-only hold | HP OUT releases after `wakeHalfPressHoldTime`; no FP OUT |
-| SC-04b | Repeated HP pulses before activity | HP hold extension | Default `extend` moves timeout later from each valid HP edge |
+| SC-04b | Repeated HP pulses before activity | Wake hold stability | Repeated HP does not move wake timeout; HP release remains at X |
 | SC-05 | Back-to-back sequence | Sequence count, inter-sequence behavior | Second FP starts sequence 2 after gates pass and under cap |
 | SC-05b | FP during post-shutter HP hold | Sequence count, HP continuity | New sequence starts in same activity if under cap and gates pass |
 | SC-06 | Cold FP, no prior HP | FP-to-HP latency, AF lead, burst timing | HP OUT asserts immediately, first FP OUT waits T, burst completes |
 | SC-07 | HP during active burst | Frame schedule stability | HP input does not change `remainingFrames`, add FP OUT, or drop HP |
-| SC-07b | HP during post-burst hold | HP hold extension, no FP OUT | HP may extend hold but does not fire without FP |
+| SC-07b | HP during post-burst hold | HP hold stability, no FP OUT | HP input alone does not fire FP and does not refresh wake timeout |
 | SC-08 | FP before HP | Cold path behavior, HP redundancy | Same as SC-06; later HP does not disturb cold-wait or burst |
 | SC-09 | FP after `MaxSequenceCount` cap | Sequence cap, ignored FP behavior | No sequence above cap; activity follows configured cap policy |
 | SC-10 | Recovery after cap | Reset of activity sequence count | After activity ends, next FP starts a new activity |
@@ -411,13 +412,11 @@ Pulse HP IN at t=0 and do not send FP IN. HP OUT must release after `wakeHalfPre
 
 ### SC-04b - Repeated wake pulses
 
-Run all policy variants:
+Inject repeated HP edges while waiting for FP. Required expectation:
 
-| Policy | Required expectation |
-|--------|----------------------|
-| `extend` | `wakeHoldDeadline` increases by +X per valid HP edge (`deadline += X`) |
-| `restart` | `wakeHoldDeadline = now + X` at each valid HP edge |
-| `ignoreWhileActive` | Refresh allowed before activity starts; once activity is active, HP edges do not move deadline |
+| Condition | Required expectation |
+|-----------|----------------------|
+| repeated debounced HP edges while HP already latched | `wakeHoldDeadline` remains anchored to the initial HP assert (no extension/restart) |
 
 ### SC-05 - Back-to-back sequence
 
@@ -437,7 +436,7 @@ Run a normal burst and inject HP IN pulses between FP OUT frames. The frame sche
 
 ### SC-07b - HP during post-burst hold
 
-Run a sequence, then inject HP IN during the post-burst hold. No FP OUT should occur from HP alone. HP OUT may remain active longer according to `wakeHoldRefreshPolicy`.
+Run a sequence, then inject HP IN during the post-burst hold. No FP OUT should occur from HP alone. HP input must not move wake timeout.
 
 Also verify that when post-burst hold expires and sequence cap allows more sequences, DUT returns to wake/AF waiting for FP (no immediate activity end solely due wake timeout during active hold).
 
@@ -636,7 +635,8 @@ Run targeted pairwise combinations after single-parameter sweeps.
 | First-frame gate delay | `actual first FP OUT start - max(FP accept, HP OUT assert + minHalfPressBeforeShutter)` |
 | Latched burst frame spacing | `current FP OUT start - previous FP OUT start`, expected `>= StartFrameSpacingMin` |
 | Post-burst earliest HP release | `last FP OUT release + PostShutterHalfPressHoldTimeExtension` |
-| Wake-only release | `last accepted HP refresh edge + wakeHalfPressHoldTime` for `extend` |
+| Wake-only release | `initial HP OUT assert + wakeHalfPressHoldTime` |
+| Final HP release target (with frames) | `max(initial HP OUT assert + wakeHalfPressHoldTime, last FP OUT release + PostShutterHalfPressHoldTimeExtension)` |
 
 ## Test report template
 

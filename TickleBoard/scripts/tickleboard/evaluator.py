@@ -124,7 +124,7 @@ def evaluate_case(
                 "expectedMs": expected,
                 "actualMs": actual,
                 "toleranceMs": tol,
-                "deltaMs": actual - expected,
+                "deltaMs": (actual - expected) if actual is not None else None,
             },
         )
         # endregion
@@ -231,6 +231,50 @@ def evaluate_case(
                     category="timing",
                 )
             )
+        drop_time_rule = hold_expect.get("dropTimeRule")
+        if isinstance(drop_time_rule, dict):
+            wake_hold_ms = drop_time_rule.get("wakeHoldMs")
+            post_final_frame_hold_ms = drop_time_rule.get("postFinalFrameHoldMs")
+            hp_continuity_ms = metrics.get("hpOutContinuityMs")
+            hp_to_final_frame_ms = metrics.get("hpAssertToFinalFrameReleaseMs")
+            if (
+                wake_hold_ms is None
+                or post_final_frame_hold_ms is None
+                or hp_continuity_ms is None
+                or hp_to_final_frame_ms is None
+            ):
+                checks.append(
+                    CheckResult(
+                        name="hold.dropTimeRule",
+                        passed=False,
+                        detail=(
+                            "missing input for drop-time rule "
+                            f"(wakeHoldMs={wake_hold_ms}, postFinalFrameHoldMs={post_final_frame_hold_ms}, "
+                            f"hpOutContinuityMs={hp_continuity_ms}, hpAssertToFinalFrameReleaseMs={hp_to_final_frame_ms})"
+                        ),
+                        category="timing",
+                    )
+                )
+            else:
+                wake_hold_value = float(wake_hold_ms)
+                post_hold_value = float(post_final_frame_hold_ms)
+                continuity_value = float(hp_continuity_ms)
+                hp_to_final_value = float(hp_to_final_frame_ms)
+                expected_drop_ms = max(wake_hold_value, hp_to_final_value + post_hold_value)
+                tol_override = drop_time_rule.get("toleranceMs")
+                tol = float(tol_override) if tol_override is not None else _tol(expected_drop_ms, floor_ms=20.0)
+                checks.append(
+                    CheckResult(
+                        name="hold.dropTimeRule",
+                        passed=abs(continuity_value - expected_drop_ms) <= tol,
+                        detail=(
+                            "expected HP_OUT continuity by rule "
+                            f"max({wake_hold_value:.1f}, {hp_to_final_value:.1f}+{post_hold_value:.1f}) "
+                            f"= {expected_drop_ms:.1f} +/- {tol:.1f}, got {continuity_value:.1f}"
+                        ),
+                        category="timing",
+                    )
+                )
 
     if "ignoredFpDuringGapCount" in telemetry_deltas:
         checks.append(
