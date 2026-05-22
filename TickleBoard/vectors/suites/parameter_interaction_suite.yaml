@@ -7,6 +7,7 @@ cases:
   - ../scenarios/SC-05b.yaml
   - ../scenarios/SC-09.yaml
   - ../scenarios/SC-10.yaml
+  - ../scenarios/AO-MAX-SEQUENCE-RANGE-64.yaml
   - ../scenarios/SC-13.yaml
   - ../scenarios/SC-14.yaml
   - ../scenarios/SC-15.yaml

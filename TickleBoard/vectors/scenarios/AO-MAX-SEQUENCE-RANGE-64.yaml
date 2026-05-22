@@ -1,0 +1,30 @@
+id: AO-MAX-SEQUENCE-RANGE-64
+scenario: ADDON-MAX-SEQUENCE-RANGE
+description: MaxSequenceCount accepts values above 8 and allows nine sequences when set to 64
+tags: [addon, cap, range]
+parameters:
+  enabled: 1
+  FrameCount: 1
+  MaxSequenceCount: 64
+  StartFrameSpacingMin: 0.2s
+  fullPressIgnoreGap: 0.5s
+  wakeHalfPressHoldTime: 10s
+fixture: { captureAfterLastStimulusMs: 12000 }
+stimulus:
+  - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 1000, signal: FP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 1700, signal: FP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 2400, signal: FP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 3100, signal: FP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 3800, signal: FP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 4500, signal: FP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 5200, signal: FP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 5900, signal: FP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 6600, signal: FP_IN_STIM, state: active, durationMs: 100 }
+expect:
+  fpOut: { pulseCount: 9, frameSpacingMs: { minMs: 500 } }
+  sequences: 9
+  telemetryDeltas:
+    acceptedFpCount: 9
+    MaxSequenceExceededCount: 0
+metrics: [sequenceCount, frameCount]

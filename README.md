@@ -6,7 +6,7 @@ This repository documents the **inline timing microcontroller** that sits betwee
 
 | If you are… | Read |
 |-------------|------|
-| **Customer** — “what will it do in the field?” | [Operational scenarios](docs/scenarios.md) (SC-01–SC-15) |
+| **Customer** — “what will it do in the field?” | [Operational scenarios](docs/scenarios.md) (SC-01-SC-20) |
 | **Developer** — implementing or integrating firmware | [Scenarios](docs/scenarios.md) → [Behavior spec](docs/behavior-spec.md) → [Parameters](docs/parameters.md) |
 | **Integrator** — wiring and PIR setup | [Architecture](docs/architecture.md) → [PIR sensor settings](docs/pir-sensor-settings.md) |
 | **Validator** — fixture or bench acceptance testing | [Validation test plan](docs/validation-test-plan.md) + [Test report](docs/validation-test-report.md) |
@@ -15,7 +15,7 @@ This repository documents the **inline timing microcontroller** that sits betwee
 
 | Document | Customers | Firmware / integration developers |
 |----------|-----------|-----------------------------------|
-| **[Scenarios](docs/scenarios.md)** | SC-01–SC-15 narratives | All SC-xx acceptance cases |
+| **[Scenarios](docs/scenarios.md)** | SC-01-SC-20 narratives | All SC-xx acceptance cases |
 | [System overview](docs/architecture.md) | Yes | Yes |
 | [Behavior specification](docs/behavior-spec.md) | Summary sections | Yes (rules R1–R15) |
 | [Parameter registry](docs/parameters.md) | MCU defaults & units | Yes — scenario-derived |

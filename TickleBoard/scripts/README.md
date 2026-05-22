@@ -12,6 +12,7 @@
 - `run-sc15 <vector>` - repeated enabled/disabled latency budget check
 - `ble-smoke` - discover + read/write/readback/restore BLE parameter smoke test
 - `ble-telemetry-smoke` - read beacon + telemetry payload and print decoded runtime details
+- `gen-parameter-sweep` - generate a comprehensive parameter-sweep vector pack + suite
 - `report <rollup.json>` - render markdown/csv report from rollup JSON
 
 ## Python modules (`tickleboard/`)
@@ -33,6 +34,17 @@ By default artifacts are written under `TickleBoard/artifacts/`:
 - per-case `result.json`
 - per-case `raw_edges.log`
 - suite rollups in `.json`, `.md`, `.csv`
+- generated sweep vectors under `TickleBoard/vectors/generated/parameter_sweep/`
+
+### Parameter sweep generator
+
+- Build sweep vectors/suite:
+  - `python TickleBoard/scripts/tickle_cli.py gen-parameter-sweep`
+- Generated suite path:
+  - `TickleBoard/vectors/suites/parameter_sweep_suite.yaml`
+- Coverage:
+  - timing grid (`StartFrameSpacingMin` x `shutterPulseDuration` x `FrameCount`)
+  - cap/gap interaction grid (`MaxSequenceCount` x `fullPressIgnoreGap`)
 
 ### No-BLE behavior
 

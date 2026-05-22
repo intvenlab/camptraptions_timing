@@ -120,12 +120,12 @@ struct CameraConfig {
   uint8_t hpDebounceMs;                 // default 35
   uint8_t fpDebounceMs;                 // default 20
   uint8_t frameCount;                   // N frames per sequence (default 4, range 1–8)
-  uint8_t maxSequenceCount;             // max sequences per activity (default 4, range 1–8)
+  uint8_t maxSequenceCount;             // max sequences per activity (default 4, range 1–64)
   uint8_t wakeHoldRefreshPolicy;        // 0=extend 1=restart 2=ignoreWhileActive
   uint8_t halfPressDuringBurstPolicy;   // 0=independent
   uint8_t fullPressWithoutHpPolicy;     // 0=assertHpThenWait 1=ignoreFP
   uint8_t activityHalfPressHoldPolicy;  // 0=holdUntilActivityEnd
-  uint8_t fpAfterMaxSeqCountPolicy;     // 0=ignoreUntilActivityEnd
+  uint8_t fpAfterMaxSeqCountPolicy;     // legacy compatibility byte (cap behavior is timeout-based)
   uint8_t inputActivePolarity;          // 0=activeLow 1=activeHigh
   uint8_t outputDriveMode;              // 0=openDrain 1=pushPull
   uint8_t powerSaveIdleMode;            // 0=disabled 1=enabled (default)
@@ -168,7 +168,7 @@ struct CameraTelemetryCounters {
   uint32_t acceptedFpCount;
   uint32_t ignoredFpDuringGapCount;
   uint32_t ignoredFpDuringBurstCount;
-  uint32_t rejectedFpAtSequenceCapCount;
+  uint32_t MaxSequenceExceededCount;
   uint32_t coldFpSequenceCount;
   uint32_t hpRefreshCount;
   uint32_t hpIgnoredDuringBurstCount;
@@ -260,6 +260,7 @@ static uint32_t    lastFpOutStartMs         = 0;
 static uint32_t    fpOutReleaseMs           = 0;  // when to release FP_OUT (0 = idle)
 static uint32_t    postShutterHoldUntilMs   = 0;
 static uint32_t    fullPressIgnoreUntilMs   = 0;  // reject FP triggers during R10 window
+static uint32_t    maxSequenceTimeoutUntilMs = 0; // post-cap input ignore window
 static bool        fpAcceptedAtGapBoundary  = false;
 static uint32_t    hpOutRecoveryCount       = 0;  // guard count for unexpected HP_OUT drops while active
 static bool        pendingCamCfgApply       = false;
@@ -314,12 +315,14 @@ uint32_t startFrameSpacingMs();
 uint32_t postShutterHoldMs();
 uint32_t wakeHalfPressHoldMs();
 uint32_t fullPressIgnoreGapMs();
+uint32_t maxSequenceTimeoutMs();
+bool maxSequenceTimeoutActive(uint32_t now);
+void beginMaxSequenceTimeout(uint32_t now);
 bool hpLeadSatisfied(uint32_t now);
 bool underSequenceCap();
 bool tryAcceptFp(uint32_t now);
 void startSequence(uint32_t now);
 void endActivity();
-void handleFpAfterCap();
 void runBurstScheduler(uint32_t now);
 void processCameraLogic();
 void idleWaitWithCameraWake(uint32_t durationMs);
@@ -634,7 +637,7 @@ void sanitizeCameraConfig(CameraConfig &cfgToSanitize) {
   if (cfgToSanitize.frameCount < 1) cfgToSanitize.frameCount = 1;
   if (cfgToSanitize.frameCount > 8) cfgToSanitize.frameCount = 8;
   if (cfgToSanitize.maxSequenceCount < 1) cfgToSanitize.maxSequenceCount = 1;
-  if (cfgToSanitize.maxSequenceCount > 8) cfgToSanitize.maxSequenceCount = 8;
+  if (cfgToSanitize.maxSequenceCount > 64) cfgToSanitize.maxSequenceCount = 64;
 
   if (cfgToSanitize.wakeHoldRefreshPolicy > 2) cfgToSanitize.wakeHoldRefreshPolicy = 0;
   if (cfgToSanitize.halfPressDuringBurstPolicy != 0) cfgToSanitize.halfPressDuringBurstPolicy = 0;
@@ -867,7 +870,11 @@ void populateTelemetryPayload() {
   telPayload.lastEventCode = lastTelemetryEvent;
   telPayload.lastScenarioHint = lastTelemetryScenario;
   telPayload.msUntilWakeDeadline = remainingMs(now, wakeHoldDeadlineMs);
-  telPayload.msUntilFpIgnoreClear = remainingMs(now, fullPressIgnoreUntilMs);
+  uint32_t msUntilGapClear = remainingMs(now, fullPressIgnoreUntilMs);
+  uint32_t msUntilCapTimeoutClear = remainingMs(now, maxSequenceTimeoutUntilMs);
+  telPayload.msUntilFpIgnoreClear = msUntilGapClear > msUntilCapTimeoutClear
+                                  ? msUntilGapClear
+                                  : msUntilCapTimeoutClear;
   telPayload.msUntilNextFrame = remainingMs(now, nextFrameMs);
   telPayload.msUntilPostHoldEnd = remainingMs(now, postShutterHoldUntilMs);
   noInterrupts();
@@ -1347,6 +1354,20 @@ uint32_t fullPressIgnoreGapMs() {
   return (uint32_t)camCfg.fullPressIgnoreGapTenths * 100UL;
 }
 
+uint32_t maxSequenceTimeoutMs() {
+  return startFrameSpacingMs() * (uint32_t)camCfg.frameCount;
+}
+
+bool maxSequenceTimeoutActive(uint32_t now) {
+  return maxSequenceTimeoutUntilMs != 0 && !timeReached(now, maxSequenceTimeoutUntilMs);
+}
+
+void beginMaxSequenceTimeout(uint32_t now) {
+  maxSequenceTimeoutUntilMs = now + maxSequenceTimeoutMs();
+  // Cap transition tears down the current activity before entering lockout.
+  endActivity();
+}
+
 bool hpLeadSatisfied(uint32_t now) {
   return hpOutAsserted && (now - hpAssertedMs >= minHalfPressMs());
 }
@@ -1365,8 +1386,9 @@ bool tryAcceptFp(uint32_t now) {
     return false;
   }
   if (!underSequenceCap()) {
-    telCounters.rejectedFpAtSequenceCapCount++;
+    telCounters.MaxSequenceExceededCount++;
     markTelemetryChanged(TEL_EVT_FP_REJECT_CAP, TEL_SC_SEQUENCE_CAP, false);
+    beginMaxSequenceTimeout(now);
     return false;
   }
   if (fullPressIgnoreUntilMs != 0 && now == fullPressIgnoreUntilMs) {
@@ -1445,12 +1467,6 @@ void endActivity() {
   }
 }
 
-void handleFpAfterCap() {
-  if (camCfg.fpAfterMaxSeqCountPolicy == 1) {
-    endActivity();
-  }
-}
-
 void runBurstScheduler(uint32_t now) {
   if (fpOutReleaseMs != 0 && timeReached(now, fpOutReleaseMs)) {
     releaseFpOut(now, "burstPulseComplete");
@@ -1503,6 +1519,13 @@ void processCameraLogic() {
   if (fpPulseFlag) { fpPulseFlag = false; fpTrig = true; }
   interrupts();
 
+  if (maxSequenceTimeoutActive(now)) {
+    hpTrig = false;
+    fpTrig = false;
+  } else if (maxSequenceTimeoutUntilMs != 0) {
+    maxSequenceTimeoutUntilMs = 0;
+  }
+
   switch (cameraState) {
 
     // ── IDLE ──────────────────────────────────────────────────────────────────
@@ -1543,8 +1566,6 @@ void processCameraLogic() {
         if (tryAcceptFp(now)) {
           startSequence(now);
           runBurstScheduler(now);
-        } else if (!underSequenceCap()) {
-          handleFpAfterCap();
         }
         break;
       }
@@ -1581,8 +1602,6 @@ void processCameraLogic() {
         if (tryAcceptFp(now)) {
           startSequence(now);
           runBurstScheduler(now);
-        } else if (!underSequenceCap()) {
-          handleFpAfterCap();
         } else {
           endActivity();
         }
@@ -1622,23 +1641,14 @@ void processCameraLogic() {
         if (tryAcceptFp(now)) {
           startSequence(now);
           runBurstScheduler(now);
-        } else if (!underSequenceCap()) {
-          handleFpAfterCap();
         }
         break;
       }
 
       if (timeReached(now, postShutterHoldUntilMs)) {
-        if (!underSequenceCap()) {
-          // Keep cap context alive until idle timeout so post-cap FP is rejected
-          // according to fpAfterMaxSeqCountPolicy.
-          activityActive = false;
-          cameraState = CAM_WAKE_AF;
-        } else {
-          // Keep wake path alive between sequences; do not end solely on wake timer.
-          activityActive = false;
-          cameraState = CAM_WAKE_AF;
-        }
+        // Keep wake path alive between sequences; do not end solely on wake timer.
+        activityActive = false;
+        cameraState = CAM_WAKE_AF;
       }
       break;
   }

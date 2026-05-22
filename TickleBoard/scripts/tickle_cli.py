@@ -12,6 +12,7 @@ from tickleboard.artifacts import write_json
 from tickleboard.ble_adapter import DutBleAdapter
 from tickleboard.constants import CAMERA_FIELDS
 from tickleboard.fixture_client import FixtureClient
+from tickleboard.parameter_sweep import build_parameter_sweep_vectors
 from tickleboard.reporting import write_csv_rollup, write_markdown_report
 from tickleboard.runner import classify_ble_requirement, preflight, run_case, run_sc15_budget
 from tickleboard.telemetry import format_snapshot, parse_payload
@@ -396,6 +397,12 @@ def cmd_ble_telemetry_smoke(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_gen_parameter_sweep(args: argparse.Namespace) -> int:
+    out = build_parameter_sweep_vectors(args.vectors_root)
+    print(json.dumps(out, indent=2))
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="TickleBoard validation framework")
     parser.add_argument(
@@ -465,6 +472,17 @@ def main() -> int:
     tsmoke.add_argument("--timeout", type=float, default=8.0)
     tsmoke.add_argument("--name-filter", default="Tickle")
 
+    gps = sub.add_parser(
+        "gen-parameter-sweep",
+        help="Generate parameter sweep vectors/suite for timing + cap/gap interactions",
+    )
+    gps.add_argument(
+        "--vectors-root",
+        type=Path,
+        default=Path("TickleBoard") / "vectors",
+        help="Vectors root directory (default: TickleBoard/vectors)",
+    )
+
     args = parser.parse_args()
     args.artifacts.mkdir(parents=True, exist_ok=True)
 
@@ -489,6 +507,8 @@ def main() -> int:
             return cmd_ble_smoke(args)
         if args.cmd == "ble-telemetry-smoke":
             return cmd_ble_telemetry_smoke(args)
+        if args.cmd == "gen-parameter-sweep":
+            return cmd_gen_parameter_sweep(args)
     except Exception as exc:  # noqa: BLE001
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2

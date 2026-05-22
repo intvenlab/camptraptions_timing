@@ -1,0 +1,66 @@
+id: SW-CAPGAP-M04-G3100
+scenario: SWEEP-CAP-GAP
+description: 'Interaction sweep case: verify fullPressIgnoreGap boundary behavior
+  and MaxSequenceCount cap behavior together.'
+tags:
+- sweep
+- cap-gap
+- generated
+requiresBle: true
+parameters:
+  enabled: 1
+  wakeHalfPressHoldTime: 10s
+  minHalfPressBeforeShutter: 0.5s
+  shutterPulseDuration: 100ms
+  StartFrameSpacingMin: 1.0s
+  PostShutterHalfPressHoldTimeExtension: 2.0s
+  halfPressInputDebounce: 35ms
+  fullPressInputDebounce: 20ms
+  FrameCount: 1
+  MaxSequenceCount: 4
+  wakeHoldRefreshPolicy: 0
+  halfPressDuringBurstPolicy: 0
+  fullPressWithoutPriorHpPolicy: 0
+  activityHalfPressHoldPolicy: 0
+  fpAfterMaxSequenceCountPolicy: 0
+  inputActivePolarity: 0
+  outputDriveMode: 0
+  powerSaveIdleMode: 1
+  fullPressIgnoreGap: 3.1s
+fixture:
+  captureAfterLastStimulusMs: 13000
+stimulus:
+- atMs: 0
+  signal: HP_IN_STIM
+  state: active
+  durationMs: 100
+- atMs: 1000
+  signal: FP_IN_STIM
+  state: active
+  durationMs: 100
+- atMs: 4000
+  signal: FP_IN_STIM
+  state: active
+  durationMs: 80
+- atMs: 4250
+  signal: FP_IN_STIM
+  state: active
+  durationMs: 100
+expect:
+  fpOut:
+    pulseCount: 2
+  sequences: 2
+  telemetryDeltas:
+    acceptedFpCount: 2
+    ignoredFpDuringGapCount: 1
+    MaxSequenceExceededCount: 0
+    sequenceCompletedCount: 2
+  timing:
+    firstFrameGateDelayMs:
+      minMs: 0
+      maxMs: 100
+metrics:
+- frameCount
+- sequenceCount
+- firstFrameGateDelayMs
+- ignoredFpCount

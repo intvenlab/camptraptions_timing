@@ -68,10 +68,11 @@ HP **input release** is not mirrored to camera HP OUT in state-machine mode. HP 
 | R10 | From **sequence start** (accepted FP that schedules the burst), ignore all FP **inputs** for `fullPressIgnoreGap` — no second sequence and no extra frames in that window. Telemetry reject counters may still increment for those ignored inputs. Covers PIR retrigger flood when PIR **Gap = minimum**. Set **≥** typical burst length; default estimate `(FrameCount - 1) × StartFrameSpacingMin + shutterPulseDuration`. |
 | R10b | An FP **input** is accepted and **starts a new sequence** only when the burst schedule is not in progress, `fullPressIgnoreGap` has elapsed since that sequence’s start, `sequencesStartedThisActivity < MaxSequenceCount`, and R4/R12 gates pass. A retrigger while HP is still latched is taken as soon as these gates clear. |
 | R11 | After the last frame of a sequence’s burst schedule, hold HP for `PostShutterHalfPressHoldTimeExtension`. If another sequence may still start (under `MaxSequenceCount`), HP may remain latched; release HP only when activity ends. |
-| R12 | A new **sequence** begins when an FP is accepted after the prior sequence’s burst **schedule** is complete, within the same activity, until `MaxSequenceCount` is reached. R4 applies before the first FP output of that sequence. |
+| R12 | A new **sequence** begins when an FP is accepted after the prior sequence’s burst **schedule** is complete and normal gates pass. R4 applies before the first FP output of that sequence. |
 | R13 | While activity is active (any sequence in progress, between sequences, or post-burst with sequences remaining), camera HP must not be released solely because `wakeHalfPressHoldTime` expired (`activityHalfPressHoldPolicy = holdUntilActivityEnd`). |
 | R14 | HP **input** during an active burst does not change `remainingFrames`, does not emit FP, and does not release camera HP (`halfPressDuringBurstPolicy = independent`). |
 | R15 | Final HP release time is `max(initial HP assert + wakeHalfPressHoldTime, final frame release + PostShutterHalfPressHoldTimeExtension)`. Accepted FP/sequence starts do not refresh wake deadline. |
+| TimeOut | When `sequencesStartedThisActivity >= MaxSequenceCount` and another FP arrives, enter timeout for `StartFrameSpacingMin * FrameCount`. During timeout, ignore FP and HP inputs for sequence triggering. After timeout expires, normal acceptance resumes. |
 
 ## Half-press without full-press (timeout path)
 
@@ -189,9 +190,9 @@ The **actual** gap since the previous frame may be **longer than** `StartFrameSp
 
 **Sequence ends when:** that sequence’s burst schedule is complete and its `PostShutterHalfPressHoldTimeExtension` has run (unless cut short by accepting the next sequence).
 
-**Activity ends when:** no further sequence will start (`MaxSequenceCount` reached or no more FP), wake hold expired, and HP released.
+**Activity ends when:** no further sequence will start, wake hold expired, and HP released.
 
-**New sequence on FP:** After the prior sequence’s burst schedule is complete, a debounced FP may start the next sequence in the **same activity** (R12), incrementing `sequencesStartedThisActivity`, until `MaxSequenceCount`.
+**New sequence on FP:** After the prior sequence’s burst schedule is complete, a debounced FP may start the next sequence (R12), incrementing `sequencesStartedThisActivity` while under cap.
 
 **Gates before first FP output of a new sequence:**
 

@@ -50,7 +50,11 @@ Number of shutter (full-press output) activations per accepted trigger — one *
 
 #### `MaxSequenceCount`
 
-Maximum number of full-press **sequences** per activity. Limits by count, not wall-clock (SC-05, SC-09).
+Maximum number of full-press **sequences** accepted before cap timeout behavior engages. Limits by count, not wall-clock (SC-05, SC-09).
+
+- Valid range: `1..64`
+- Default: `4`
+- On cap hit (`sequencesStartedThisActivity >= MaxSequenceCount`), firmware enters **TimeOut** and ignores FP/HP inputs for `StartFrameSpacingMin * FrameCount`, then resumes normal acceptance.
 
 #### `StartFrameSpacingMin`
 
@@ -100,20 +104,15 @@ Applies for the whole **activity** — from first accepted FP through the last s
 
 | Value | Behavior |
 |-------|----------|
-| `holdUntilActivityEnd` | Camera HP OUT must **not** be released solely because `wakeHalfPressHoldTime` expired while the activity is still active (any sequence in progress, between sequences, or waiting for another FP under `MaxSequenceCount`). HP is released when the activity ends (cap reached, no further sequences, and idle/timeout logic completes). |
+| `holdUntilActivityEnd` | Camera HP OUT must **not** be released solely because `wakeHalfPressHoldTime` expired while the activity is still active (any sequence in progress or between sequences while under cap). HP is released when the activity ends through normal idle/timeout teardown. |
 
 Only this value is currently implemented. Other policy encodings are reserved and coerced to `holdUntilActivityEnd` on write/load.
 
 #### `fpAfterMaxSequenceCountPolicy`
 
-Applies when `sequencesStartedThisActivity >= MaxSequenceCount` and another debounced FP **input** arrives (SC-09). Separate from R10 (intra-sequence FP ignore during `fullPressIgnoreGap`).
+Legacy compatibility byte retained in camera config layout. Runtime cap handling is now timeout-based and does not branch behavior by this field.
 
-**Default:** `ignoreUntilActivityEnd`
-
-| Value | Behavior |
-|-------|----------|
-| `ignoreUntilActivityEnd` | Further FP inputs **do not** start a new sequence and **do not** add frames. Activity continues until normal end conditions (HP released, idle). SC-10: after that activity ends, the next FP starts a **new** activity with `sequencesStartedThisActivity = 0`. |
-| `endActivityImmediately` | On FP after the cap, **end the activity now**: stop accepting new sequences, run activity teardown, and release camera HP OUT without waiting for further idle timeout. **Not** the registry default. |
+**Current behavior:** when cap is reached, firmware enters TimeOut for `StartFrameSpacingMin * FrameCount`, ignores FP/HP inputs during that window, then resumes normal sequence acceptance.
 
 #### `inputActivePolarity`
 
@@ -163,8 +162,8 @@ PIR v4 menu values (wide/far modes, gap, NUM, C Vars, etc.) live in **[pir-senso
 | `FrameCount` | SC-01, SC-02, SC-03 (frames per sequence) |
 | `MaxSequenceCount` | SC-05, SC-09 |
 | `StartFrameSpacingMin` | SC-01, SC-11 |
+| `TimeOut on MaxSequenceCount` | SC-09, SC-10 |
 | `activityHalfPressHoldPolicy` | SC-03, SC-07 |
-| `fpAfterMaxSequenceCountPolicy` | SC-09 |
 | `halfPressDuringBurstPolicy` | SC-07 |
 | `fullPressWithoutPriorHpPolicy` | SC-06, SC-08 |
 | `PostShutterHalfPressHoldTimeExtension` | SC-01, SC-05b (per sequence) |

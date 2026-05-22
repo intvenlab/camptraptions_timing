@@ -1,19 +1,20 @@
 id: SC-10-RECOVERY-AFTER-CAP
 scenario: SC-10
-description: New event after cap end starts fresh activity
+description: Recovery after cap timeout resumes sequence starts
 tags: [core, cap]
-parameters: { enabled: 1, FrameCount: 2, MaxSequenceCount: 1 }
+parameters: { enabled: 1, FrameCount: 2, MaxSequenceCount: 1, StartFrameSpacingMin: 1.0s }
 fixture: { captureAfterLastStimulusMs: 20000 }
 stimulus:
   - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
   - { atMs: 1000, signal: FP_IN_STIM, state: active, durationMs: 100 }
-  - { atMs: 12000, signal: FP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 5000, signal: FP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 7300, signal: FP_IN_STIM, state: active, durationMs: 100 }
 expect:
   fpOut: { pulseCount: 4, frameSpacingMs: 1000 }
   sequences: 2
   timing:
-    interSequenceGapMs: { minMs: 5000 }
+    interSequenceGapMs: { minMs: 2000 }
   telemetryDeltas:
     acceptedFpCount: 2
-    rejectedFpAtSequenceCapCount: 0
+    MaxSequenceExceededCount: 1
 metrics: [sequenceCount, frameCount]

@@ -63,7 +63,10 @@ flowchart TD
     M -->|Yes| D
     L --> P{sequences less than MaxSequenceCount?}
     P -->|Yes FP SC05| H
-    P -->|No cap SC09| Q[ignore FP until activity end]
+    P -->|No cap SC09| Q[timeout lockout duration Y times N]
+    Q --> R[ignore FP and HP inputs]
+    R --> S{timeout elapsed?}
+    S -->|Yes SC10| H
     N[FP during sequence SC02] --> O[discard R10]
     O --> H
 ```
@@ -78,7 +81,7 @@ flowchart TD
 | Burst active | SC-01–SC-03 | Exposures firing; extra FP inputs ignored (R10) |
 | Post-shutter HP extension | SC-01, SC-05b | HP still on after last frame (`PostShutterHalfPressHoldTimeExtension`) |
 | Second sequence same activity | SC-05, SC-05b | HP usually still latched; new burst |
-| At max sequences | SC-09 | Further FP cannot start sequences until activity ends |
+| At max sequences | SC-09 | Cap starts timeout lockout; FP/HP ignored until timeout clears |
 
 ## Exception entry points
 

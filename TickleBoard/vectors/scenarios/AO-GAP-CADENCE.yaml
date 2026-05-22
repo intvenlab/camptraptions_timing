@@ -34,6 +34,6 @@ expect:
     acceptedFpCount: 1
     ignoredFpDuringGapCount: 0
     ignoredFpDuringBurstCount: 0
-    rejectedFpAtSequenceCapCount: 0
+    MaxSequenceExceededCount: 0
     sequenceCompletedCount: 1
 metrics: [frameStartSpacingMs, ignoredFpCount]

@@ -37,6 +37,6 @@ expect:
     acceptedFpCount: 2
     ignoredFpDuringGapCount: 2
     ignoredFpDuringBurstCount: 1
-    rejectedFpAtSequenceCapCount: 0
+    MaxSequenceExceededCount: 0
     sequenceCompletedCount: 2
 metrics: [ignoredFpCount]

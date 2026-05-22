@@ -15,7 +15,7 @@ This plan validates the timing MCU behavior described by [scenarios.md](scenario
 | Source | Validation use |
 |--------|----------------|
 | [scenarios.md](scenarios.md) | Scenario intent, inputs, and expected behavior |
-| [behavior-spec.md](behavior-spec.md) | Rules R1-R15 and sequence/activity definitions |
+| [behavior-spec.md](behavior-spec.md) | Rules R1-R15 plus TimeOut behavior and sequence/activity definitions |
 | [parameters.md](parameters.md) | Parameter names, defaults, units, and enum behavior |
 | [diagrams/timing-sequences.md](diagrams/timing-sequences.md) | Canonical timing examples and reference waveforms |
 | [pir-sensor-settings.md](pir-sensor-settings.md) | Field PIR setup assumptions, especially PIR Gap minimum |
@@ -43,7 +43,7 @@ Use this matrix as the pre-run consistency gate and keep it updated when scenari
 | SC-04/04b/12 (wake-only hold) | R1, R2 | `wakeHalfPressHoldTime`, `wakeHoldRefreshPolicy` | `wakeOnlyHoldMs`, `hpInToHpOutLatencyMs` | `wakeTimeoutCount`, `hpRefreshCount` | `CAM_WAKE_AF -> CAM_IDLE` |
 | SC-06/08/16/17/19/20 (AF gate paths) | R3, R4, R6, R7 | `minHalfPressBeforeShutter`, `StartFrameSpacingMin`, `fullPressWithoutPriorHpPolicy` | `firstFrameAfLeadMs`, `firstFrameGateDelayMs`, `frameStartSpacingMs` | `coldFpSequenceCount`, `acceptedFpCount` | `CAM_COLD_FP_WAIT` and/or warm `CAM_WAKE_AF` path |
 | SC-07/07b/18 (HP during burst/post-hold) | R1, R11, R13, R14 | `halfPressDuringBurstPolicy`, `wakeHoldRefreshPolicy` | `hpOutContinuityMs`, `frameCount` | `hpIgnoredDuringBurstCount`, `hpRefreshCount` | `CAM_BURST_ACTIVE` / `CAM_POST_SHUTTER_EXT` stability |
-| SC-09/10 (sequence cap handling) | R10b, R12, R13 | `MaxSequenceCount`, `fpAfterMaxSequenceCountPolicy` | `sequenceCount`, `frameCount` | `rejectedFpAtSequenceCapCount`, `activityCompletedCount` | Cap reached then idle recovery |
+| SC-09/10 (sequence cap handling) | R10b, R12, R13, TimeOut | `MaxSequenceCount`, `StartFrameSpacingMin`, `FrameCount` | `sequenceCount`, `frameCount`, `interSequenceGapMs` | `MaxSequenceExceededCount`, `activityCompletedCount` | Cap reached, timeout window, recovery |
 | SC-13 (debounce) | R1, R10b | `halfPressInputDebounce`, `fullPressInputDebounce` | Reject/accept edge outcomes | `fpDebounceRejectCount` | No unintended state transitions |
 | SC-15 (power-save latency) | R4 | `powerSaveIdleMode` | P1/P2/P3 latency stats + delta | Optional snapshot only | Same logical path with/without power save |
 
@@ -117,7 +117,7 @@ The Windows client should treat DUT configuration as an adapter layer. The valid
 | `halfPressDuringBurstPolicy` | `halfPressDuringBurstPolicy` enum (only 0 currently active) |
 | `fullPressWithoutPriorHpPolicy` | `fullPressWithoutHpPolicy` enum |
 | `activityHalfPressHoldPolicy` | `activityHalfPressHoldPolicy` enum (currently fixed/coerced) |
-| `fpAfterMaxSequenceCountPolicy` | `fpAfterMaxSeqCountPolicy` enum |
+| `fpAfterMaxSequenceCountPolicy` | Legacy compatibility byte; runtime cap behavior is timeout-based |
 | `inputActivePolarity` | `inputActivePolarity` enum (currently coerced to active-low) |
 | `outputDriveMode` | `outputDriveMode` enum (currently coerced to open-drain) |
 | `powerSaveIdleMode` | `powerSaveIdleMode` |
@@ -244,7 +244,7 @@ Persisted telemetry counters are RAM-first and flash-snapshotted by the firmware
 | `acceptedFpCount` | Confirms accepted sequence starts | SC-01, SC-05, SC-05b, SC-06, SC-08 |
 | `ignoredFpDuringGapCount` | Confirms R10 ignore-gap behavior | SC-02, SC-03, SC-14 |
 | `ignoredFpDuringBurstCount` | Confirms burst-time FP inputs did not alter schedule | SC-02, SC-03 |
-| `rejectedFpAtSequenceCapCount` | Confirms `MaxSequenceCount` cap behavior | SC-09, SC-10 |
+| `MaxSequenceExceededCount` | Confirms `MaxSequenceCount` cap behavior and timeout trigger | SC-09, SC-10 |
 | `coldFpSequenceCount` | Confirms FP-before-HP path | SC-06, SC-08 |
 | `hpRefreshCount` | Confirms repeated HP input handling | SC-04b, SC-07b, SC-12 |
 | `hpIgnoredDuringBurstCount` | Confirms HP during burst does not alter scheduling | SC-07, SC-18 |
@@ -610,7 +610,7 @@ Run these sweeps after nominal scenarios pass. Use one parameter at a time unles
 | `wakeHalfPressHoldTime` | 1 s | 10 s | 60 s | SC-04, SC-12 |
 | `minHalfPressBeforeShutter` | 0.1 s | 0.5 s | 2.0 s | SC-06, SC-11, SC-17, SC-20 |
 | `FrameCount` | 1 | 4 | 8 | SC-01, SC-03 |
-| `MaxSequenceCount` | 1 | 4 | 8 | SC-09, SC-10 |
+| `MaxSequenceCount` | 1 | 4 | 64 | SC-09, SC-10 |
 | `StartFrameSpacingMin` | 0.2 s | 1.0 s | 5.0 s | SC-01, SC-11, SC-18, SC-20 |
 | `PostShutterHalfPressHoldTimeExtension` | 0.1 s | 2.0 s | 10.0 s | SC-01, SC-05b |
 | `shutterPulseDuration` | 20 ms | 100 ms | 500 ms | SC-01, SC-14 |
@@ -634,7 +634,7 @@ Run targeted pairwise combinations after single-parameter sweeps.
 |-------------|----------------|----------------|
 | `T x Y` (`minHalfPressBeforeShutter` x `StartFrameSpacingMin`) | Verifies frame-1 gate versus inter-frame schedule | SC-11 + SC-20 warm and cold variants |
 | `Z x inter-sequence timing` | Determines whether post-hold window allows quick second sequence | SC-05 / SC-05b at short and long Z |
-| `MaxSequenceCount x fpAfterMaxSequenceCountPolicy` | Defines activity teardown at cap | SC-09 and SC-10 under both cap policies |
+| `MaxSequenceCount x timeoutDuration` | Defines lockout and recovery after cap | SC-09 and SC-10 with `StartFrameSpacingMin * FrameCount` timing checks |
 | `debounce x held input` | Distinguishes bounce rejection from true accept | SC-13 + SC-14 with threshold-near stimuli |
 | `powerSaveIdleMode x latency path` | Quantifies wake overhead by path | SC-15 P1/P2/P3 with same fixture wiring |
 

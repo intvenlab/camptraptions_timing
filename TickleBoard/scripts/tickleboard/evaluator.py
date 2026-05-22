@@ -94,6 +94,7 @@ def evaluate_case(
     telemetry_deltas: dict[str, int],
     telemetry_available: bool = True,
     run_id: str = "unknown",
+    vector_parameters: dict[str, Any] | None = None,
 ) -> list[CheckResult]:
     checks: list[CheckResult] = []
 
@@ -149,12 +150,55 @@ def evaluate_case(
 
     sequences_expect = vector_expect.get("sequences")
     if sequences_expect is not None:
-        actual = int(metrics.get("sequenceCount") or 0)
+        expected_sequences = int(sequences_expect)
+        fp_out_pulses = int(metrics.get("frameCount") or 0)
+        frame_count_param_raw = (vector_parameters or {}).get("FrameCount")
+        frame_count_param = int(frame_count_param_raw) if frame_count_param_raw is not None else None
+
+        # Sequence validation should be deterministic and not inferred from pulse-gap heuristics.
+        # 1) Firmware-authoritative sequence starts from telemetry.
+        if telemetry_available:
+            telemetry_sequences = int(telemetry_deltas.get("acceptedFpCount", 0))
+            checks.append(
+                CheckResult(
+                    name="sequenceCount.telemetryAcceptedFpCount",
+                    passed=telemetry_sequences == expected_sequences,
+                    detail=f"expected {expected_sequences}, got {telemetry_sequences}",
+                )
+            )
+
+        # 2) Physical-output corroboration via FP_OUT pulse count.
+        if frame_count_param is not None and frame_count_param > 0:
+            expected_fp_out_pulses = expected_sequences * frame_count_param
+            checks.append(
+                CheckResult(
+                    name="sequenceCount.fpOutPulseCount",
+                    passed=fp_out_pulses == expected_fp_out_pulses,
+                    detail=f"expected {expected_fp_out_pulses}, got {fp_out_pulses}",
+                )
+            )
+        else:
+            checks.append(
+                CheckResult(
+                    name="sequenceCount.fpOutPulseCount",
+                    passed=False,
+                    detail="missing FrameCount parameter for deterministic FP_OUT pulse derivation",
+                )
+            )
+
+        # Keep compatibility field for report readers, but tie it to deterministic signals.
+        # If telemetry is available, use telemetry acceptedFpCount; otherwise derive from FP_OUT/FrameCount.
+        if telemetry_available:
+            compatibility_actual = int(telemetry_deltas.get("acceptedFpCount", 0))
+        elif frame_count_param is not None and frame_count_param > 0:
+            compatibility_actual = fp_out_pulses // frame_count_param
+        else:
+            compatibility_actual = 0
         checks.append(
             CheckResult(
                 name="sequenceCount",
-                passed=actual == int(sequences_expect),
-                detail=f"expected {sequences_expect}, got {actual}",
+                passed=compatibility_actual == expected_sequences,
+                detail=f"expected {expected_sequences}, got {compatibility_actual}",
             )
         )
 

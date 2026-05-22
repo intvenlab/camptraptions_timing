@@ -30,7 +30,7 @@ CAMERA_FIELDS: dict[str, CameraField] = {
     "halfPressInputDebounce": CameraField(7, 1, 100, "ms_to_u8"),
     "fullPressInputDebounce": CameraField(8, 1, 100, "ms_to_u8"),
     "FrameCount": CameraField(9, 1, 8, "raw"),
-    "MaxSequenceCount": CameraField(10, 1, 8, "raw"),
+    "MaxSequenceCount": CameraField(10, 1, 64, "raw"),
     "wakeHoldRefreshPolicy": CameraField(11, 0, 2, "raw"),
     "halfPressDuringBurstPolicy": CameraField(12, 0, 1, "raw"),
     "fullPressWithoutPriorHpPolicy": CameraField(13, 0, 1, "raw"),

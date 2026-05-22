@@ -58,7 +58,7 @@ The payload is a fixed little-endian binary struct with a schema version byte. A
 | `acceptedFpCount` | FP inputs accepted as sequence starts | SC-01, SC-05, SC-05b, SC-06, SC-08 |
 | `ignoredFpDuringGapCount` | FP inputs rejected by `fullPressIgnoreGap` / R10 | SC-02, SC-03, SC-14 |
 | `ignoredFpDuringBurstCount` | FP input observed while burst scheduling is active | SC-02, SC-03 |
-| `rejectedFpAtSequenceCapCount` | FP rejected because `MaxSequenceCount` is reached | SC-09, SC-10 |
+| `MaxSequenceExceededCount` | FP attempts that hit `MaxSequenceCount` and trigger TimeOut | SC-09, SC-10 |
 | `coldFpSequenceCount` | FP-before-HP events that become accepted sequences | SC-06, SC-08 |
 | `hpRefreshCount` | Repeated HP pulses while wake/activity logic is active | SC-04b, SC-07b, SC-12 |
 | `hpIgnoredDuringBurstCount` | HP pulses during burst that do not alter scheduling | SC-07, SC-18 |

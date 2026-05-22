@@ -454,3 +454,24 @@
 
 ## Debug serial output toggle 2026-05-21
 - Disabled firmware pin-debug serial logs by commenting out `#define DEBUG_CAMERA_LOGIC_PINS` in `Camtraptions_Firmware/Camtraptions_Firmware.ino`.
+
+## Documentation refresh 2026-05-21
+- User request: "update all of the documents."
+- Updated top-level docs for current scope wording (`README.md`: scenarios now labeled SC-01-SC-20 for customer/developer audiences).
+- Refreshed `TickleBoard/artifacts/suite_rollup.md` to the latest authoritative BLE full-suite outcome (31/31 pass, 86/86 timing, 109/109 functional) and included `AO-GAP-CADENCE`.
+- Updated `TickleBoard/README.md` artifact section with authoritative BLE and reference no-BLE run paths.
+- Added non-authoritative no-BLE reference summary to `docs/validation-test-report.md`.
+- Corrected stale statement in `Camtraptions_Firmware/firmware_editing_guide.md` ("5 states" instead of "4 states") and adjusted connected-loop example comments to avoid fixed-delay guidance.
+
+## Timeout-on-cap update 2026-05-22
+- Implemented cap behavior change: when `MaxSequenceCount` is reached, firmware enters timeout lockout for `StartFrameSpacingMin * FrameCount` and ignores FP/HP inputs during lockout.
+- Timeout behavior replaces runtime branching by `fpAfterMaxSeqCountPolicy`; byte remains for wire-layout compatibility.
+- Telemetry counter renamed to `MaxSequenceExceededCount` (replacing `rejectedFpAtSequenceCapCount` naming in active code/vectors/docs).
+- `MaxSequenceCount` clamp expanded from `1..8` to `1..64` in firmware and TickleBoard parameter bounds.
+- Added validation coverage vectors updates for SC-09/SC-10 timeout semantics and added `AO-MAX-SEQUENCE-RANGE-64` to confirm values above 8 are effective.
+
+## Parameter sweep expansion 2026-05-22
+- Added generator command `tickle_cli.py gen-parameter-sweep` to build a repeatable matrix of BLE-required vectors for:
+  - timing grid: `StartFrameSpacingMin x shutterPulseDuration x FrameCount`
+  - cap/gap grid: `MaxSequenceCount x fullPressIgnoreGap`
+- Generated suite path: `TickleBoard/vectors/suites/parameter_sweep_suite.yaml` with case files under `TickleBoard/vectors/generated/parameter_sweep/` (47 cases).

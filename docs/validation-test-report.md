@@ -4,12 +4,19 @@
 
 This report captures results from the latest **BLE-enabled authoritative full-suite run**.
 
+Timeout-on-cap and telemetry rename (`MaxSequenceExceededCount`) were introduced after this archived run. Detailed assertion lines below may still show the previous counter label (`rejectedFpAtSequenceCapCount`) until the suite is rerun on the updated firmware.
+
 - Suite: `TickleBoard/vectors/suites/full_validation_suite.yaml`
 - Artifacts root: `TickleBoard/artifacts/full_run_ble_20260521_1719`
 - Cases executed: 31
 - Outcome: **31 passed, 0 failed, 0 skipped**
 - Timing assertions: **86/86 passed**
 - Functional assertions: **109/109 passed**
+
+Reference non-BLE execution (for harness behavior checks when BLE is unavailable):
+
+- Artifacts root: `TickleBoard/artifacts/full_run_no_ble_20260521_1731`
+- Outcome: 19 passed, 2 failed, 10 skipped (non-authoritative; BLE-required checks skipped)
 
 ## Master Results Table
 

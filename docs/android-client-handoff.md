@@ -53,7 +53,7 @@ Firmware constants:
 | 12 | `halfPressDuringBurstPolicy` | currently only `0` supported |
 | 13 | `fullPressWithoutHpPolicy` | `0 assertHpThenWait`, `1 ignoreFP` |
 | 14 | `activityHalfPressHoldPolicy` | currently coerced to `0` |
-| 15 | `fpAfterMaxSeqCountPolicy` | `0 ignoreUntilActivityEnd`, `1 endActivityImmediately` |
+| 15 | `fpAfterMaxSeqCountPolicy` | Legacy compatibility byte; cap handling is timeout-based in current firmware |
 | 16 | `inputActivePolarity` | reserved, currently coerced to `0` |
 | 17 | `outputDriveMode` | reserved, currently coerced to `0` |
 | 18 | `powerSaveIdleMode` | `0` disabled, `1` enabled |

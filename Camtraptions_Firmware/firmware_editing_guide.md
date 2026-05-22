@@ -5,7 +5,7 @@ This guide explains how to modify the Camtraptions camera trap firmware, focusin
 
 ## Current Features
 - ✅ Dual battery monitoring (CR2032 internal + LiPo external)
-- ✅ Camera state machine with 4 states
+- ✅ Camera state machine with 5 states
 - ✅ Configurable camera logic via GATT/Android app
 - ✅ Pass-through mode (disabled logic, direct I/O mirroring)
 - ✅ State-machine mode (burst sequences, timing control)
@@ -75,8 +75,7 @@ void loop() {
   }
 
   if (isConnected) {
-    delay(20);
-    return;
+    serviceBleConnectedWork();  // Do BLE housekeeping without fixed delay padding
   }
 
   if (cameraLogicActive) {
@@ -118,12 +117,12 @@ struct CameraConfig {
   uint8_t hpDebounceMs;                 // HP input debounce
   uint8_t fpDebounceMs;                 // FP input debounce
   uint8_t frameCount;                   // N frames per sequence (1-8)
-  uint8_t maxSequenceCount;             // Max sequences per activity (1-8)
+  uint8_t maxSequenceCount;             // Max sequences before timeout lockout (1-64)
   uint8_t wakeHoldRefreshPolicy;        // legacy encoded field; currently no-op for wake deadline timing
   uint8_t halfPressDuringBurstPolicy;   // Reserved (0)
   uint8_t fullPressWithoutHpPolicy;     // 0=assertHp, 1=ignoreFP
   uint8_t activityHalfPressHoldPolicy;  // Reserved (0)
-  uint8_t fpAfterMaxSeqCountPolicy;     // 0=ignoreUntilTimeout
+  uint8_t fpAfterMaxSeqCountPolicy;     // legacy compatibility byte
   uint8_t inputActivePolarity;          // Reserved (coerced to 0=activeLow)
   uint8_t outputDriveMode;              // Reserved (coerced to 0=openDrain)
   uint8_t powerSaveIdleMode;            // 0=disabled, 1=enabled (default)

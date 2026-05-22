@@ -34,11 +34,23 @@ The design follows `docs/validation-test-plan.md`:
   - `fullPressIgnoreGap` cadence sanity (`1000/2000/3000/4000 ms` with `StartFrameSpacingMin=1.0s`)
   - deferred config write case
   - factory reset and reserved-field coercion case
+  - generated parameter sweep pack for timing + cap/gap interactions
 - suite files:
   - `full_validation_suite.yaml`
   - `golden_subset_suite.yaml`
   - `mandatory_addons_suite.yaml`
   - `parameter_interaction_suite.yaml`
+  - `parameter_sweep_suite.yaml` (generated)
+
+## Parameter Sweep
+
+- Generate sweep vectors/suite:
+  - `python TickleBoard/scripts/tickle_cli.py gen-parameter-sweep`
+- Run generated sweep:
+  - `python TickleBoard/scripts/tickle_cli.py run-suite TickleBoard/vectors/suites/parameter_sweep_suite.yaml --port COM7 --ble <dut_ble_address>`
+- The generated suite currently produces 47 BLE-required cases covering:
+  - `StartFrameSpacingMin` x `shutterPulseDuration` x `FrameCount`
+  - `MaxSequenceCount` x `fullPressIgnoreGap`
 
 ## Artifacts
 
@@ -47,3 +59,9 @@ Run outputs are written to `TickleBoard/artifacts/`:
 - per-case run folder with `result.json` and raw edge log
 - suite rollup files: JSON, markdown, and CSV
 - preflight and discovery outputs via CLI JSON/text
+
+## Latest authoritative run
+
+- BLE full-suite artifacts: `TickleBoard/artifacts/full_run_ble_20260521_1719`
+- Current top-level rollups (`TickleBoard/artifacts/suite_rollup.*`) mirror that authoritative BLE run
+- No-BLE reference run (partial/skip-tolerant): `TickleBoard/artifacts/full_run_no_ble_20260521_1731`

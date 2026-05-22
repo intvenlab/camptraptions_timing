@@ -9,7 +9,7 @@ COUNTER_NAMES = [
     "acceptedFpCount",
     "ignoredFpDuringGapCount",
     "ignoredFpDuringBurstCount",
-    "rejectedFpAtSequenceCapCount",
+    "MaxSequenceExceededCount",
     "coldFpSequenceCount",
     "hpRefreshCount",
     "hpIgnoredDuringBurstCount",

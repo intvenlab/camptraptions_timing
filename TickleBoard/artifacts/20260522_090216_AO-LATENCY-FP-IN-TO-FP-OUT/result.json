@@ -1,0 +1,293 @@
+{
+  "camera_rw": {
+    "mismatches": {},
+    "payload_readback_hex": "02010a020a0a142314010400000000000000011f",
+    "payload_written_hex": "02010a020a0a142314010400000000000000011f",
+    "readback_norm": {
+      "FrameCount": 1,
+      "MaxSequenceCount": 4,
+      "PostShutterHalfPressHoldTimeExtension": 20,
+      "StartFrameSpacingMin": 10,
+      "activityHalfPressHoldPolicy": 0,
+      "enabled": 1,
+      "fpAfterMaxSequenceCountPolicy": 0,
+      "fullPressIgnoreGap": 31,
+      "fullPressInputDebounce": 20,
+      "fullPressWithoutPriorHpPolicy": 0,
+      "halfPressDuringBurstPolicy": 0,
+      "halfPressInputDebounce": 35,
+      "inputActivePolarity": 0,
+      "minHalfPressBeforeShutter": 2,
+      "outputDriveMode": 0,
+      "powerSaveIdleMode": 1,
+      "shutterPulseDuration": 10,
+      "wakeHalfPressHoldTime": 10,
+      "wakeHoldRefreshPolicy": 0
+    },
+    "requested_norm": {
+      "FrameCount": 1,
+      "MaxSequenceCount": 4,
+      "PostShutterHalfPressHoldTimeExtension": 20,
+      "StartFrameSpacingMin": 10,
+      "activityHalfPressHoldPolicy": 0,
+      "enabled": 1,
+      "fpAfterMaxSequenceCountPolicy": 0,
+      "fullPressIgnoreGap": 31,
+      "fullPressInputDebounce": 20,
+      "fullPressWithoutPriorHpPolicy": 0,
+      "halfPressDuringBurstPolicy": 0,
+      "halfPressInputDebounce": 35,
+      "inputActivePolarity": 0,
+      "minHalfPressBeforeShutter": 2,
+      "outputDriveMode": 0,
+      "powerSaveIdleMode": 1,
+      "shutterPulseDuration": 10,
+      "wakeHalfPressHoldTime": 10,
+      "wakeHoldRefreshPolicy": 0
+    }
+  },
+  "case_id": "AO-LATENCY-FP-IN-TO-FP-OUT",
+  "check_summary": {
+    "functional_passed": 3,
+    "functional_total": 3,
+    "timing_passed": 2,
+    "timing_total": 2
+  },
+  "checks": [
+    {
+      "category": "functional",
+      "detail": "expected 1, got 1",
+      "name": "frameCount",
+      "passed": true
+    },
+    {
+      "category": "functional",
+      "detail": "expected 1, got 1",
+      "name": "telemetryDelta.acceptedFpCount",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "expected range [0.0, 200.0], got 83.0",
+      "name": "fpInToFpOutLatencyMs",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "expected >= 0 when measurable, got 54.0",
+      "name": "hpInToHpOutLatencyMs_non_negative",
+      "passed": true
+    },
+    {
+      "category": "functional",
+      "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'MaxSequenceExceededCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 0}",
+      "name": "telemetry_delta_sanity",
+      "passed": true
+    }
+  ],
+  "description": "Measure FP_IN to FP_OUT latency with HP lead pre-satisfied",
+  "failure_class": "pass",
+  "fixture_dump": {
+    "edges": [
+      {
+        "signal": "HP_IN",
+        "state": "ACTIVE",
+        "t_ms": 0
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 54
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 100
+      },
+      {
+        "signal": "FP_IN",
+        "state": "ACTIVE",
+        "t_ms": 600
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 683
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 700
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 783
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 2500
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 2500
+      }
+    ],
+    "malformed_lines": [],
+    "run_id": 1,
+    "snapshots": [
+      "SNAPSHOT HP_IN=INACTIVE FP_IN=INACTIVE HP_OUT=ACTIVE FP_OUT=INACTIVE"
+    ],
+    "warnings": []
+  },
+  "metrics": {
+    "firstFrameAfLeadMs": 629.0,
+    "firstFrameGateDelayMs": 83.0,
+    "fpInToFpOutLatencyMs": 83.0,
+    "fpInToHpOutLatencyMs": -546.0,
+    "fpPulseWidthMs": 100.0,
+    "frameCount": 1,
+    "frameStartSpacingMs": null,
+    "hpAssertToFinalFrameReleaseMs": 729.0,
+    "hpHoldAfterLastFrameMs": null,
+    "hpHoldAfterLastFrameReason": "no_hp_release_after_final_fp_release",
+    "hpInToHpOutLatencyMs": 54.0,
+    "hpInToHpOutLatencyReason": null,
+    "hpOutContinuityMs": null,
+    "hpOutPreAssertedBeforeHpIn": false,
+    "hpReleaseBeforeFinalFrameDetected": false,
+    "ignoredFpCount": 0,
+    "interSequenceGapMs": null,
+    "secondSequenceStartDelayMs": null,
+    "sequenceCount": 1,
+    "wakeOnlyHoldMs": null
+  },
+  "passed": true,
+  "scenario": "ADDON-LATENCY",
+  "telemetry_after": {
+    "camera_state": 4,
+    "counters": {
+      "MaxSequenceExceededCount": 25,
+      "acceptedFpCount": 339,
+      "activityCompletedCount": 499,
+      "coldFpSequenceCount": 44,
+      "fpDebounceRejectCount": 8,
+      "hpDebounceRejectCount": 2,
+      "hpIgnoredDuringBurstCount": 27,
+      "hpRefreshCount": 106,
+      "ignoredFpDuringBurstCount": 60,
+      "ignoredFpDuringGapCount": 67,
+      "sequenceCompletedCount": 339,
+      "version": 1,
+      "wakeTimeoutCount": 472
+    },
+    "flags": 3,
+    "frames_fired_this_sequence": 1,
+    "last_event_code": 7,
+    "last_scenario_hint": 0,
+    "ms_until_fp_ignore_clear": 1243,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 243,
+    "ms_until_wake_deadline": 7513,
+    "sequences_started_this_activity": 1,
+    "version": 1
+  },
+  "telemetry_before": {
+    "camera_state": 0,
+    "counters": {
+      "MaxSequenceExceededCount": 25,
+      "acceptedFpCount": 338,
+      "activityCompletedCount": 499,
+      "coldFpSequenceCount": 44,
+      "fpDebounceRejectCount": 8,
+      "hpDebounceRejectCount": 2,
+      "hpIgnoredDuringBurstCount": 27,
+      "hpRefreshCount": 106,
+      "ignoredFpDuringBurstCount": 60,
+      "ignoredFpDuringGapCount": 67,
+      "sequenceCompletedCount": 338,
+      "version": 1,
+      "wakeTimeoutCount": 472
+    },
+    "flags": 0,
+    "frames_fired_this_sequence": 0,
+    "last_event_code": 4,
+    "last_scenario_hint": 1,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 0,
+    "sequences_started_this_activity": 0,
+    "version": 1
+  },
+  "telemetry_deltas": {
+    "MaxSequenceExceededCount": 0,
+    "acceptedFpCount": 1,
+    "activityCompletedCount": 0,
+    "coldFpSequenceCount": 0,
+    "fpDebounceRejectCount": 0,
+    "hpDebounceRejectCount": 0,
+    "hpIgnoredDuringBurstCount": 0,
+    "hpRefreshCount": 0,
+    "ignoredFpDuringBurstCount": 0,
+    "ignoredFpDuringGapCount": 0,
+    "sequenceCompletedCount": 1,
+    "wakeTimeoutCount": 0
+  },
+  "telemetry_notes": [],
+  "vector": {
+    "case_id": "AO-LATENCY-FP-IN-TO-FP-OUT",
+    "description": "Measure FP_IN to FP_OUT latency with HP lead pre-satisfied",
+    "expect": {
+      "fpOut": {
+        "pulseCount": 1
+      },
+      "telemetryDeltas": {
+        "acceptedFpCount": 1
+      },
+      "timing": {
+        "fpInToFpOutLatencyMs": {
+          "maxMs": 200,
+          "minMs": 0
+        }
+      }
+    },
+    "fixture": {
+      "captureAfterLastStimulusMs": 2500
+    },
+    "metrics": [
+      "fpInToFpOutLatencyMs",
+      "fpInToHpOutLatencyMs",
+      "firstFrameGateDelayMs"
+    ],
+    "parameters": {
+      "FrameCount": 1,
+      "StartFrameSpacingMin": "1.0s",
+      "enabled": 1,
+      "minHalfPressBeforeShutter": "0.2s"
+    },
+    "requires_ble": false,
+    "scenario": "ADDON-LATENCY",
+    "stimulus": [
+      {
+        "at_ms": 0,
+        "duration_ms": 100,
+        "signal": "HP_IN_STIM",
+        "state": "active"
+      },
+      {
+        "at_ms": 600,
+        "duration_ms": 100,
+        "signal": "FP_IN_STIM",
+        "state": "active"
+      }
+    ],
+    "tags": [
+      "addon",
+      "latency",
+      "fp"
+    ]
+  }
+}

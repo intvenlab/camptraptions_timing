@@ -19,8 +19,8 @@ Primary specification artifact for timing behavior. Each scenario has a stable I
 | SC-07 | HP during burst | `halfPressDuringBurstPolicy` | R13, R14 |
 | SC-07b | HP during post-burst hold | `PostShutterHalfPressHoldTimeExtension` | R1, R11 |
 | SC-08 | FP before HP | `minHalfPressBeforeShutter`, `fullPressWithoutPriorHpPolicy` | R3, R4 |
-| SC-09 | FP at MaxSequenceCount cap | `MaxSequenceCount`, `fpAfterMaxSequenceCountPolicy` | R10b, R13 |
-| SC-10 | Recovery after cap | `fpAfterMaxSequenceCountPolicy` | R12 |
+| SC-09 | FP at MaxSequenceCount cap | `MaxSequenceCount`, `StartFrameSpacingMin`, `FrameCount` | R10b, TimeOut |
+| SC-10 | Recovery after cap | `MaxSequenceCount`, `StartFrameSpacingMin`, `FrameCount` | R12, TimeOut |
 | SC-11 | StartFrameSpacingMin vs T (Y) | `StartFrameSpacingMin`, `minHalfPressBeforeShutter` | R4, R6, R7 |
 | SC-12 | HP only (PIR Gap minimum) | `wakeHalfPressHoldTime` | R1, R2, R13 |
 | SC-13 | Input line bounce (debounce) | `halfPressInputDebounce`, `fullPressInputDebounce` | R1, R10b |
@@ -419,7 +419,7 @@ sequenceDiagram
 
 ## SC-09 — FP when MaxSequenceCount reached
 
-**Status:** defined (default policy)
+**Status:** defined
 
 **Intent:** Subject keeps triggering narrow PIR; limit how many **full-press sequences** run in one activity (not frames per sequence).
 
@@ -427,15 +427,15 @@ sequenceDiagram
 
 **Expected behavior**
 
-- Registry default `fpAfterMaxSequenceCountPolicy = ignoreUntilActivityEnd`: further FP inputs **do not start a new sequence** until activity ends (HP released, idle).
-- Separate from R10 (intra-sequence FP ignore while burst runs).
-- Alternate `endActivityImmediately` and per-value behavior: [parameters.md § `fpAfterMaxSequenceCountPolicy`](parameters.md#fpaftermaxsequencecountpolicy).
+- On cap hit (`sequencesStartedThisActivity >= MaxSequenceCount`), firmware enters **TimeOut**.
+- During TimeOut, both FP and HP inputs are ignored for sequence triggering.
+- TimeOut duration is `StartFrameSpacingMin * FrameCount`.
 
 **Example:** `MaxSequenceCount = 4`, `FrameCount = 4` → up to **4 sequences**, up to **16 frames** in one activity if every sequence runs full burst.
 
-**Parameters:** `MaxSequenceCount`, `fpAfterMaxSequenceCountPolicy`
+**Parameters:** `MaxSequenceCount`, `StartFrameSpacingMin`, `FrameCount`
 
-**Rules:** R10b, R13; `fpAfterMaxSequenceCountPolicy`
+**Rules:** R10b, R13, TimeOut
 
 ---
 
@@ -443,18 +443,18 @@ sequenceDiagram
 
 **Status:** defined
 
-**Intent:** After a capped activity ends, the next FP should start fresh.
+**Intent:** After a capped event enters and exits TimeOut, the next eligible FP should start a fresh sequence again.
 
-**Preconditions:** Prior activity ended (cap reached, HP released); idle.
+**Preconditions:** Prior cap event occurred and TimeOut window elapsed.
 
 **Input timeline:** FP after idle.
 
 **Expected behavior**
 
-- New **activity**; `sequencesStartedThisActivity = 0`.
+- Post-timeout FP is accepted again and can start a new sequence.
 - Normal R4 / R10 / R12 gates apply.
 
-**Rules:** R12
+**Rules:** R12, TimeOut
 
 ---
 

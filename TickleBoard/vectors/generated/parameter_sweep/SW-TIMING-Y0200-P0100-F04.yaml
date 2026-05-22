@@ -1,0 +1,60 @@
+id: SW-TIMING-Y0200-P0100-F04
+scenario: SWEEP-TIMING
+description: 'Timing sweep case: verify StartFrameSpacingMin/shutterPulseDuration/FrameCount
+  mapping into output timing metrics.'
+tags:
+- sweep
+- timing
+- generated
+requiresBle: true
+parameters:
+  enabled: 1
+  wakeHalfPressHoldTime: 10s
+  minHalfPressBeforeShutter: 0.5s
+  shutterPulseDuration: 100ms
+  StartFrameSpacingMin: 0.2s
+  PostShutterHalfPressHoldTimeExtension: 2.0s
+  halfPressInputDebounce: 35ms
+  fullPressInputDebounce: 20ms
+  FrameCount: 4
+  MaxSequenceCount: 64
+  wakeHoldRefreshPolicy: 0
+  halfPressDuringBurstPolicy: 0
+  fullPressWithoutPriorHpPolicy: 0
+  activityHalfPressHoldPolicy: 0
+  fpAfterMaxSequenceCountPolicy: 0
+  inputActivePolarity: 0
+  outputDriveMode: 0
+  powerSaveIdleMode: 1
+  fullPressIgnoreGap: 3.1s
+fixture:
+  captureAfterLastStimulusMs: 12000
+stimulus:
+- atMs: 0
+  signal: HP_IN_STIM
+  state: active
+  durationMs: 100
+- atMs: 1000
+  signal: FP_IN_STIM
+  state: active
+  durationMs: 100
+expect:
+  fpOut:
+    pulseCount: 4
+    pulseWidthMs: 100
+    frameSpacingMs: 200
+  sequences: 1
+  timing:
+    firstFrameGateDelayMs:
+      minMs: 0
+      maxMs: 80
+  telemetryDeltas:
+    acceptedFpCount: 1
+    sequenceCompletedCount: 1
+    MaxSequenceExceededCount: 0
+metrics:
+- frameCount
+- fpPulseWidthMs
+- frameStartSpacingMs
+- firstFrameGateDelayMs
+- sequenceCount
