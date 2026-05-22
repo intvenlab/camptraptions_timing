@@ -44,7 +44,7 @@ Use this matrix as the pre-run consistency gate and keep it updated when scenari
 | SC-06/08/16/17/19/20 (AF gate paths) | R3, R4, R6, R7 | `minHalfPressBeforeShutter`, `StartFrameSpacingMin`, `fullPressWithoutPriorHpPolicy` | `firstFrameAfLeadMs`, `firstFrameGateDelayMs`, `frameStartSpacingMs` | `coldFpSequenceCount`, `acceptedFpCount` | `CAM_COLD_FP_WAIT` and/or warm `CAM_WAKE_AF` path |
 | SC-07/07b/18 (HP during burst/post-hold) | R1, R11, R13, R14 | `halfPressDuringBurstPolicy`, `wakeHoldRefreshPolicy` | `hpOutContinuityMs`, `frameCount` | `hpIgnoredDuringBurstCount`, `hpRefreshCount` | `CAM_BURST_ACTIVE` / `CAM_POST_SHUTTER_EXT` stability |
 | SC-09/10 (sequence cap handling) | R10b, R12, R13 | `MaxSequenceCount`, `fpAfterMaxSequenceCountPolicy` | `sequenceCount`, `frameCount` | `rejectedFpAtSequenceCapCount`, `activityCompletedCount` | Cap reached then idle recovery |
-| SC-13 (debounce) | R1, R10b | `halfPressInputDebounce`, `fullPressInputDebounce` | Reject/accept edge outcomes | `hpDebounceRejectCount`, `fpDebounceRejectCount` | No unintended state transitions |
+| SC-13 (debounce) | R1, R10b | `halfPressInputDebounce`, `fullPressInputDebounce` | Reject/accept edge outcomes | `fpDebounceRejectCount` | No unintended state transitions |
 | SC-15 (power-save latency) | R4 | `powerSaveIdleMode` | P1/P2/P3 latency stats + delta | Optional snapshot only | Same logical path with/without power save |
 
 ## Test system
@@ -153,9 +153,10 @@ The harness must evaluate at least one explicit timing assertion for every timin
 | SC-05, SC-05b, SC-16 | `hpHoldAfterLastFrameMs`, sequence-aware inter-sequence timing where applicable | +/-1% or +/-10 ms floor |
 | SC-06, SC-08, SC-17, SC-20 | `firstFrameAfLeadMs` and/or `firstFrameGateDelayMs` | range gate (`minMs`/`maxMs`) or target +/- tolerance |
 | SC-09, SC-10, SC-19 | sequence-aware timing (`interSequenceGapMs`, `secondSequenceStartDelayMs`) plus cap/recovery telemetry | +/-1% or +/-5 ms floor for spacing/delay checks |
-| SC-13 | debounce counters as timing-proxy gates (`fpDebounceRejectCount`, `hpDebounceRejectCount`) | exact telemetry delta match |
+| SC-13 | FP debounce counter as timing-proxy gate (`fpDebounceRejectCount`) | exact telemetry delta match |
 | AO-BLE-CONNECTED-SC01, AO-DEFERRED-CONFIG-WRITES, AO-FACTORY-RESET-AND-COERCION | parity timing checks vs nominal behavior (`frameStartSpacingMs`, `fpPulseWidthMs` when pulses exist) | same tolerance as corresponding SC baseline |
-| AO-GAP-BOUNDARY-TRIAD | edge-of-gap timing checks (`interSequenceGapMs` and ignored/accepted FP counter balance) | range gate around boundary plus telemetry exact match |
+| AO-GAP-BOUNDARY-TRIAD | edge-of-gap classification with hermetic params (`ignoreGap - epsilon`, `ignoreGap`, `ignoreGap + epsilon`) and explicit telemetry balance | range gate around first boundary acceptance plus telemetry exact match |
+| AO-GAP-CADENCE | accepted-burst cadence check with hermetic params (`FrameCount=4`, `StartFrameSpacingMin=1.0s`) | +/-1% or +/-5 ms floor on `frameStartSpacingMs` plus exact pulse count |
 
 ### Machine-readable timing expectation schema
 
@@ -247,7 +248,7 @@ Persisted telemetry counters are RAM-first and flash-snapshotted by the firmware
 | `coldFpSequenceCount` | Confirms FP-before-HP path | SC-06, SC-08 |
 | `hpRefreshCount` | Confirms repeated HP input handling | SC-04b, SC-07b, SC-12 |
 | `hpIgnoredDuringBurstCount` | Confirms HP during burst does not alter scheduling | SC-07, SC-18 |
-| `fpDebounceRejectCount`, `hpDebounceRejectCount` | Confirms debounce rejection of synthetic bounce | SC-13 |
+| `fpDebounceRejectCount` | Confirms debounce rejection of synthetic FP bounce | SC-13 |
 | `sequenceCompletedCount` | Confirms completed burst sequences | SC-01, SC-05, SC-05b |
 | `activityCompletedCount` | Confirms completed MCU activities, including wake-only timeout activities | SC-01, SC-04, SC-05 |
 
@@ -472,12 +473,12 @@ Bench version: send HP IN pulses representing wide PIR only. Field version: conf
 
 ### SC-13 - Input bounce
 
-For each debounce setting under test, run below-threshold and above-threshold cases on HP and FP.
+For each debounce setting under test, run below-threshold and above-threshold cases on FP. Keep HP chatter coverage as a state-stability check (no extra HP state transitions while HP is already latched), not as an HP debounce-counter assertion.
 
 | Case | Stimulus | Expected |
 |------|----------|----------|
-| HP bounce below threshold | Active segments shorter than `halfPressInputDebounce` | No HP OUT |
-| HP valid pulse | Stable active longer than threshold plus margin | One HP OUT assertion |
+| HP chatter while HP already latched | Short repeated HP pulses during wake/activity hold | No additional HP state transitions; hold behavior remains anchored to the existing wake/activity logic |
+| HP valid pulse from idle | Single intentional HP pulse while idle | One HP OUT assertion and normal wake-path entry |
 | FP bounce below threshold | Active segments shorter than `fullPressInputDebounce` | No sequence |
 | FP valid pulse | Stable active longer than threshold plus margin | One accept if other gates pass |
 | FP bounce during wake hold (Case D) | Inject near-threshold FP chatter while wake-only hold is active | No extra accepts; first valid pulse only starts one sequence |
@@ -561,7 +562,19 @@ For at least one representative burst config, inject FP at:
 
 1. Just before gate clear (`ignoreGap - epsilon`) -> reject
 2. Exact gate boundary (`ignoreGap`) -> boundary-acceptable within timing tolerance
-3. Just after gate clear (`ignoreGap + epsilon`) -> accept if other gates pass
+3. Just after gate clear (`ignoreGap + epsilon`) -> classify deterministically based on current state gate (`CAM_BURST_ACTIVE` vs post-burst gate path)
+
+Use explicit (hermetic) case parameters so this add-on is independent of suite defaults:
+`FrameCount`, `StartFrameSpacingMin`, `minHalfPressBeforeShutter`, `shutterPulseDuration`, debounce settings, cap policy bytes, and `fullPressIgnoreGap`.
+
+### `fullPressIgnoreGap` cadence sanity add-on
+
+Run a dedicated cadence case with one accepted FP sequence and fixed timing params:
+
+- `FrameCount = 4`
+- `StartFrameSpacingMin = 1.0 s`
+- Expected FP OUT frame starts near `1000/2000/3000/4000 ms` (within tolerance)
+- No additional accepted FP during the case
 
 ### Mid-activity and mid-burst config writes
 
@@ -688,7 +701,7 @@ A firmware/documentation release passes validation when:
 1. All required SC-01 through SC-20 nominal tests pass.
 2. Required practical parameter sweeps pass.
 3. SC-15 meets the power-save latency budget or has an approved waiver with scope/logic-analyzer evidence.
-4. Mandatory add-on cases (BLE-connected behavior, boundary triad, deferred config writes, factory reset behavior, reserved-field coercion) pass.
+4. Mandatory add-on cases (BLE-connected behavior, boundary triad, cadence sanity, deferred config writes, factory reset behavior, reserved-field coercion) pass.
 5. All failures are linked to a bug, documentation correction, or accepted product decision.
 6. The final report includes raw captures, telemetry before/after snapshots, and exact parameter readbacks for every case.
 

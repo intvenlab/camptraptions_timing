@@ -33,3 +33,12 @@ By default artifacts are written under `TickleBoard/artifacts/`:
 - per-case `result.json`
 - per-case `raw_edges.log`
 - suite rollups in `.json`, `.md`, `.csv`
+
+### No-BLE behavior
+
+- If `--ble` is omitted, vectors that require BLE are marked as `skipped` with a skip reason.
+- BLE-required classification uses:
+  - vector-level `requiresBle: true` / `requires_ble: true`,
+  - `ble-connected` tag,
+  - non-default `parameters` that require runtime camera config writes.
+- When telemetry is unavailable (no BLE), `expect.telemetryDeltas` assertions are skipped and noted in case output.

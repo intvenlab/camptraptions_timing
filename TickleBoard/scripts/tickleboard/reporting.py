@@ -4,14 +4,27 @@ from pathlib import Path
 import csv
 
 
+def _record_status(row: dict) -> str:
+    status = str(row.get("status", "")).strip().lower()
+    if status in {"passed", "failed", "skipped"}:
+        return status
+    if bool(row.get("skipped", False)):
+        return "skipped"
+    return "passed" if bool(row.get("passed", False)) else "failed"
+
+
 def write_markdown_report(path: Path, title: str, records: list[dict]) -> None:
     timing_passed = sum(int(r.get("timing_passed", 0)) for r in records)
     timing_total = sum(int(r.get("timing_total", 0)) for r in records)
     functional_passed = sum(int(r.get("functional_passed", 0)) for r in records)
     functional_total = sum(int(r.get("functional_total", 0)) for r in records)
+    passed_cases = sum(1 for r in records if _record_status(r) == "passed")
+    failed_cases = sum(1 for r in records if _record_status(r) == "failed")
+    skipped_cases = sum(1 for r in records if _record_status(r) == "skipped")
     lines: list[str] = [
         f"# {title}",
         "",
+        f"- Cases: {passed_cases} passed, {failed_cases} failed, {skipped_cases} skipped, {len(records)} total",
         f"- Timing assertions: {timing_passed}/{timing_total}",
         f"- Functional assertions: {functional_passed}/{functional_total}",
         "",
@@ -43,16 +56,18 @@ def write_markdown_report(path: Path, title: str, records: list[dict]) -> None:
 
     lines.extend(
         [
-        "| Case | Scenario | Passed | Failure Class | Timing | Functional | Notes |",
-        "|------|----------|--------|---------------|--------|------------|-------|",
+        "| Case | Scenario | Status | Failure Class | Timing | Functional | Skip Reason | Notes |",
+        "|------|----------|--------|---------------|--------|------------|-------------|-------|",
         ]
     )
     for r in records:
+        status = _record_status(r)
         notes = "; ".join(r.get("notes", []))
+        skip_reason = str(r.get("skip_reason", ""))
         lines.append(
-            f"| {r.get('case_id','')} | {r.get('scenario','')} | {r.get('passed', False)} | "
+            f"| {r.get('case_id','')} | {r.get('scenario','')} | {status} | "
             f"{r.get('failure_class','')} | {r.get('timing_passed',0)}/{r.get('timing_total',0)} | "
-            f"{r.get('functional_passed',0)}/{r.get('functional_total',0)} | {notes} |"
+            f"{r.get('functional_passed',0)}/{r.get('functional_total',0)} | {skip_reason} | {notes} |"
         )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -64,6 +79,9 @@ def write_csv_rollup(path: Path, records: list[dict]) -> None:
             fieldnames=[
                 "case_id",
                 "scenario",
+                "status",
+                "skipped",
+                "skip_reason",
                 "passed",
                 "failure_class",
                 "timing_passed",
@@ -79,6 +97,9 @@ def write_csv_rollup(path: Path, records: list[dict]) -> None:
                 {
                     "case_id": r.get("case_id", ""),
                     "scenario": r.get("scenario", ""),
+                    "status": _record_status(r),
+                    "skipped": bool(r.get("skipped", False)),
+                    "skip_reason": r.get("skip_reason", ""),
                     "passed": r.get("passed", False),
                     "failure_class": r.get("failure_class", ""),
                     "timing_passed": r.get("timing_passed", 0),

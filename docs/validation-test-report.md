@@ -1,1256 +1,603 @@
-# Test Report
+# Camptraptions Timing Validation Test Report
 
 ## Executive Summary
 
-This report summarizes validation execution of the timing controller using the TickleBoard bench harness and vector-driven scenario suite. The test method replays scripted HP/FP stimuli, captures HP/FP output edges, evaluates telemetry deltas, and compares observed behavior against scenario acceptance checks.
+This report captures results from the latest **BLE-enabled authoritative full-suite run**.
 
-Scope includes all core scenarios (`SC-01` through `SC-20`) and mandatory add-on scenarios for BLE-connected behavior, gap-boundary handling, deferred config writes, and factory reset/coercion behavior.
-
-### Outcome Summary
-
-- Tests executed: 28
-- Passed: 10
-- Failed: 18
-- Timing assertion compliance: 36/59 (61.0%)
-- Functional assertion compliance: 88/97 (90.7%)
-- Timing coverage KPI target for future runs: >=80% of SC/AO cases with at least one explicit timing assertion
-
-### Status Update
-
-- Current full-suite run is regressed versus the prior baseline: 18 failing cases are present and require triage.
-
-### Metric Interpretation Update (HP Timing)
-
-- `hpInToHpOutLatencyMs` is treated as a causal latency metric and is never reported as negative.
-- If `HP_OUT` is already asserted before first `HP_IN`, `hpInToHpOutLatencyMs` is classified as **unmeasurable** (null + reason), not a signed latency.
-- `hpHoldAfterLastFrameMs` is interpreted as the delay from final `FP_OUT` release to the first `HP_OUT` release at/after that point.
-- Any `HP_OUT` release before final `FP_OUT` release is an anomaly for scenarios requiring latched HP and must be called out as validation failure evidence, not accepted as normal arithmetic.
+- Suite: `TickleBoard/vectors/suites/full_validation_suite.yaml`
+- Artifacts root: `TickleBoard/artifacts/full_run_ble_20260521_1719`
+- Cases executed: 31
+- Outcome: **31 passed, 0 failed, 0 skipped**
+- Timing assertions: **86/86 passed**
+- Functional assertions: **109/109 passed**
 
 ## Master Results Table
 
-| Test Description | Reference | Outcome | Failure Class | Timing Assertions |
-|---|---|---|---|---:|
-| Normal wake then shoot | `SC-01` (`SC-01-NOMINAL`) | Fail | timing_tolerance | 4/5 |
-| Extra FP during sequence should be ignored | `SC-02` (`SC-02-FP-DURING-SEQUENCE`) | Pass | pass | 1/1 |
-| FP flood during burst still yields one sequence | `SC-03` (`SC-03-FP-FLOOD`) | Pass | pass | 1/1 |
-| HP only path should timeout with no FP | `SC-04` (`SC-04-WAKE-TIMEOUT`) | Fail | timing_tolerance | 0/1 |
-| Repeated HP pulses do not extend wake hold | `SC-04b` (`SC-04B-REPEATED-HP`) | Pass | pass | 2/2 |
-| FP after burst starts second sequence under cap | `SC-05` (`SC-05-BACK-TO-BACK`) | Fail | timing_tolerance | 1/5 |
-| FP during post-shutter hold can start next sequence | `SC-05b` (`SC-05B-FP-DURING-POST-HOLD`) | Fail | timing_tolerance | 1/5 |
-| FP before HP triggers cold path with AF lead | `SC-06` (`SC-06-COLD-FP`) | Fail | timing_tolerance | 1/2 |
-| HP activity during burst does not alter frame schedule | `SC-07` (`SC-07-HP-DURING-BURST`) | Pass | pass | 1/1 |
-| HP during post-hold does not move wake hold and does not fire FP | `SC-07b` (`SC-07B-HP-DURING-POST-HOLD`) | Pass | pass | 2/2 |
-| FP before HP then later HP should keep cold path stable | `SC-08` (`SC-08-FP-BEFORE-HP`) | Fail | timing_tolerance | 1/2 |
-| Additional FP rejected at MaxSequenceCount cap | `SC-09` (`SC-09-SEQUENCE-CAP`) | Fail | logic_mismatch | 1/1 |
-| New event after cap end starts fresh activity | `SC-10` (`SC-10-RECOVERY-AFTER-CAP`) | Fail | timing_tolerance | 2/3 |
-| Validate T gating frame 1 and Y spacing for later frames | `SC-11` (`SC-11-SPACING-VS-T`) | Fail | timing_tolerance | 1/2 |
-| HP-only no-sequence behavior at field-like stimulus | `SC-12` (`SC-12-HP-ONLY-MIN-GAP`) | Fail | timing_tolerance | 0/1 |
-| Synthetic bounce should be rejected by debounce windows | `SC-13` (`SC-13-BOUNCE-DEBOUNCE`) | Fail | logic_mismatch | 1/1 |
-| Held FP should count once, not continuous output | `SC-14` (`SC-14-HELD-VS-PULSED-FP`) | Pass | pass | 2/2 |
-| Compare latency paths with powerSaveIdleMode enabled vs disabled | `SC-15` (`SC-15-POWER-SAVE-BUDGET`) | Pass | pass | 1/1 |
-| HP release after FP should not drop HP_OUT continuity | `SC-16` (`SC-16-HP-RELEASE-AFTER-FP`) | Fail | timing_tolerance | 3/5 |
-| First frame follows max(FP accept, HP_OUT assert + T) | `SC-17` (`SC-17-SHORT-HP-LEAD`) | Fail | timing_tolerance | 1/2 |
-| HP chatter/release during burst does not alter scheduling | `SC-18` (`SC-18-HP-CHATTER-BURST`) | Pass | pass | 1/1 |
-| New FP after HP release should be cold/short-lead behavior | `SC-19` (`SC-19-NEW-EVENT-AFTER-RELEASE`) | Fail | timing_tolerance | 3/4 |
-| T may delay frame 1 but not add delay to frames 2..N | `SC-20` (`SC-20-T-GREATER-THAN-Y`) | Pass | pass | 3/3 |
-| Re-run SC-04 while BLE remains connected | `ADDON-BLE-CONNECTED` (`AO-BLE-CONNECTED-SC04`) | Fail | timing_tolerance | 0/1 |
-| Re-run SC-01 while BLE remains connected | `ADDON-BLE-CONNECTED` (`AO-BLE-CONNECTED-SC01`) | Fail | timing_tolerance | 0/1 |
-| fullPressIgnoreGap just-before/exact/just-after checks | `ADDON-GAP-BOUNDARY` (`AO-GAP-BOUNDARY-TRIAD`) | Fail | timing_tolerance | 1/2 |
-| Write config during active flow and verify defer/reject behavior | `ADDON-DEFERRED-CONFIG` (`AO-DEFERRED-CONFIG-WRITES`) | Fail | timing_tolerance | 0/1 |
-| Verify factory reset behavior and reserved field coercion | `ADDON-FACTORY-RESET` (`AO-FACTORY-RESET-AND-COERCION`) | Pass | pass | 1/1 |
+| Case | Scenario | Status | Failure Class | Timing | Functional | Notes |
+|------|----------|--------|---------------|--------|------------|-------|
+| SC-01-NOMINAL | SC-01 | passed | pass | 6/6 | 5/5 |  |
+| SC-02-FP-DURING-SEQUENCE | SC-02 | passed | pass | 2/2 | 5/5 | dual_classification_expected: gap_and_burst_ignored_fp_incremented |
+| SC-03-FP-FLOOD | SC-03 | passed | pass | 2/2 | 5/5 | dual_classification_expected: gap_and_burst_ignored_fp_incremented |
+| SC-04-WAKE-TIMEOUT | SC-04 | passed | pass | 2/2 | 3/3 |  |
+| SC-04B-REPEATED-HP | SC-04b | passed | pass | 2/2 | 3/3 |  |
+| SC-05-BACK-TO-BACK | SC-05 | passed | pass | 5/5 | 5/5 |  |
+| SC-05B-FP-DURING-POST-HOLD | SC-05b | passed | pass | 5/5 | 5/5 |  |
+| SC-06-COLD-FP | SC-06 | passed | pass | 2/2 | 3/3 |  |
+| SC-07-HP-DURING-BURST | SC-07 | passed | pass | 2/2 | 3/3 |  |
+| SC-07B-HP-DURING-POST-HOLD | SC-07b | passed | pass | 2/2 | 3/3 |  |
+| SC-08-FP-BEFORE-HP | SC-08 | passed | pass | 3/3 | 3/3 |  |
+| SC-09-SEQUENCE-CAP | SC-09 | passed | pass | 2/2 | 4/4 |  |
+| SC-10-RECOVERY-AFTER-CAP | SC-10 | passed | pass | 3/3 | 5/5 |  |
+| SC-11-SPACING-VS-T | SC-11 | passed | pass | 3/3 | 2/2 |  |
+| SC-12-HP-ONLY-MIN-GAP | SC-12 | passed | pass | 2/2 | 3/3 |  |
+| SC-13-BOUNCE-DEBOUNCE | SC-13 | passed | pass | 2/2 | 3/3 | dual_classification_expected: gap_and_burst_ignored_fp_incremented |
+| SC-14-HELD-VS-PULSED-FP | SC-14 | passed | pass | 3/3 | 2/2 |  |
+| SC-15-POWER-SAVE-BUDGET | SC-15 | passed | pass | 2/2 | 3/3 |  |
+| SC-16-HP-RELEASE-AFTER-FP | SC-16 | passed | pass | 6/6 | 2/2 |  |
+| SC-17-SHORT-HP-LEAD | SC-17 | passed | pass | 3/3 | 2/2 |  |
+| SC-18-HP-CHATTER-BURST | SC-18 | passed | pass | 2/2 | 3/3 |  |
+| SC-19-NEW-EVENT-AFTER-RELEASE | SC-19 | passed | pass | 4/4 | 5/5 |  |
+| SC-20-T-GREATER-THAN-Y | SC-20 | passed | pass | 3/3 | 2/2 |  |
+| AO-BLE-CONNECTED-SC04 | ADDON-BLE-CONNECTED | passed | pass | 2/2 | 3/3 |  |
+| AO-BLE-CONNECTED-SC01 | ADDON-BLE-CONNECTED | passed | pass | 2/2 | 3/3 |  |
+| AO-LATENCY-HP-IN-TO-HP-OUT | ADDON-LATENCY | passed | pass | 2/2 | 1/1 |  |
+| AO-LATENCY-FP-IN-TO-FP-OUT | ADDON-LATENCY | passed | pass | 2/2 | 3/3 |  |
+| AO-GAP-BOUNDARY-TRIAD | ADDON-GAP-BOUNDARY | passed | pass | 3/3 | 7/7 | dual_classification_expected: gap_and_burst_ignored_fp_incremented |
+| AO-GAP-CADENCE | ADDON-GAP-CADENCE | passed | pass | 3/3 | 7/7 |  |
+| AO-DEFERRED-CONFIG-WRITES | ADDON-DEFERRED-CONFIG | passed | pass | 2/2 | 3/3 |  |
+| AO-FACTORY-RESET-AND-COERCION | ADDON-FACTORY-RESET | passed | pass | 2/2 | 3/3 |  |
 
 ## Results Statistics
 
-### Assertion Coverage And Compliance
-
-| Assertion Class | Passed | Total | Compliance |
-|---|---:|---:|---:|
-| Timing assertions | 36 | 59 | 61.0% |
-| Functional assertions | 88 | 97 | 90.7% |
-
-### Failure Class Definitions
-
-| Failure class | Meaning |
-|---|---|
-| `pass` | No failed assertions |
-| `timing_tolerance` | One or more timing assertions failed tolerance/range checks |
-| `logic_mismatch` | Functional assertion mismatch with no timing assertion failures |
-
-### Timing By Commanded Condition
-
-Mixed-condition global means are intentionally removed here. Timing values are broken out by commanded scenario regime so each line compares like-with-like.
-
-| Timing regime | Sample count | Min | Mean | Max | Cases |
-|---|---:|---:|---:|---:|---|
-| `frameStartSpacingMs` around 0.2 s (rapid cadence) | 4 | 200 ms | 200 ms | 200 ms | `SC-20-T-GREATER-THAN-Y`, `AO-BLE-CONNECTED-SC01`, `AO-GAP-BOUNDARY-TRIAD`, `AO-DEFERRED-CONFIG-WRITES` |
-| `frameStartSpacingMs` around 1.0 s (nominal cadence) | 16 | 998.67 ms | 998.93 ms | 999.57 ms | `SC-01-NOMINAL`, `SC-02-FP-DURING-SEQUENCE`, `SC-03-FP-FLOOD`, `SC-06-COLD-FP`, `SC-07-HP-DURING-BURST`, `SC-07B-HP-DURING-POST-HOLD`, `SC-08-FP-BEFORE-HP`, `SC-09-SEQUENCE-CAP`, `SC-11-SPACING-VS-T`, `SC-13-BOUNCE-DEBOUNCE`, `SC-14-HELD-VS-PULSED-FP`, `SC-15-POWER-SAVE-BUDGET`, `SC-16-HP-RELEASE-AFTER-FP`, `SC-17-SHORT-HP-LEAD`, `SC-18-HP-CHATTER-BURST`, `AO-FACTORY-RESET-AND-COERCION` |
-| `frameStartSpacingMs` around 1.2-2.0 s (extended/cap windows) | 3 | 1.412 s | 1.604 s | 1.929 s | `SC-05-BACK-TO-BACK`, `SC-05B-FP-DURING-POST-HOLD`, `SC-19-NEW-EVENT-AFTER-RELEASE` |
-| `frameStartSpacingMs` around 4.2 s (recovery cadence) | 1 | 4.171 s | 4.171 s | 4.171 s | `SC-10-RECOVERY-AFTER-CAP` |
-
-All other timing metrics are reported per-test in the detailed sections to preserve command/context-specific meaning.
+- Total cases: 31
+- Passed: 31
+- Failed: 0
+- Skipped: 0
+- Timing assertions passed: 86/86
+- Functional assertions passed: 109/109
 
 ## Detailed Test Results
 
-### Normal wake then shoot (`SC-01-NOMINAL`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | Normal wake then shoot |
-| Reference | `SC-01` |
-| Coverage tags | core, nominal |
-| Outcome | Fail |
-| Failure class | timing_tolerance |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | 100 |
-| `frameStartSpacingMs` | 999 |
-| `fpInToFpOutLatencyMs` | 0 |
-| `hpInToHpOutLatencyMs` | n/a |
-| `frameCount` | 4 |
-| `sequenceCount` | 1 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 1 |
-| `ignoredFpDuringGapCount` | 0 |
-| `ignoredFpDuringBurstCount` | 0 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 1 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Pass | expected 4, got 4 |
-| `fpPulseWidthMs` | Pass | expected 100.0 +/- 5.0, got 100.0 |
-| `frameStartSpacingMs` | Pass | expected 1000.0 +/- 10.0, got 999.0 |
-| `sequenceCount` | Pass | expected 1, got 1 |
-| `telemetryDelta.acceptedFpCount` | Pass | expected 1, got 1 |
-| `telemetryDelta.sequenceCompletedCount` | Pass | expected 1, got 1 |
-| `hold.noHpReleaseBeforeFinalFrame` | Pass | expected False, got False |
-| `hold.requirePostFinalFrameHpRelease` | Pass | hpHoldAfterLastFrameMs=1999.0 reason=None |
-| `hold.dropTimeRule` | Fail | missing input for drop-time rule (wakeHoldMs=10000, postFinalFrameHoldMs=2000, hpOutContinuityMs=None, hpAssertToFinalFrameReleaseMs=None) |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1} |
-
-### Extra FP during sequence should be ignored (`SC-02-FP-DURING-SEQUENCE`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | Extra FP during sequence should be ignored |
-| Reference | `SC-02` |
-| Coverage tags | core, ignore-gap |
-| Outcome | Pass |
-| Failure class | pass |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | 99.25 |
-| `frameStartSpacingMs` | 998.67 |
-| `fpInToFpOutLatencyMs` | 0 |
-| `hpInToHpOutLatencyMs` | n/a |
-| `frameCount` | 4 |
-| `sequenceCount` | 1 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 1 |
-| `ignoredFpDuringGapCount` | 1 |
-| `ignoredFpDuringBurstCount` | 1 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 1 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Pass | expected 4, got 4 |
-| `frameStartSpacingMs` | Pass | expected 1000.0 +/- 10.0, got 998.7 |
-| `telemetryDelta.acceptedFpCount` | Pass | expected 1, got 1 |
-| `telemetryDelta.ignoredFpDuringGapCount` | Pass | expected 1, got 1 |
-| `telemetryDelta.ignoredFpDuringBurstCount` | Pass | expected 1, got 1 |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 1, 'ignoredFpDuringBurstCount': 1, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1} |
-
-### FP flood during burst still yields one sequence (`SC-03-FP-FLOOD`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | FP flood during burst still yields one sequence |
-| Reference | `SC-03` |
-| Coverage tags | core, ignore-gap |
-| Outcome | Pass |
-| Failure class | pass |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | 99.25 |
-| `frameStartSpacingMs` | 998.67 |
-| `fpInToFpOutLatencyMs` | 0 |
-| `hpInToHpOutLatencyMs` | n/a |
-| `frameCount` | 4 |
-| `sequenceCount` | 1 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 1 |
-| `ignoredFpDuringGapCount` | 3 |
-| `ignoredFpDuringBurstCount` | 3 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 1 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Pass | expected 4, got 4 |
-| `frameStartSpacingMs` | Pass | expected 1000.0 +/- 10.0, got 998.7 |
-| `telemetryDelta.acceptedFpCount` | Pass | expected 1, got 1 |
-| `telemetryDelta.ignoredFpDuringGapCount` | Pass | expected 3, got 3 |
-| `telemetryDelta.ignoredFpDuringBurstCount` | Pass | expected 3, got 3 |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 3, 'ignoredFpDuringBurstCount': 3, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1} |
-
-### HP only path should timeout with no FP (`SC-04-WAKE-TIMEOUT`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | HP only path should timeout with no FP |
-| Reference | `SC-04` |
-| Coverage tags | core, wake-only |
-| Outcome | Fail |
-| Failure class | timing_tolerance |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | n/a |
-| `frameStartSpacingMs` | n/a |
-| `fpInToFpOutLatencyMs` | n/a |
-| `hpInToHpOutLatencyMs` | n/a |
-| `frameCount` | 0 |
-| `sequenceCount` | 0 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 0 |
-| `ignoredFpDuringGapCount` | 0 |
-| `ignoredFpDuringBurstCount` | 0 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 1 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Pass | expected 0, got 0 |
-| `telemetryDelta.wakeTimeoutCount` | Pass | expected 1, got 1 |
-| `wakeOnlyHoldMs` | Fail | missing metric wakeOnlyHoldMs |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 0, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 0, 'activityCompletedCount': 1} |
-
-### Repeated HP pulses do not extend wake hold (`SC-04B-REPEATED-HP`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | Repeated HP pulses do not extend wake hold |
-| Reference | `SC-04b` |
-| Coverage tags | variant, wake-only |
-| Outcome | Pass |
-| Failure class | pass |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | n/a |
-| `frameStartSpacingMs` | n/a |
-| `fpInToFpOutLatencyMs` | n/a |
-| `hpInToHpOutLatencyMs` | 6.7e+03 |
-| `frameCount` | 0 |
-| `sequenceCount` | 0 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 0 |
-| `ignoredFpDuringGapCount` | 0 |
-| `ignoredFpDuringBurstCount` | 0 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 2 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Pass | expected 0, got 0 |
-| `telemetryDelta.hpRefreshCount` | Pass | expected 2, got 2 |
-| `wakeOnlyHoldMs` | Pass | expected 10000.0 +/- 100.0, got 9989.0 |
-| `hpInToHpOutLatencyMs_non_negative` | Pass | expected >= 0 when measurable, got 6698.0 |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 2, 'acceptedFpCount': 0, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 2, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 0, 'activityCompletedCount': 2} |
-
-### FP after burst starts second sequence under cap (`SC-05-BACK-TO-BACK`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | FP after burst starts second sequence under cap |
-| Reference | `SC-05` |
-| Coverage tags | core, multi-sequence |
-| Outcome | Fail |
-| Failure class | timing_tolerance |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | 99.88 |
-| `frameStartSpacingMs` | 1.41e+03 |
-| `fpInToFpOutLatencyMs` | 0 |
-| `hpInToHpOutLatencyMs` | 7.39e+03 |
-| `frameCount` | 8 |
-| `sequenceCount` | 2 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 2 |
-| `ignoredFpDuringGapCount` | 0 |
-| `ignoredFpDuringBurstCount` | 0 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 1 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Pass | expected 8, got 8 |
-| `sequenceCount` | Pass | expected 2, got 2 |
-| `telemetryDelta.acceptedFpCount` | Pass | expected 2, got 2 |
-| `telemetryDelta.sequenceCompletedCount` | Pass | expected 2, got 2 |
-| `interSequenceGapMs` | Fail | expected range [2500.0, 3500.0], got 3790.0 |
-| `hpInToHpOutLatencyMs_non_negative` | Pass | expected >= 0 when measurable, got 7387.0 |
-| `hold.noHpReleaseBeforeFinalFrame` | Fail | expected False, got True |
-| `hold.requirePostFinalFrameHpRelease` | Fail | hpHoldAfterLastFrameMs=None reason=no_hp_release_after_final_fp_release |
-| `hold.dropTimeRule` | Fail | expected HP_OUT continuity by rule max(10000.0, 3596.0+2000.0) = 10000.0 +/- 100.0, got -1292.0 |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 2, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 1, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 2, 'activityCompletedCount': 1} |
-
-### FP during post-shutter hold can start next sequence (`SC-05B-FP-DURING-POST-HOLD`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | FP during post-shutter hold can start next sequence |
-| Reference | `SC-05b` |
-| Coverage tags | variant, multi-sequence |
-| Outcome | Fail |
-| Failure class | timing_tolerance |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | 100 |
-| `frameStartSpacingMs` | 1.47e+03 |
-| `fpInToFpOutLatencyMs` | 0 |
-| `hpInToHpOutLatencyMs` | 7.81e+03 |
-| `frameCount` | 8 |
-| `sequenceCount` | 2 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 2 |
-| `ignoredFpDuringGapCount` | 0 |
-| `ignoredFpDuringBurstCount` | 0 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 1 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Pass | expected 8, got 8 |
-| `sequenceCount` | Pass | expected 2, got 2 |
-| `telemetryDelta.acceptedFpCount` | Pass | expected 2, got 2 |
-| `telemetryDelta.sequenceCompletedCount` | Pass | expected 2, got 2 |
-| `interSequenceGapMs` | Fail | expected range [1800.0, 2600.0], got 4209.0 |
-| `hpInToHpOutLatencyMs_non_negative` | Pass | expected >= 0 when measurable, got 7806.0 |
-| `hold.noHpReleaseBeforeFinalFrame` | Fail | expected False, got True |
-| `hold.requirePostFinalFrameHpRelease` | Fail | hpHoldAfterLastFrameMs=None reason=no_hp_release_after_final_fp_release |
-| `hold.dropTimeRule` | Fail | expected HP_OUT continuity by rule max(10000.0, 3597.0+2000.0) = 10000.0 +/- 100.0, got -1711.0 |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 2, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 1, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 2, 'activityCompletedCount': 1} |
-
-### FP before HP triggers cold path with AF lead (`SC-06-COLD-FP`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | FP before HP triggers cold path with AF lead |
-| Reference | `SC-06` |
-| Coverage tags | core, cold-fp |
-| Outcome | Fail |
-| Failure class | timing_tolerance |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | 99 |
-| `frameStartSpacingMs` | 999 |
-| `fpInToFpOutLatencyMs` | 0 |
-| `hpInToHpOutLatencyMs` | n/a |
-| `frameCount` | 4 |
-| `sequenceCount` | 1 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 1 |
-| `ignoredFpDuringGapCount` | 0 |
-| `ignoredFpDuringBurstCount` | 0 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 1 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Pass | expected 4, got 4 |
-| `frameStartSpacingMs` | Pass | expected 1000.0 +/- 10.0, got 999.0 |
-| `telemetryDelta.coldFpSequenceCount` | Fail | expected 1, got 0 |
-| `firstFrameGateDelayMs` | Fail | expected range [450.0, 650.0], got 0.0 |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1} |
-
-### HP activity during burst does not alter frame schedule (`SC-07-HP-DURING-BURST`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | HP activity during burst does not alter frame schedule |
-| Reference | `SC-07` |
-| Coverage tags | core, hp-during-burst |
-| Outcome | Pass |
-| Failure class | pass |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | 100 |
-| `frameStartSpacingMs` | 999 |
-| `fpInToFpOutLatencyMs` | 0 |
-| `hpInToHpOutLatencyMs` | n/a |
-| `frameCount` | 4 |
-| `sequenceCount` | 1 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 1 |
-| `ignoredFpDuringGapCount` | 0 |
-| `ignoredFpDuringBurstCount` | 0 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 1 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Pass | expected 4, got 4 |
-| `frameStartSpacingMs` | Pass | expected 1000.0 +/- 10.0, got 999.0 |
-| `telemetryDelta.hpIgnoredDuringBurstCount` | Pass | expected 1, got 1 |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 1, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1} |
-
-### HP during post-hold does not move wake hold and does not fire FP (`SC-07B-HP-DURING-POST-HOLD`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | HP during post-hold does not move wake hold and does not fire FP |
-| Reference | `SC-07b` |
-| Coverage tags | variant, hp-during-burst |
-| Outcome | Pass |
-| Failure class | pass |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | 99.75 |
-| `frameStartSpacingMs` | 998.67 |
-| `fpInToFpOutLatencyMs` | 1 |
-| `hpInToHpOutLatencyMs` | 7.81e+03 |
-| `frameCount` | 4 |
-| `sequenceCount` | 1 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 1 |
-| `ignoredFpDuringGapCount` | 0 |
-| `ignoredFpDuringBurstCount` | 0 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 1 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Pass | expected 4, got 4 |
-| `frameStartSpacingMs` | Pass | expected 1000.0 +/- 10.0, got 998.7 |
-| `telemetryDelta.hpRefreshCount` | Pass | expected 1, got 1 |
-| `hpInToHpOutLatencyMs_non_negative` | Pass | expected >= 0 when measurable, got 7807.0 |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1} |
-
-### FP before HP then later HP should keep cold path stable (`SC-08-FP-BEFORE-HP`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | FP before HP then later HP should keep cold path stable |
-| Reference | `SC-08` |
-| Coverage tags | core, cold-fp |
-| Outcome | Fail |
-| Failure class | timing_tolerance |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | 99.5 |
-| `frameStartSpacingMs` | 999 |
-| `fpInToFpOutLatencyMs` | 0 |
-| `hpInToHpOutLatencyMs` | n/a |
-| `frameCount` | 4 |
-| `sequenceCount` | 1 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 1 |
-| `ignoredFpDuringGapCount` | 0 |
-| `ignoredFpDuringBurstCount` | 0 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 1 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Pass | expected 4, got 4 |
-| `frameStartSpacingMs` | Pass | expected 1000.0 +/- 10.0, got 999.0 |
-| `telemetryDelta.coldFpSequenceCount` | Fail | expected 1, got 0 |
-| `firstFrameGateDelayMs` | Fail | expected range [450.0, 650.0], got 0.0 |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 1, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1} |
-
-### Additional FP rejected at MaxSequenceCount cap (`SC-09-SEQUENCE-CAP`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | Additional FP rejected at MaxSequenceCount cap |
-| Reference | `SC-09` |
-| Coverage tags | core, cap |
-| Outcome | Fail |
-| Failure class | logic_mismatch |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | 99.5 |
-| `frameStartSpacingMs` | 999.57 |
-| `fpInToFpOutLatencyMs` | 0 |
-| `hpInToHpOutLatencyMs` | n/a |
-| `frameCount` | 8 |
-| `sequenceCount` | 1 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 2 |
-| `ignoredFpDuringGapCount` | 0 |
-| `ignoredFpDuringBurstCount` | 0 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 1 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Fail | expected 2, got 8 |
-| `frameStartSpacingMs` | Pass | expected 1000.0 +/- 10.0, got 999.6 |
-| `telemetryDelta.acceptedFpCount` | Fail | expected 1, got 2 |
-| `telemetryDelta.rejectedFpAtSequenceCapCount` | Fail | expected 1, got 0 |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 2, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 2, 'activityCompletedCount': 1} |
-
-### New event after cap end starts fresh activity (`SC-10-RECOVERY-AFTER-CAP`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | New event after cap end starts fresh activity |
-| Reference | `SC-10` |
-| Coverage tags | core, cap |
-| Outcome | Fail |
-| Failure class | timing_tolerance |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | 99.5 |
-| `frameStartSpacingMs` | 4.17e+03 |
-| `fpInToFpOutLatencyMs` | 0 |
-| `hpInToHpOutLatencyMs` | 1.2e+04 |
-| `frameCount` | 4 |
-| `sequenceCount` | 2 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 2 |
-| `ignoredFpDuringGapCount` | 0 |
-| `ignoredFpDuringBurstCount` | 0 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 1 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Pass | expected 4, got 4 |
-| `frameStartSpacingMs` | Fail | expected 1000.0 +/- 10.0, got 4171.3 |
-| `sequenceCount` | Pass | expected 2, got 2 |
-| `telemetryDelta.acceptedFpCount` | Pass | expected 2, got 2 |
-| `telemetryDelta.rejectedFpAtSequenceCapCount` | Pass | expected 0, got 0 |
-| `interSequenceGapMs` | Pass | expected range [5000.0, inf], got 10416.0 |
-| `hpInToHpOutLatencyMs_non_negative` | Pass | expected >= 0 when measurable, got 12015.0 |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 2, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 1, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 2, 'activityCompletedCount': 1} |
-
-### Validate T gating frame 1 and Y spacing for later frames (`SC-11-SPACING-VS-T`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | Validate T gating frame 1 and Y spacing for later frames |
-| Reference | `SC-11` |
-| Coverage tags | core, timing |
-| Outcome | Fail |
-| Failure class | timing_tolerance |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | 100 |
-| `frameStartSpacingMs` | 999 |
-| `fpInToFpOutLatencyMs` | 0 |
-| `hpInToHpOutLatencyMs` | n/a |
-| `frameCount` | 2 |
-| `sequenceCount` | 1 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 1 |
-| `ignoredFpDuringGapCount` | 0 |
-| `ignoredFpDuringBurstCount` | 0 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 1 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Fail | expected 4, got 2 |
-| `frameStartSpacingMs` | Pass | expected 1000.0 +/- 10.0, got 999.0 |
-| `firstFrameGateDelayMs` | Fail | expected range [350.0, 650.0], got 0.0 |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1} |
-
-### HP-only no-sequence behavior at field-like stimulus (`SC-12-HP-ONLY-MIN-GAP`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | HP-only no-sequence behavior at field-like stimulus |
-| Reference | `SC-12` |
-| Coverage tags | core, wake-only |
-| Outcome | Fail |
-| Failure class | timing_tolerance |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | n/a |
-| `frameStartSpacingMs` | n/a |
-| `fpInToFpOutLatencyMs` | n/a |
-| `hpInToHpOutLatencyMs` | n/a |
-| `frameCount` | 0 |
-| `sequenceCount` | 0 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 0 |
-| `ignoredFpDuringGapCount` | 0 |
-| `ignoredFpDuringBurstCount` | 0 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 1 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Pass | expected 0, got 0 |
-| `telemetryDelta.wakeTimeoutCount` | Pass | expected 1, got 1 |
-| `wakeOnlyHoldMs` | Fail | missing metric wakeOnlyHoldMs |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 0, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 0, 'activityCompletedCount': 1} |
-
-### Synthetic bounce should be rejected by debounce windows (`SC-13-BOUNCE-DEBOUNCE`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | Synthetic bounce should be rejected by debounce windows |
-| Reference | `SC-13` |
-| Coverage tags | core, debounce |
-| Outcome | Fail |
-| Failure class | logic_mismatch |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | 100 |
-| `frameStartSpacingMs` | 999 |
-| `fpInToFpOutLatencyMs` | 0 |
-| `hpInToHpOutLatencyMs` | n/a |
-| `frameCount` | 4 |
-| `sequenceCount` | 1 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 1 |
-| `ignoredFpDuringGapCount` | 2 |
-| `ignoredFpDuringBurstCount` | 2 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 1 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Pass | expected 4, got 4 |
-| `frameStartSpacingMs` | Pass | expected 1000.0 +/- 10.0, got 999.0 |
-| `telemetryDelta.fpDebounceRejectCount` | Fail | expected 1, got 0 |
-| `telemetryDelta.hpDebounceRejectCount` | Pass | expected 1, got 1 |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 2, 'ignoredFpDuringBurstCount': 2, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 2, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 1, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1} |
-
-### Held FP should count once, not continuous output (`SC-14-HELD-VS-PULSED-FP`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | Held FP should count once, not continuous output |
-| Reference | `SC-14` |
-| Coverage tags | core, fp-shape |
-| Outcome | Pass |
-| Failure class | pass |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | 99.25 |
-| `frameStartSpacingMs` | 999 |
-| `fpInToFpOutLatencyMs` | 0 |
-| `hpInToHpOutLatencyMs` | n/a |
-| `frameCount` | 4 |
-| `sequenceCount` | 1 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 1 |
-| `ignoredFpDuringGapCount` | 0 |
-| `ignoredFpDuringBurstCount` | 0 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 1 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Pass | expected 4, got 4 |
-| `fpPulseWidthMs` | Pass | expected 100.0 +/- 5.0, got 99.2 |
-| `frameStartSpacingMs` | Pass | expected 1000.0 +/- 10.0, got 999.0 |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1} |
-
-### Compare latency paths with powerSaveIdleMode enabled vs disabled (`SC-15-POWER-SAVE-BUDGET`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | Compare latency paths with powerSaveIdleMode enabled vs disabled |
-| Reference | `SC-15` |
-| Coverage tags | core, performance |
-| Outcome | Pass |
-| Failure class | pass |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | 100.5 |
-| `frameStartSpacingMs` | 999 |
-| `fpInToFpOutLatencyMs` | 0 |
-| `hpInToHpOutLatencyMs` | n/a |
-| `frameCount` | 4 |
-| `sequenceCount` | 1 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 1 |
-| `ignoredFpDuringGapCount` | 0 |
-| `ignoredFpDuringBurstCount` | 0 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 1 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Pass | expected 4, got 4 |
-| `frameStartSpacingMs` | Pass | expected 1000.0 +/- 10.0, got 999.0 |
-| `telemetryDelta.acceptedFpCount` | Pass | expected 1, got 1 |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1} |
-
-### HP release after FP should not drop HP_OUT continuity (`SC-16-HP-RELEASE-AFTER-FP`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | HP release after FP should not drop HP_OUT continuity |
-| Reference | `SC-16` |
-| Coverage tags | core, hp-continuity |
-| Outcome | Fail |
-| Failure class | timing_tolerance |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | 99.75 |
-| `frameStartSpacingMs` | 999 |
-| `fpInToFpOutLatencyMs` | 0 |
-| `hpInToHpOutLatencyMs` | n/a |
-| `frameCount` | 4 |
-| `sequenceCount` | 1 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 1 |
-| `ignoredFpDuringGapCount` | 0 |
-| `ignoredFpDuringBurstCount` | 0 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 1 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Pass | expected 4, got 4 |
-| `frameStartSpacingMs` | Pass | expected 1000.0 +/- 10.0, got 999.0 |
-| `firstFrameGateDelayMs` | Fail | expected range [450.0, 650.0], got 0.0 |
-| `hold.noHpReleaseBeforeFinalFrame` | Pass | expected False, got False |
-| `hold.requirePostFinalFrameHpRelease` | Pass | hpHoldAfterLastFrameMs=2193.0 reason=None |
-| `hold.dropTimeRule` | Fail | missing input for drop-time rule (wakeHoldMs=10000, postFinalFrameHoldMs=2000, hpOutContinuityMs=None, hpAssertToFinalFrameReleaseMs=None) |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1} |
-
-### First frame follows max(FP accept, HP_OUT assert + T) (`SC-17-SHORT-HP-LEAD`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | First frame follows max(FP accept, HP_OUT assert + T) |
-| Reference | `SC-17` |
-| Coverage tags | core, af-gate |
-| Outcome | Fail |
-| Failure class | timing_tolerance |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | 100.75 |
-| `frameStartSpacingMs` | 998.67 |
-| `fpInToFpOutLatencyMs` | 1 |
-| `hpInToHpOutLatencyMs` | n/a |
-| `frameCount` | 4 |
-| `sequenceCount` | 1 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 1 |
-| `ignoredFpDuringGapCount` | 0 |
-| `ignoredFpDuringBurstCount` | 0 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 1 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Pass | expected 4, got 4 |
-| `frameStartSpacingMs` | Pass | expected 1000.0 +/- 10.0, got 998.7 |
-| `firstFrameGateDelayMs` | Fail | expected range [1750.0, 2150.0], got 1.0 |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1} |
-
-### HP chatter/release during burst does not alter scheduling (`SC-18-HP-CHATTER-BURST`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | HP chatter/release during burst does not alter scheduling |
-| Reference | `SC-18` |
-| Coverage tags | core, hp-during-burst |
-| Outcome | Pass |
-| Failure class | pass |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | 100.25 |
-| `frameStartSpacingMs` | 998.67 |
-| `fpInToFpOutLatencyMs` | 0 |
-| `hpInToHpOutLatencyMs` | n/a |
-| `frameCount` | 4 |
-| `sequenceCount` | 1 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 1 |
-| `ignoredFpDuringGapCount` | 0 |
-| `ignoredFpDuringBurstCount` | 0 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 1 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Pass | expected 4, got 4 |
-| `frameStartSpacingMs` | Pass | expected 1000.0 +/- 10.0, got 998.7 |
-| `telemetryDelta.hpIgnoredDuringBurstCount` | Pass | expected 2, got 2 |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 2, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1} |
-
-### New FP after HP release should be cold/short-lead behavior (`SC-19-NEW-EVENT-AFTER-RELEASE`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | New FP after HP release should be cold/short-lead behavior |
-| Reference | `SC-19` |
-| Coverage tags | core, cold-fp |
-| Outcome | Fail |
-| Failure class | timing_tolerance |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | 99.62 |
-| `frameStartSpacingMs` | 1.93e+03 |
-| `fpInToFpOutLatencyMs` | 0 |
-| `hpInToHpOutLatencyMs` | 1.1e+04 |
-| `frameCount` | 8 |
-| `sequenceCount` | 2 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 2 |
-| `ignoredFpDuringGapCount` | 0 |
-| `ignoredFpDuringBurstCount` | 0 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 1 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Pass | expected 8, got 8 |
-| `frameStartSpacingMs` | Fail | expected 1000.0 +/- 10.0, got 1929.0 |
-| `sequenceCount` | Pass | expected 2, got 2 |
-| `telemetryDelta.coldFpSequenceCount` | Pass | expected 1, got 1 |
-| `telemetryDelta.acceptedFpCount` | Pass | expected 2, got 2 |
-| `interSequenceGapMs` | Pass | expected range [6500.0, 7500.0], got 7410.0 |
-| `secondSequenceStartDelayMs` | Pass | expected range [450.0, 700.0], got 506.0 |
-| `hpInToHpOutLatencyMs_non_negative` | Pass | expected >= 0 when measurable, got 11006.0 |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 2, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 1, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 2, 'activityCompletedCount': 1} |
-
-### T may delay frame 1 but not add delay to frames 2..N (`SC-20-T-GREATER-THAN-Y`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | T may delay frame 1 but not add delay to frames 2..N |
-| Reference | `SC-20` |
-| Coverage tags | core, timing |
-| Outcome | Pass |
-| Failure class | pass |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | 99.5 |
-| `frameStartSpacingMs` | 200 |
-| `fpInToFpOutLatencyMs` | 1.91e+03 |
-| `hpInToHpOutLatencyMs` | 13 |
-| `frameCount` | 4 |
-| `sequenceCount` | 1 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 1 |
-| `ignoredFpDuringGapCount` | 0 |
-| `ignoredFpDuringBurstCount` | 0 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 0 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Pass | expected 4, got 4 |
-| `frameStartSpacingMs` | Pass | expected 200.0 +/- 5.0, got 200.0 |
-| `firstFrameGateDelayMs` | Pass | expected range [1750.0, 2150.0], got 1911.0 |
-| `hpInToHpOutLatencyMs_non_negative` | Pass | expected >= 0 when measurable, got 13.0 |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 0} |
-
-### Re-run SC-04 while BLE remains connected (`AO-BLE-CONNECTED-SC04`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | Re-run SC-04 while BLE remains connected |
-| Reference | `ADDON-BLE-CONNECTED` |
-| Coverage tags | addon, ble-connected |
-| Outcome | Fail |
-| Failure class | timing_tolerance |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | n/a |
-| `frameStartSpacingMs` | n/a |
-| `fpInToFpOutLatencyMs` | n/a |
-| `hpInToHpOutLatencyMs` | n/a |
-| `frameCount` | 0 |
-| `sequenceCount` | 0 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 0 |
-| `ignoredFpDuringGapCount` | 0 |
-| `ignoredFpDuringBurstCount` | 0 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 1 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Pass | expected 0, got 0 |
-| `telemetryDelta.wakeTimeoutCount` | Pass | expected 1, got 1 |
-| `wakeOnlyHoldMs` | Fail | missing metric wakeOnlyHoldMs |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 0, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 0, 'activityCompletedCount': 1} |
-
-### Re-run SC-01 while BLE remains connected (`AO-BLE-CONNECTED-SC01`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | Re-run SC-01 while BLE remains connected |
-| Reference | `ADDON-BLE-CONNECTED` |
-| Coverage tags | addon, ble-connected |
-| Outcome | Fail |
-| Failure class | timing_tolerance |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | 99.25 |
-| `frameStartSpacingMs` | 200 |
-| `fpInToFpOutLatencyMs` | 0 |
-| `hpInToHpOutLatencyMs` | n/a |
-| `frameCount` | 4 |
-| `sequenceCount` | 1 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 1 |
-| `ignoredFpDuringGapCount` | 0 |
-| `ignoredFpDuringBurstCount` | 0 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 1 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Pass | expected 4, got 4 |
-| `frameStartSpacingMs` | Fail | expected 1000.0 +/- 10.0, got 200.0 |
-| `telemetryDelta.acceptedFpCount` | Pass | expected 1, got 1 |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1} |
-
-### fullPressIgnoreGap just-before/exact/just-after checks (`AO-GAP-BOUNDARY-TRIAD`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | fullPressIgnoreGap just-before/exact/just-after checks |
-| Reference | `ADDON-GAP-BOUNDARY` |
-| Coverage tags | addon, boundary |
-| Outcome | Fail |
-| Failure class | timing_tolerance |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | 100.5 |
-| `frameStartSpacingMs` | 200 |
-| `fpInToFpOutLatencyMs` | 0 |
-| `hpInToHpOutLatencyMs` | n/a |
-| `frameCount` | 4 |
-| `sequenceCount` | 1 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 1 |
-| `ignoredFpDuringGapCount` | 1 |
-| `ignoredFpDuringBurstCount` | 0 |
-| `rejectedFpAtSequenceCapCount` | 2 |
-| `wakeTimeoutCount` | 1 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Fail | expected 2, got 4 |
-| `frameStartSpacingMs` | Pass | expected 200.0 +/- 5.0, got 200.0 |
-| `telemetryDelta.acceptedFpCount` | Pass | expected 1, got 1 |
-| `telemetryDelta.ignoredFpDuringGapCount` | Pass | expected 1, got 1 |
-| `telemetryDelta.rejectedFpAtSequenceCapCount` | Pass | expected 2, got 2 |
-| `firstFrameGateDelayMs` | Fail | expected range [850.0, 1200.0], got 0.0 |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 1, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 2, 'coldFpSequenceCount': 0, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1} |
-
-### Write config during active flow and verify defer/reject behavior (`AO-DEFERRED-CONFIG-WRITES`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | Write config during active flow and verify defer/reject behavior |
-| Reference | `ADDON-DEFERRED-CONFIG` |
-| Coverage tags | addon, config-write |
-| Outcome | Fail |
-| Failure class | timing_tolerance |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | 100 |
-| `frameStartSpacingMs` | 200 |
-| `fpInToFpOutLatencyMs` | 0 |
-| `hpInToHpOutLatencyMs` | n/a |
-| `frameCount` | 2 |
-| `sequenceCount` | 1 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 1 |
-| `ignoredFpDuringGapCount` | 0 |
-| `ignoredFpDuringBurstCount` | 0 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 1 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Fail | expected 4, got 2 |
-| `frameStartSpacingMs` | Fail | expected 1000.0 +/- 10.0, got 200.0 |
-| `telemetryDelta.acceptedFpCount` | Pass | expected 1, got 1 |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1} |
-
-### Verify factory reset behavior and reserved field coercion (`AO-FACTORY-RESET-AND-COERCION`)
-
-| Field | Value |
-|---|---|
-| Requirement descriptor | Verify factory reset behavior and reserved field coercion |
-| Reference | `ADDON-FACTORY-RESET` |
-| Coverage tags | addon, reset, coercion |
-| Outcome | Pass |
-| Failure class | pass |
-
-#### Performance Metrics
-
-| Metric | Value |
-|---|---:|
-| `fpPulseWidthMs` | 99 |
-| `frameStartSpacingMs` | 999 |
-| `fpInToFpOutLatencyMs` | 0 |
-| `hpInToHpOutLatencyMs` | n/a |
-| `frameCount` | 4 |
-| `sequenceCount` | 1 |
-
-#### Telemetry Delta Highlights
-
-| Counter | Delta |
-|---|---:|
-| `acceptedFpCount` | 1 |
-| `ignoredFpDuringGapCount` | 0 |
-| `ignoredFpDuringBurstCount` | 0 |
-| `rejectedFpAtSequenceCapCount` | 0 |
-| `wakeTimeoutCount` | 1 |
-
-#### Check Outcomes
-
-| Check | Result | Detail |
-|---|---|---|
-| `frameCount` | Pass | expected 4, got 4 |
-| `frameStartSpacingMs` | Pass | expected 1000.0 +/- 10.0, got 999.0 |
-| `telemetryDelta.acceptedFpCount` | Pass | expected 1, got 1 |
-| `telemetry_delta_sanity` | Pass | deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1} |
+### SC-01-NOMINAL (SC-01)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 6/6
+- Functional assertions: 5/5
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172101_SC-01-NOMINAL`
+- Description: Normal wake then shoot
+- Key metrics: frameCount=4; sequenceCount=1; hpInToHpOutLatencyMs=54.0; fpInToFpOutLatencyMs=0.0; fpPulseWidthMs=98.75; frameStartSpacingMs=998.6666666666666; firstFrameGateDelayMs=0.0; firstFrameAfLeadMs=946.0; hpOutContinuityMs=9989.0; hpHoldAfterLastFrameMs=5948.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 4, got 4
+  - [PASS] `fpPulseWidthMs` (timing) - expected 100.0 +/- 5.0, got 98.8
+  - [PASS] `frameStartSpacingMs` (timing) - expected 1000.0 +/- 10.0, got 998.7
+  - [PASS] `sequenceCount` (functional) - expected 1, got 1
+  - [PASS] `telemetryDelta.acceptedFpCount` (functional) - expected 1, got 1
+  - [PASS] `telemetryDelta.sequenceCompletedCount` (functional) - expected 1, got 1
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 54.0
+  - [PASS] `hold.noHpReleaseBeforeFinalFrame` (timing) - expected False, got False
+  - [PASS] `hold.requirePostFinalFrameHpRelease` (timing) - hpHoldAfterLastFrameMs=5948.0 reason=None
+  - [PASS] `hold.dropTimeRule` (timing) - expected HP_OUT continuity by rule max(10000.0, 4041.0+2000.0) = 10000.0 +/- 100.0, got 9989.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1}
+
+### SC-02-FP-DURING-SEQUENCE (SC-02)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 2/2
+- Functional assertions: 5/5
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172120_SC-02-FP-DURING-SEQUENCE`
+- Description: Extra FP during sequence should be ignored
+- Notes: dual_classification_expected: gap_and_burst_ignored_fp_incremented
+- Key metrics: frameCount=4; sequenceCount=1; hpInToHpOutLatencyMs=48.0; fpInToFpOutLatencyMs=0.0; fpPulseWidthMs=99.75; frameStartSpacingMs=998.6666666666666; firstFrameGateDelayMs=0.0; firstFrameAfLeadMs=952.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 4, got 4
+  - [PASS] `frameStartSpacingMs` (timing) - expected 1000.0 +/- 10.0, got 998.7
+  - [PASS] `telemetryDelta.acceptedFpCount` (functional) - expected 1, got 1
+  - [PASS] `telemetryDelta.ignoredFpDuringGapCount` (functional) - expected 1, got 1
+  - [PASS] `telemetryDelta.ignoredFpDuringBurstCount` (functional) - expected 1, got 1
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 48.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 1, 'ignoredFpDuringBurstCount': 1, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 0}
+
+### SC-03-FP-FLOOD (SC-03)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 2/2
+- Functional assertions: 5/5
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172135_SC-03-FP-FLOOD`
+- Description: FP flood during burst still yields one sequence
+- Notes: dual_classification_expected: gap_and_burst_ignored_fp_incremented
+- Key metrics: frameCount=4; sequenceCount=1; hpInToHpOutLatencyMs=39.0; fpInToFpOutLatencyMs=0.0; fpPulseWidthMs=100.75; frameStartSpacingMs=998.6666666666666; firstFrameGateDelayMs=0.0; firstFrameAfLeadMs=961.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 4, got 4
+  - [PASS] `frameStartSpacingMs` (timing) - expected 1000.0 +/- 10.0, got 998.7
+  - [PASS] `telemetryDelta.acceptedFpCount` (functional) - expected 1, got 1
+  - [PASS] `telemetryDelta.ignoredFpDuringGapCount` (functional) - expected 3, got 3
+  - [PASS] `telemetryDelta.ignoredFpDuringBurstCount` (functional) - expected 3, got 3
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 39.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 3, 'ignoredFpDuringBurstCount': 3, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1}
+
+### SC-04-WAKE-TIMEOUT (SC-04)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 2/2
+- Functional assertions: 3/3
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172153_SC-04-WAKE-TIMEOUT`
+- Description: HP only path should timeout with no FP
+- Key metrics: frameCount=0; sequenceCount=0; hpInToHpOutLatencyMs=55.0; hpOutContinuityMs=9989.0; wakeOnlyHoldMs=9989.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 0, got 0
+  - [PASS] `telemetryDelta.wakeTimeoutCount` (functional) - expected 1, got 1
+  - [PASS] `wakeOnlyHoldMs` (timing) - expected 10000.0 +/- 100.0, got 9989.0
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 55.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 0, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 0, 'activityCompletedCount': 1}
+
+### SC-04B-REPEATED-HP (SC-04b)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 2/2
+- Functional assertions: 3/3
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172211_SC-04B-REPEATED-HP`
+- Description: Repeated HP pulses do not extend wake hold
+- Key metrics: frameCount=0; sequenceCount=0; hpInToHpOutLatencyMs=0.0; hpOutContinuityMs=9988.0; wakeOnlyHoldMs=9988.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 0, got 0
+  - [PASS] `telemetryDelta.hpRefreshCount` (functional) - expected 2, got 2
+  - [PASS] `wakeOnlyHoldMs` (timing) - expected 10000.0 +/- 100.0, got 9988.0
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 0.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 0, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 2, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 0, 'activityCompletedCount': 1}
+
+### SC-05-BACK-TO-BACK (SC-05)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 5/5
+- Functional assertions: 5/5
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172236_SC-05-BACK-TO-BACK`
+- Description: FP after burst starts second sequence under cap
+- Key metrics: frameCount=8; sequenceCount=2; hpInToHpOutLatencyMs=46.0; fpInToFpOutLatencyMs=0.0; fpPulseWidthMs=99.25; frameStartSpacingMs=998.6666666666666; firstFrameGateDelayMs=0.0; firstFrameAfLeadMs=954.0; hpOutContinuityMs=12047.0; hpHoldAfterLastFrameMs=1998.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 8, got 8
+  - [PASS] `sequenceCount` (functional) - expected 2, got 2
+  - [PASS] `telemetryDelta.acceptedFpCount` (functional) - expected 2, got 2
+  - [PASS] `telemetryDelta.sequenceCompletedCount` (functional) - expected 2, got 2
+  - [PASS] `interSequenceGapMs` (timing) - expected range [2500.0, 3500.0], got 2904.0
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 46.0
+  - [PASS] `hold.noHpReleaseBeforeFinalFrame` (timing) - expected False, got False
+  - [PASS] `hold.requirePostFinalFrameHpRelease` (timing) - hpHoldAfterLastFrameMs=1998.0 reason=None
+  - [PASS] `hold.dropTimeRule` (timing) - expected HP_OUT continuity by rule max(10000.0, 10049.0+2000.0) = 12049.0 +/- 120.5, got 12047.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 2, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 2, 'activityCompletedCount': 1}
+
+### SC-05B-FP-DURING-POST-HOLD (SC-05b)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 5/5
+- Functional assertions: 5/5
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172259_SC-05B-FP-DURING-POST-HOLD`
+- Description: FP during post-shutter hold can start next sequence
+- Key metrics: frameCount=8; sequenceCount=2; hpInToHpOutLatencyMs=49.0; fpInToFpOutLatencyMs=0.0; fpPulseWidthMs=99.375; frameStartSpacingMs=998.6666666666666; firstFrameGateDelayMs=0.0; firstFrameAfLeadMs=951.0; hpOutContinuityMs=11244.0; hpHoldAfterLastFrameMs=1998.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 8, got 8
+  - [PASS] `sequenceCount` (functional) - expected 2, got 2
+  - [PASS] `telemetryDelta.acceptedFpCount` (functional) - expected 2, got 2
+  - [PASS] `telemetryDelta.sequenceCompletedCount` (functional) - expected 2, got 2
+  - [PASS] `interSequenceGapMs` (timing) - expected range [1800.0, 2600.0], got 2104.0
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 49.0
+  - [PASS] `hold.noHpReleaseBeforeFinalFrame` (timing) - expected False, got False
+  - [PASS] `hold.requirePostFinalFrameHpRelease` (timing) - hpHoldAfterLastFrameMs=1998.0 reason=None
+  - [PASS] `hold.dropTimeRule` (timing) - expected HP_OUT continuity by rule max(10000.0, 9246.0+2000.0) = 11246.0 +/- 112.5, got 11244.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 2, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 2, 'activityCompletedCount': 1}
+
+### SC-06-COLD-FP (SC-06)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 2/2
+- Functional assertions: 3/3
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172320_SC-06-COLD-FP`
+- Description: FP before HP triggers cold path with AF lead
+- Key metrics: frameCount=4; sequenceCount=1; fpInToFpOutLatencyMs=554.0; fpPulseWidthMs=107.5; frameStartSpacingMs=999.0; firstFrameGateDelayMs=554.0; firstFrameAfLeadMs=499.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 4, got 4
+  - [PASS] `frameStartSpacingMs` (timing) - expected 1000.0 +/- 10.0, got 999.0
+  - [PASS] `telemetryDelta.coldFpSequenceCount` (functional) - expected 1, got 1
+  - [PASS] `firstFrameGateDelayMs` (timing) - expected range [450.0, 650.0], got 554.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 1, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 0}
+
+### SC-07-HP-DURING-BURST (SC-07)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 2/2
+- Functional assertions: 3/3
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172336_SC-07-HP-DURING-BURST`
+- Description: HP activity during burst does not alter frame schedule
+- Key metrics: frameCount=4; sequenceCount=1; hpInToHpOutLatencyMs=46.0; fpInToFpOutLatencyMs=0.0; fpPulseWidthMs=99.75; frameStartSpacingMs=998.6666666666666; firstFrameGateDelayMs=0.0; firstFrameAfLeadMs=954.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 4, got 4
+  - [PASS] `frameStartSpacingMs` (timing) - expected 1000.0 +/- 10.0, got 998.7
+  - [PASS] `telemetryDelta.hpIgnoredDuringBurstCount` (functional) - expected 1, got 1
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 46.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 1, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1}
+
+### SC-07B-HP-DURING-POST-HOLD (SC-07b)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 2/2
+- Functional assertions: 3/3
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172353_SC-07B-HP-DURING-POST-HOLD`
+- Description: HP during post-hold does not move wake hold and does not fire FP
+- Key metrics: frameCount=4; sequenceCount=1; hpInToHpOutLatencyMs=46.0; fpInToFpOutLatencyMs=0.0; fpPulseWidthMs=100.25; frameStartSpacingMs=998.6666666666666; firstFrameGateDelayMs=0.0; firstFrameAfLeadMs=954.0; hpOutContinuityMs=9989.0; hpHoldAfterLastFrameMs=5939.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 4, got 4
+  - [PASS] `frameStartSpacingMs` (timing) - expected 1000.0 +/- 10.0, got 998.7
+  - [PASS] `telemetryDelta.hpRefreshCount` (functional) - expected 1, got 1
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 46.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1}
+
+### SC-08-FP-BEFORE-HP (SC-08)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 3/3
+- Functional assertions: 3/3
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172413_SC-08-FP-BEFORE-HP`
+- Description: FP before HP then later HP should keep cold path stable
+- Key metrics: frameCount=4; sequenceCount=1; fpInToFpOutLatencyMs=551.0; fpPulseWidthMs=107.25; frameStartSpacingMs=999.0; firstFrameGateDelayMs=551.0; firstFrameAfLeadMs=499.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 4, got 4
+  - [PASS] `frameStartSpacingMs` (timing) - expected 1000.0 +/- 10.0, got 999.0
+  - [PASS] `telemetryDelta.coldFpSequenceCount` (functional) - expected 1, got 1
+  - [PASS] `firstFrameGateDelayMs` (timing) - expected range [450.0, 650.0], got 551.0
+  - [PASS] `hpInToHpOutLatencyMs_preasserted_handling` (timing) - expected unmeasurable latency when HP_OUT pre-asserted (latency=None, reason=hp_out_already_asserted_before_hp_in)
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 1, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 0}
+
+### SC-09-SEQUENCE-CAP (SC-09)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 2/2
+- Functional assertions: 4/4
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172429_SC-09-SEQUENCE-CAP`
+- Description: Additional FP rejected at MaxSequenceCount cap
+- Key metrics: frameCount=2; sequenceCount=1; hpInToHpOutLatencyMs=43.0; fpInToFpOutLatencyMs=0.0; fpPulseWidthMs=99.5; frameStartSpacingMs=998.0; firstFrameGateDelayMs=0.0; firstFrameAfLeadMs=957.0; hpOutContinuityMs=9989.0; hpHoldAfterLastFrameMs=7934.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 2, got 2
+  - [PASS] `frameStartSpacingMs` (timing) - expected 1000.0 +/- 10.0, got 998.0
+  - [PASS] `telemetryDelta.acceptedFpCount` (functional) - expected 1, got 1
+  - [PASS] `telemetryDelta.rejectedFpAtSequenceCapCount` (functional) - expected 1, got 1
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 43.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 1, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1}
+
+### SC-10-RECOVERY-AFTER-CAP (SC-10)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 3/3
+- Functional assertions: 5/5
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172448_SC-10-RECOVERY-AFTER-CAP`
+- Description: New event after cap end starts fresh activity
+- Key metrics: frameCount=4; sequenceCount=2; hpInToHpOutLatencyMs=50.0; fpInToFpOutLatencyMs=0.0; fpPulseWidthMs=100.5; frameStartSpacingMs=998.5; firstFrameGateDelayMs=0.0; firstFrameAfLeadMs=950.0; hpOutContinuityMs=9988.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 4, got 4
+  - [PASS] `frameStartSpacingMs` (timing) - expected 1000.0 +/- 10.0, got 998.5
+  - [PASS] `sequenceCount` (functional) - expected 2, got 2
+  - [PASS] `telemetryDelta.acceptedFpCount` (functional) - expected 2, got 2
+  - [PASS] `telemetryDelta.rejectedFpAtSequenceCapCount` (functional) - expected 0, got 0
+  - [PASS] `interSequenceGapMs` (timing) - expected range [5000.0, inf], got 10400.0
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 50.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 2, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 1, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 2, 'activityCompletedCount': 1}
+
+### SC-11-SPACING-VS-T (SC-11)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 3/3
+- Functional assertions: 2/2
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172515_SC-11-SPACING-VS-T`
+- Description: Validate T gating frame 1 and Y spacing for later frames
+- Key metrics: frameCount=4; sequenceCount=1; hpInToHpOutLatencyMs=52.0; fpInToFpOutLatencyMs=372.0; fpPulseWidthMs=99.0; frameStartSpacingMs=999.0; firstFrameGateDelayMs=372.0; firstFrameAfLeadMs=420.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 4, got 4
+  - [PASS] `frameStartSpacingMs` (timing) - expected 1000.0 +/- 10.0, got 999.0
+  - [PASS] `firstFrameGateDelayMs` (timing) - expected range [350.0, 650.0], got 372.0
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 52.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1}
+
+### SC-12-HP-ONLY-MIN-GAP (SC-12)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 2/2
+- Functional assertions: 3/3
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172532_SC-12-HP-ONLY-MIN-GAP`
+- Description: HP-only no-sequence behavior at field-like stimulus
+- Key metrics: frameCount=0; sequenceCount=0; hpInToHpOutLatencyMs=54.0; hpOutContinuityMs=9989.0; wakeOnlyHoldMs=9989.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 0, got 0
+  - [PASS] `telemetryDelta.wakeTimeoutCount` (functional) - expected 1, got 1
+  - [PASS] `wakeOnlyHoldMs` (timing) - expected 10000.0 +/- 100.0, got 9989.0
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 54.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 0, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 0, 'activityCompletedCount': 1}
+
+### SC-13-BOUNCE-DEBOUNCE (SC-13)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 2/2
+- Functional assertions: 3/3
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172551_SC-13-BOUNCE-DEBOUNCE`
+- Description: Synthetic bounce should be rejected by debounce windows
+- Notes: dual_classification_expected: gap_and_burst_ignored_fp_incremented
+- Key metrics: frameCount=4; sequenceCount=1; hpInToHpOutLatencyMs=36.0; fpInToFpOutLatencyMs=0.0; fpPulseWidthMs=99.75; frameStartSpacingMs=998.6666666666666; firstFrameGateDelayMs=0.0; firstFrameAfLeadMs=1964.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 4, got 4
+  - [PASS] `frameStartSpacingMs` (timing) - expected 1000.0 +/- 10.0, got 998.7
+  - [PASS] `telemetryDelta.fpDebounceRejectCount` (functional) - expected 1, got 1
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 36.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 1, 'ignoredFpDuringBurstCount': 1, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 1, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 0}
+
+### SC-14-HELD-VS-PULSED-FP (SC-14)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 3/3
+- Functional assertions: 2/2
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172605_SC-14-HELD-VS-PULSED-FP`
+- Description: Held FP should count once, not continuous output
+- Key metrics: frameCount=4; sequenceCount=1; hpInToHpOutLatencyMs=50.0; fpInToFpOutLatencyMs=0.0; fpPulseWidthMs=99.25; frameStartSpacingMs=998.6666666666666; firstFrameGateDelayMs=0.0; firstFrameAfLeadMs=950.0; hpOutContinuityMs=9989.0; hpHoldAfterLastFrameMs=5944.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 4, got 4
+  - [PASS] `fpPulseWidthMs` (timing) - expected 100.0 +/- 5.0, got 99.2
+  - [PASS] `frameStartSpacingMs` (timing) - expected 1000.0 +/- 10.0, got 998.7
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 50.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1}
+
+### SC-15-POWER-SAVE-BUDGET (SC-15)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 2/2
+- Functional assertions: 3/3
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172623_SC-15-POWER-SAVE-BUDGET`
+- Description: Compare latency paths with powerSaveIdleMode enabled vs disabled
+- Key metrics: frameCount=4; sequenceCount=1; hpInToHpOutLatencyMs=54.0; fpInToFpOutLatencyMs=0.0; fpPulseWidthMs=100.75; frameStartSpacingMs=998.6666666666666; firstFrameGateDelayMs=0.0; firstFrameAfLeadMs=946.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 4, got 4
+  - [PASS] `frameStartSpacingMs` (timing) - expected 1000.0 +/- 10.0, got 998.7
+  - [PASS] `telemetryDelta.acceptedFpCount` (functional) - expected 1, got 1
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 54.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 0}
+
+### SC-16-HP-RELEASE-AFTER-FP (SC-16)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 6/6
+- Functional assertions: 2/2
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172636_SC-16-HP-RELEASE-AFTER-FP`
+- Description: HP release after FP should not drop HP_OUT continuity
+- Key metrics: frameCount=4; sequenceCount=1; hpInToHpOutLatencyMs=0.0; fpInToFpOutLatencyMs=399.0; fpPulseWidthMs=99.75; frameStartSpacingMs=998.6666666666666; firstFrameGateDelayMs=399.0; firstFrameAfLeadMs=499.0; hpOutContinuityMs=9988.0; hpHoldAfterLastFrameMs=6393.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 4, got 4
+  - [PASS] `frameStartSpacingMs` (timing) - expected 1000.0 +/- 10.0, got 998.7
+  - [PASS] `firstFrameAfLeadMs` (timing) - expected range [450.0, 650.0], got 499.0
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 0.0
+  - [PASS] `hold.noHpReleaseBeforeFinalFrame` (timing) - expected False, got False
+  - [PASS] `hold.requirePostFinalFrameHpRelease` (timing) - hpHoldAfterLastFrameMs=6393.0 reason=None
+  - [PASS] `hold.dropTimeRule` (timing) - expected HP_OUT continuity by rule max(10000.0, 3595.0+2000.0) = 10000.0 +/- 100.0, got 9988.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1}
+
+### SC-17-SHORT-HP-LEAD (SC-17)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 3/3
+- Functional assertions: 2/2
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172655_SC-17-SHORT-HP-LEAD`
+- Description: First frame follows max(FP accept, HP_OUT assert + T)
+- Key metrics: frameCount=4; sequenceCount=1; hpInToHpOutLatencyMs=52.0; fpInToFpOutLatencyMs=1866.0; fpPulseWidthMs=99.75; frameStartSpacingMs=998.6666666666666; firstFrameGateDelayMs=1866.0; firstFrameAfLeadMs=1914.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 4, got 4
+  - [PASS] `frameStartSpacingMs` (timing) - expected 1000.0 +/- 10.0, got 998.7
+  - [PASS] `firstFrameGateDelayMs` (timing) - expected range [1750.0, 2150.0], got 1866.0
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 52.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 0}
+
+### SC-18-HP-CHATTER-BURST (SC-18)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 2/2
+- Functional assertions: 3/3
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172711_SC-18-HP-CHATTER-BURST`
+- Description: HP chatter/release during burst does not alter scheduling
+- Key metrics: frameCount=4; sequenceCount=1; hpInToHpOutLatencyMs=45.0; fpInToFpOutLatencyMs=0.0; fpPulseWidthMs=98.75; frameStartSpacingMs=998.6666666666666; firstFrameGateDelayMs=0.0; firstFrameAfLeadMs=955.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 4, got 4
+  - [PASS] `frameStartSpacingMs` (timing) - expected 1000.0 +/- 10.0, got 998.7
+  - [PASS] `telemetryDelta.hpIgnoredDuringBurstCount` (functional) - expected 2, got 2
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 45.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 2, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 0}
+
+### SC-19-NEW-EVENT-AFTER-RELEASE (SC-19)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 4/4
+- Functional assertions: 5/5
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172728_SC-19-NEW-EVENT-AFTER-RELEASE`
+- Description: New FP after HP release should be cold/short-lead behavior
+- Key metrics: frameCount=8; sequenceCount=2; hpInToHpOutLatencyMs=49.0; fpInToFpOutLatencyMs=0.0; fpPulseWidthMs=99.875; frameStartSpacingMs=998.8333333333334; firstFrameGateDelayMs=0.0; firstFrameAfLeadMs=951.0; hpOutContinuityMs=9990.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 8, got 8
+  - [PASS] `frameStartSpacingMs` (timing) - expected 1000.0 +/- 10.0, got 998.8
+  - [PASS] `sequenceCount` (functional) - expected 2, got 2
+  - [PASS] `telemetryDelta.coldFpSequenceCount` (functional) - expected 1, got 1
+  - [PASS] `telemetryDelta.acceptedFpCount` (functional) - expected 2, got 2
+  - [PASS] `interSequenceGapMs` (timing) - expected range [6500.0, 7500.0], got 7403.0
+  - [PASS] `secondSequenceStartDelayMs` (timing) - expected range [450.0, 700.0], got 498.0
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 49.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 2, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 1, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 2, 'activityCompletedCount': 1}
+
+### SC-20-T-GREATER-THAN-Y (SC-20)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 3/3
+- Functional assertions: 2/2
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172751_SC-20-T-GREATER-THAN-Y`
+- Description: T may delay frame 1 but not add delay to frames 2..N
+- Key metrics: frameCount=4; sequenceCount=1; hpInToHpOutLatencyMs=51.0; fpInToFpOutLatencyMs=1865.0; fpPulseWidthMs=100.25; frameStartSpacingMs=199.66666666666666; firstFrameGateDelayMs=1865.0; firstFrameAfLeadMs=1914.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 4, got 4
+  - [PASS] `frameStartSpacingMs` (timing) - expected 200.0 +/- 5.0, got 199.7
+  - [PASS] `firstFrameGateDelayMs` (timing) - expected range [1750.0, 2150.0], got 1865.0
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 51.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 0}
+
+### AO-BLE-CONNECTED-SC04 (ADDON-BLE-CONNECTED)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 2/2
+- Functional assertions: 3/3
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172807_AO-BLE-CONNECTED-SC04`
+- Description: Re-run SC-04 while BLE remains connected
+- Key metrics: frameCount=0; sequenceCount=0; hpInToHpOutLatencyMs=0.0; hpOutContinuityMs=9988.0; wakeOnlyHoldMs=9988.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 0, got 0
+  - [PASS] `telemetryDelta.wakeTimeoutCount` (functional) - expected 1, got 1
+  - [PASS] `wakeOnlyHoldMs` (timing) - expected 10000.0 +/- 100.0, got 9988.0
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 0.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 0, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 0, 'activityCompletedCount': 1}
+
+### AO-BLE-CONNECTED-SC01 (ADDON-BLE-CONNECTED)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 2/2
+- Functional assertions: 3/3
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172826_AO-BLE-CONNECTED-SC01`
+- Description: Re-run SC-01 while BLE remains connected
+- Key metrics: frameCount=4; sequenceCount=1; hpInToHpOutLatencyMs=52.0; fpInToFpOutLatencyMs=0.0; fpPulseWidthMs=98.75; frameStartSpacingMs=998.6666666666666; firstFrameGateDelayMs=0.0; firstFrameAfLeadMs=948.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 4, got 4
+  - [PASS] `frameStartSpacingMs` (timing) - expected 1000.0 +/- 10.0, got 998.7
+  - [PASS] `telemetryDelta.acceptedFpCount` (functional) - expected 1, got 1
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 52.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 0}
+
+### AO-LATENCY-HP-IN-TO-HP-OUT (ADDON-LATENCY)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 2/2
+- Functional assertions: 1/1
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172842_AO-LATENCY-HP-IN-TO-HP-OUT`
+- Description: Measure HP_IN to HP_OUT assertion latency under suite runtime conditions
+- Key metrics: frameCount=0; sequenceCount=0; hpInToHpOutLatencyMs=55.0
+- Assertion details:
+  - [PASS] `hpInToHpOutLatencyMs` (timing) - expected range [0.0, 200.0], got 55.0
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 55.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 0, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 0, 'activityCompletedCount': 0}
+
+### AO-LATENCY-FP-IN-TO-FP-OUT (ADDON-LATENCY)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 2/2
+- Functional assertions: 3/3
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172850_AO-LATENCY-FP-IN-TO-FP-OUT`
+- Description: Measure FP_IN to FP_OUT latency with HP lead pre-satisfied
+- Key metrics: frameCount=1; sequenceCount=1; hpInToHpOutLatencyMs=53.0; fpInToFpOutLatencyMs=83.0; fpPulseWidthMs=99.0; firstFrameGateDelayMs=83.0; firstFrameAfLeadMs=630.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 1, got 1
+  - [PASS] `telemetryDelta.acceptedFpCount` (functional) - expected 1, got 1
+  - [PASS] `fpInToFpOutLatencyMs` (timing) - expected range [0.0, 200.0], got 83.0
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 53.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 0}
+
+### AO-GAP-BOUNDARY-TRIAD (ADDON-GAP-BOUNDARY)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 3/3
+- Functional assertions: 7/7
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172900_AO-GAP-BOUNDARY-TRIAD`
+- Description: Hermetic fullPressIgnoreGap boundary triad with explicit runtime parameters
+- Notes: dual_classification_expected: gap_and_burst_ignored_fp_incremented
+- Key metrics: frameCount=4; sequenceCount=2; hpInToHpOutLatencyMs=0.0; fpInToFpOutLatencyMs=0.0; fpPulseWidthMs=99.0; frameStartSpacingMs=998.0; firstFrameGateDelayMs=0.0; firstFrameAfLeadMs=1000.0; hpOutContinuityMs=9988.0; hpHoldAfterLastFrameMs=4790.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 4, got 4
+  - [PASS] `frameStartSpacingMs` (timing) - expected 1000.0 +/- 10.0, got 998.0
+  - [PASS] `telemetryDelta.acceptedFpCount` (functional) - expected 2, got 2
+  - [PASS] `telemetryDelta.ignoredFpDuringGapCount` (functional) - expected 2, got 2
+  - [PASS] `telemetryDelta.ignoredFpDuringBurstCount` (functional) - expected 1, got 1
+  - [PASS] `telemetryDelta.rejectedFpAtSequenceCapCount` (functional) - expected 0, got 0
+  - [PASS] `telemetryDelta.sequenceCompletedCount` (functional) - expected 2, got 2
+  - [PASS] `firstFrameGateDelayMs` (timing) - expected range [0.0, 50.0], got 0.0
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 0.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 2, 'ignoredFpDuringGapCount': 2, 'ignoredFpDuringBurstCount': 1, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 2, 'activityCompletedCount': 1}
+
+### AO-GAP-CADENCE (ADDON-GAP-CADENCE)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 3/3
+- Functional assertions: 7/7
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172924_AO-GAP-CADENCE`
+- Description: Hermetic 1 second inter-frame cadence check (1000/2000/3000/4000)
+- Key metrics: frameCount=4; sequenceCount=1; hpInToHpOutLatencyMs=50.0; fpInToFpOutLatencyMs=0.0; fpPulseWidthMs=100.75; frameStartSpacingMs=998.6666666666666; firstFrameGateDelayMs=0.0; firstFrameAfLeadMs=950.0; hpOutContinuityMs=9989.0; hpHoldAfterLastFrameMs=5942.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 4, got 4
+  - [PASS] `frameStartSpacingMs` (timing) - expected 1000.0 +/- 10.0, got 998.7
+  - [PASS] `telemetryDelta.acceptedFpCount` (functional) - expected 1, got 1
+  - [PASS] `telemetryDelta.ignoredFpDuringGapCount` (functional) - expected 0, got 0
+  - [PASS] `telemetryDelta.ignoredFpDuringBurstCount` (functional) - expected 0, got 0
+  - [PASS] `telemetryDelta.rejectedFpAtSequenceCapCount` (functional) - expected 0, got 0
+  - [PASS] `telemetryDelta.sequenceCompletedCount` (functional) - expected 1, got 1
+  - [PASS] `firstFrameGateDelayMs` (timing) - expected range [0.0, 50.0], got 0.0
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 50.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1}
+
+### AO-DEFERRED-CONFIG-WRITES (ADDON-DEFERRED-CONFIG)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 2/2
+- Functional assertions: 3/3
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_172946_AO-DEFERRED-CONFIG-WRITES`
+- Description: Write config during active flow and verify defer/reject behavior
+- Key metrics: frameCount=4; sequenceCount=1; hpInToHpOutLatencyMs=53.0; fpInToFpOutLatencyMs=0.0; fpPulseWidthMs=99.25; frameStartSpacingMs=998.6666666666666; firstFrameGateDelayMs=0.0; firstFrameAfLeadMs=947.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 4, got 4
+  - [PASS] `frameStartSpacingMs` (timing) - expected 1000.0 +/- 10.0, got 998.7
+  - [PASS] `telemetryDelta.acceptedFpCount` (functional) - expected 1, got 1
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 53.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 0}
+
+### AO-FACTORY-RESET-AND-COERCION (ADDON-FACTORY-RESET)
+
+- Status: passed
+- Failure class: pass
+- Timing assertions: 2/2
+- Functional assertions: 3/3
+- Artifact path: `TickleBoard\artifacts\full_run_ble_20260521_1719\20260521_173002_AO-FACTORY-RESET-AND-COERCION`
+- Description: Verify factory reset behavior and reserved field coercion
+- Key metrics: frameCount=4; sequenceCount=1; hpInToHpOutLatencyMs=0.0; fpInToFpOutLatencyMs=0.0; fpPulseWidthMs=99.75; frameStartSpacingMs=998.6666666666666; firstFrameGateDelayMs=0.0; firstFrameAfLeadMs=1000.0
+- Assertion details:
+  - [PASS] `frameCount` (functional) - expected 4, got 4
+  - [PASS] `frameStartSpacingMs` (timing) - expected 1000.0 +/- 10.0, got 998.7
+  - [PASS] `telemetryDelta.acceptedFpCount` (functional) - expected 1, got 1
+  - [PASS] `hpInToHpOutLatencyMs_non_negative` (timing) - expected >= 0 when measurable, got 0.0
+  - [PASS] `telemetry_delta_sanity` (functional) - deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'rejectedFpAtSequenceCapCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 0}
+
+## Conclusion
+
+All BLE-enabled full-suite cases passed with complete timing and functional assertion coverage.

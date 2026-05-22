@@ -63,7 +63,7 @@ The payload is a fixed little-endian binary struct with a schema version byte. A
 | `hpRefreshCount` | Repeated HP pulses while wake/activity logic is active | SC-04b, SC-07b, SC-12 |
 | `hpIgnoredDuringBurstCount` | HP pulses during burst that do not alter scheduling | SC-07, SC-18 |
 | `fpDebounceRejectCount` | FP edges rejected by debounce | SC-13 |
-| `hpDebounceRejectCount` | HP edges rejected by debounce | SC-13 |
+| `hpDebounceRejectCount` | Legacy HP debounce reject counter (no longer used as a validation gate) | Informational only |
 | `sequenceCompletedCount` | Completed burst sequences | SC-01, SC-05, SC-05b |
 | `activityCompletedCount` | Completed MCU activities, including wake-only timeouts | SC-01, SC-04, SC-05 |
 
@@ -100,6 +100,7 @@ Firmware counters are named by rule/reason. Scenario hints are deliberately broa
 | `HP_IGNORED_BURST` | HP input during burst did not alter scheduling |
 | `FP_DEBOUNCE_REJECT` | FP edge rejected by debounce |
 | `HP_DEBOUNCE_REJECT` | HP edge rejected by debounce |
+| `FP_ACCEPTED_AT_GAP_BOUNDARY` | FP accepted exactly when `fullPressIgnoreGap` cleared (`now == fullPressIgnoreUntilMs`) |
 
 | Scenario hint | Maps to |
 |---------------|---------|

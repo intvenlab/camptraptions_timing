@@ -17,7 +17,7 @@
 using namespace Adafruit_LittleFS_Namespace;
 
 // Uncomment to emit state-machine pin transition logs over USB serial.
-#define DEBUG_CAMERA_LOGIC_PINS
+// #define DEBUG_CAMERA_LOGIC_PINS
 
 // ─── Pins ────────────────────────────────────────────────────────────────────
 #define BATTERY_PIN          A0  // D0/A0 – Internal CR2032 power-supply ADC input
@@ -45,6 +45,17 @@ using namespace Adafruit_LittleFS_Namespace;
 #define TELEMETRY_VERSION       1
 #define BEACON_LAYOUT_VERSION   2
 #define TELEMETRY_FLUSH_INTERVAL_MS 60000UL
+
+// Connected-mode scheduler:
+// camera control-plane work gets deterministic priority; BLE management-plane
+// work runs only within a bounded leftover budget.
+#define CONNECTED_ACTIVE_TELEMETRY_MIN_INTERVAL_MS 200UL  // 5 Hz max when timing-sensitive
+#define CONNECTED_POST_TELEMETRY_MIN_INTERVAL_MS   100UL  // 10 Hz catch-up after activity
+#define CONNECTED_IDLE_TELEMETRY_MIN_INTERVAL_MS    75UL
+#define CONNECTED_POST_MODE_WINDOW_MS              1500UL
+#define CONNECTED_ACTIVE_BLE_BUDGET_US              500UL
+#define CONNECTED_POST_BLE_BUDGET_US               2500UL
+#define CONNECTED_IDLE_BLE_BUDGET_US               3500UL
 
 constexpr uint8_t parseTwoDigits(char tens, char ones) {
   return (uint8_t)((tens - '0') * 10 + (ones - '0'));
@@ -135,7 +146,8 @@ enum TelemetryEvent : uint8_t {
   TEL_EVT_COLD_FP = 9,
   TEL_EVT_HP_IGNORED_BURST = 10,
   TEL_EVT_FP_DEBOUNCE_REJECT = 11,
-  TEL_EVT_HP_DEBOUNCE_REJECT = 12
+  TEL_EVT_HP_DEBOUNCE_REJECT = 12,
+  TEL_EVT_FP_ACCEPTED_AT_GAP_BOUNDARY = 13
 };
 
 enum TelemetryScenarioHint : uint8_t {
@@ -248,10 +260,13 @@ static uint32_t    lastFpOutStartMs         = 0;
 static uint32_t    fpOutReleaseMs           = 0;  // when to release FP_OUT (0 = idle)
 static uint32_t    postShutterHoldUntilMs   = 0;
 static uint32_t    fullPressIgnoreUntilMs   = 0;  // reject FP triggers during R10 window
+static bool        fpAcceptedAtGapBoundary  = false;
 static uint32_t    hpOutRecoveryCount       = 0;  // guard count for unexpected HP_OUT drops while active
 static bool        pendingCamCfgApply       = false;
 static volatile bool runtimeIoReconfigurePending = false;
 static CameraConfig pendingCamCfg;
+static uint32_t    lastActivityEndMs        = 0;
+static uint32_t    lastTelemetryServiceMs   = 0;
 #ifdef DEBUG_CAMERA_LOGIC_PINS
 static uint32_t    nextHpSampleLogMs         = 0;
 #endif
@@ -330,6 +345,10 @@ void configureRuntimeIo();
 bool cameraActivityInProgress();
 void applyPendingCamCfgIfIdle();
 void refreshWakeHoldFromHp(uint32_t now);
+bool cameraControlWorkPending();
+uint32_t connectedTelemetryIntervalMs(uint32_t now);
+uint32_t connectedBleBudgetUs(uint32_t now);
+void serviceConnectedManagementPlane(uint32_t now);
 
 #ifdef DEBUG_CAMERA_LOGIC_PINS
 static void dbgLogPinTransition(
@@ -454,32 +473,26 @@ void setup() {
 // loop()
 // ═════════════════════════════════════════════════════════════════════════════
 void loop() {
+  bool cameraModeEnabled = (cfg.deviceType == 1 /* CAMERA */ && camCfg.enabled);
+
+  // Fast-path wake: IRQ-driven camera work always runs before BLE housekeeping.
+  if (cameraModeEnabled && cameraControlWorkPending()) {
+    processCameraLogic();
+  }
+
   applyPendingCamCfgIfIdle();
 
-  // Keep camera logic running even when connected over BLE.
-  if (cfg.deviceType == 1 /* CAMERA */ && camCfg.enabled) {
+  // Keep camera logic deterministic regardless of BLE connection state.
+  if (cameraModeEnabled && !cameraControlWorkPending()) {
     processCameraLogic();
   }
 
   if (isConnected) {
-    // Stay awake while a phone is connected.
-    if (shutterUpdated) {
-      shutterUpdated = false;
-      chrShutter.notify32(cfg.shutterCount);
-    }
-    if (telemetryUpdated) {
-      telemetryUpdated = false;
-      populateTelemetryCharacteristic();
-      chrTelemetry.notify((uint8_t*)&telPayload, sizeof(telPayload));
-    } else {
-      populateTelemetryCharacteristic();
-    }
-    flushTelemetryIfDue(millis());
-    // Keep camera timing tight while connected: long sleeps quantize burst scheduling.
-    if (cfg.deviceType == 1 /* CAMERA */ && camCfg.enabled && cameraLogicActive) {
-      delay(1);
-    } else {
-      delay(20);
+    serviceConnectedManagementPlane(millis());
+
+    // Connected idle is event-driven: wake immediately on HP/FP ISR flags.
+    if (!cameraControlWorkPending()) {
+      __WFE();
     }
     return;
   }
@@ -718,6 +731,74 @@ void refreshWakeHoldFromHp(uint32_t now) {
   markTelemetryChanged(TEL_EVT_HP_REFRESH, TEL_SC_NONE, false);
   // Customer requirement: HP_OUT release is based on max(initial HP assert + X, last frame + Z).
   // Therefore, repeated HP input pulses must not move wakeHoldDeadlineMs.
+}
+
+bool cameraControlWorkPending() {
+  if (!(cfg.deviceType == 1 /* CAMERA */ && camCfg.enabled)) return false;
+  return cameraLogicActive || hpPulseFlag || fpPulseFlag;
+}
+
+static bool budgetExpired(uint32_t startedUs, uint32_t budgetUs) {
+  if (budgetUs == 0) return false;
+  return (uint32_t)(micros() - startedUs) >= budgetUs;
+}
+
+static bool inPostSequenceWindow(uint32_t now) {
+  if (lastActivityEndMs == 0) return false;
+  return !timeReached(now, lastActivityEndMs + CONNECTED_POST_MODE_WINDOW_MS);
+}
+
+uint32_t connectedTelemetryIntervalMs(uint32_t now) {
+  if (cameraActivityInProgress()) {
+    return CONNECTED_ACTIVE_TELEMETRY_MIN_INTERVAL_MS;
+  }
+  if (inPostSequenceWindow(now)) {
+    return CONNECTED_POST_TELEMETRY_MIN_INTERVAL_MS;
+  }
+  return CONNECTED_IDLE_TELEMETRY_MIN_INTERVAL_MS;
+}
+
+uint32_t connectedBleBudgetUs(uint32_t now) {
+  if (cameraActivityInProgress()) {
+    return CONNECTED_ACTIVE_BLE_BUDGET_US;
+  }
+  if (inPostSequenceWindow(now)) {
+    return CONNECTED_POST_BLE_BUDGET_US;
+  }
+  return CONNECTED_IDLE_BLE_BUDGET_US;
+}
+
+void serviceConnectedManagementPlane(uint32_t now) {
+  uint32_t serviceStartedUs = micros();
+  uint32_t bleBudgetUs = connectedBleBudgetUs(now);
+
+  if (shutterUpdated) {
+    if (!cameraActivityInProgress() || timeReached(now, lastTelemetryServiceMs + connectedTelemetryIntervalMs(now))) {
+      shutterUpdated = false;
+      chrShutter.notify32(cfg.shutterCount);
+      lastTelemetryServiceMs = now;
+    }
+  }
+
+  if (budgetExpired(serviceStartedUs, bleBudgetUs)) return;
+
+  bool telemetryDue = timeReached(now, lastTelemetryServiceMs + connectedTelemetryIntervalMs(now));
+  if (telemetryDue) {
+    bool telemetryWasUpdated = telemetryUpdated;
+    populateTelemetryCharacteristic();
+    if (telemetryWasUpdated) {
+      telemetryUpdated = false;
+      chrTelemetry.notify((uint8_t*)&telPayload, sizeof(telPayload));
+    }
+    lastTelemetryServiceMs = now;
+  }
+
+  if (budgetExpired(serviceStartedUs, bleBudgetUs)) return;
+
+  // Persist telemetry outside active timing windows to avoid flash jitter.
+  if (!cameraActivityInProgress()) {
+    flushTelemetryIfDue(now);
+  }
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -1151,10 +1232,10 @@ void onShutterPulse() {
 // ═════════════════════════════════════════════════════════════════════════════
 void onHpPulse() {
   uint32_t now = millis();
-  if (now - lastHpMs < camCfg.hpDebounceMs) {
-    telCounters.hpDebounceRejectCount++;
-    markTelemetryChanged(TEL_EVT_HP_DEBOUNCE_REJECT, TEL_SC_DEBOUNCE, false);
-    return;
+  if (!hpOutAsserted) {
+    assertPin(HP_OUT_PIN);
+    hpAssertedMs = now;
+    hpOutAsserted = true;
   }
   lastHpMs    = now;
   hpPulseFlag = true;
@@ -1277,6 +1358,7 @@ bool underSequenceCap() {
 }
 
 bool tryAcceptFp(uint32_t now) {
+  fpAcceptedAtGapBoundary = false;
   if (!timeReached(now, fullPressIgnoreUntilMs)) {
     telCounters.ignoredFpDuringGapCount++;
     markTelemetryChanged(TEL_EVT_FP_REJECT_GAP, TEL_SC_FP_GAP_IGNORE, false);
@@ -1286,6 +1368,9 @@ bool tryAcceptFp(uint32_t now) {
     telCounters.rejectedFpAtSequenceCapCount++;
     markTelemetryChanged(TEL_EVT_FP_REJECT_CAP, TEL_SC_SEQUENCE_CAP, false);
     return false;
+  }
+  if (fullPressIgnoreUntilMs != 0 && now == fullPressIgnoreUntilMs) {
+    fpAcceptedAtGapBoundary = true;
   }
   return true;
 }
@@ -1309,9 +1394,14 @@ void startSequence(uint32_t now) {
   if (wasColdFp) {
     telCounters.coldFpSequenceCount++;
   }
-  markTelemetryChanged(TEL_EVT_FP_ACCEPTED,
+  uint8_t fpAcceptedEvent = TEL_EVT_FP_ACCEPTED;
+  if (!wasColdFp && fpAcceptedAtGapBoundary) {
+    fpAcceptedEvent = TEL_EVT_FP_ACCEPTED_AT_GAP_BOUNDARY;
+  }
+  markTelemetryChanged(fpAcceptedEvent,
                        wasColdFp ? TEL_SC_COLD_FP : TEL_SC_NONE,
                        false);
+  fpAcceptedAtGapBoundary = false;
 
   sequenceStartMs = now;
   fullPressIgnoreUntilMs = now + fullPressIgnoreGapMs();
@@ -1340,6 +1430,8 @@ void endActivity() {
   lastFpOutStartMs = 0;
   postShutterHoldUntilMs = 0;
   fullPressIgnoreUntilMs = 0;
+  fpAcceptedAtGapBoundary = false;
+  lastActivityEndMs = millis();
 
   if (hadActivity) {
     telCounters.activityCompletedCount++;

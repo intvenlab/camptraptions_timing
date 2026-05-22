@@ -45,6 +45,35 @@ DEFAULT_CASE_CAMERA_PARAMS: dict[str, Any] = {
 }
 
 
+def _normalize_param_value(value: Any) -> Any:
+    if isinstance(value, str):
+        return value.strip().lower()
+    return value
+
+
+def classify_ble_requirement(vector: TestVector) -> tuple[bool, list[str]]:
+    reasons: list[str] = []
+    if vector.requires_ble:
+        reasons.append("vector explicitly marked requiresBle=true")
+
+    tags = {t.strip().lower() for t in vector.tags}
+    if "ble-connected" in tags:
+        reasons.append("ble-connected scenario")
+
+    non_default_params: list[str] = []
+    for name, value in vector.parameters.items():
+        if name not in DEFAULT_CASE_CAMERA_PARAMS:
+            non_default_params.append(f"{name}=<unknown-default>")
+            continue
+        default_value = DEFAULT_CASE_CAMERA_PARAMS[name]
+        if _normalize_param_value(value) != _normalize_param_value(default_value):
+            non_default_params.append(f"{name}={value} (factory={default_value})")
+    if non_default_params:
+        reasons.append("requires non-default camera params: " + ", ".join(non_default_params))
+
+    return (len(reasons) > 0, reasons)
+
+
 def _signal_token(signal: str) -> str:
     s = signal.upper()
     if "HP" in s:
@@ -213,9 +242,18 @@ def run_case(
                 after_payload = active_ble.read_telemetry_payload()
                 after_tel = parse_payload(after_payload)
 
+        telemetry_available = before_tel is not None and after_tel is not None
         deltas = diff_counters(before_tel, after_tel)
         delta_notes = validate_delta_rules(deltas)
-        checks = evaluate_case(vector.expect, result["metrics"], deltas, run_id=vector.case_id)
+        if not telemetry_available and isinstance(vector.expect.get("telemetryDeltas"), dict):
+            delta_notes.append("telemetry_assertions_skipped_no_ble")
+        checks = evaluate_case(
+            vector.expect,
+            result["metrics"],
+            deltas,
+            telemetry_available=telemetry_available,
+            run_id=vector.case_id,
+        )
         passed = all(c.passed for c in checks)
         timing_total = sum(1 for c in checks if c.category == "timing")
         timing_passed = sum(1 for c in checks if c.category == "timing" and c.passed)

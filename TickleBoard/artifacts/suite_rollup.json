@@ -6,7 +6,7 @@
     "functional_total": 5,
     "notes": [],
     "passed": true,
-    "run_dir": "TickleBoard\\artifacts\\20260521_142236_SC-01-NOMINAL",
+    "run_dir": "TickleBoard\\artifacts\\20260521_151636_SC-01-NOMINAL",
     "scenario": "SC-01",
     "timing_passed": 6,
     "timing_total": 6
@@ -20,7 +20,7 @@
       "dual_classification_expected: gap_and_burst_ignored_fp_incremented"
     ],
     "passed": true,
-    "run_dir": "TickleBoard\\artifacts\\20260521_142301_SC-02-FP-DURING-SEQUENCE",
+    "run_dir": "TickleBoard\\artifacts\\20260521_151701_SC-02-FP-DURING-SEQUENCE",
     "scenario": "SC-02",
     "timing_passed": 2,
     "timing_total": 2
@@ -34,7 +34,7 @@
       "dual_classification_expected: gap_and_burst_ignored_fp_incremented"
     ],
     "passed": true,
-    "run_dir": "TickleBoard\\artifacts\\20260521_142324_SC-03-FP-FLOOD",
+    "run_dir": "TickleBoard\\artifacts\\20260521_151723_SC-03-FP-FLOOD",
     "scenario": "SC-03",
     "timing_passed": 2,
     "timing_total": 2
@@ -46,7 +46,7 @@
     "functional_total": 3,
     "notes": [],
     "passed": true,
-    "run_dir": "TickleBoard\\artifacts\\20260521_142347_SC-04-WAKE-TIMEOUT",
+    "run_dir": "TickleBoard\\artifacts\\20260521_151747_SC-04-WAKE-TIMEOUT",
     "scenario": "SC-04",
     "timing_passed": 2,
     "timing_total": 2
@@ -58,7 +58,7 @@
     "functional_total": 3,
     "notes": [],
     "passed": true,
-    "run_dir": "TickleBoard\\artifacts\\20260521_142412_SC-04B-REPEATED-HP",
+    "run_dir": "TickleBoard\\artifacts\\20260521_151813_SC-04B-REPEATED-HP",
     "scenario": "SC-04b",
     "timing_passed": 2,
     "timing_total": 2
@@ -70,21 +70,21 @@
     "functional_total": 5,
     "notes": [],
     "passed": true,
-    "run_dir": "TickleBoard\\artifacts\\20260521_142443_SC-05-BACK-TO-BACK",
+    "run_dir": "TickleBoard\\artifacts\\20260521_151845_SC-05-BACK-TO-BACK",
     "scenario": "SC-05",
     "timing_passed": 5,
     "timing_total": 5
   },
   {
     "case_id": "SC-05B-FP-DURING-POST-HOLD",
-    "failure_class": "timing_tolerance",
-    "functional_passed": 4,
+    "failure_class": "pass",
+    "functional_passed": 5,
     "functional_total": 5,
     "notes": [],
-    "passed": false,
-    "run_dir": "TickleBoard\\artifacts\\20260521_142513_SC-05B-FP-DURING-POST-HOLD",
+    "passed": true,
+    "run_dir": "TickleBoard\\artifacts\\20260521_151915_SC-05B-FP-DURING-POST-HOLD",
     "scenario": "SC-05b",
-    "timing_passed": 4,
+    "timing_passed": 5,
     "timing_total": 5
   },
   {
@@ -94,7 +94,7 @@
     "functional_total": 3,
     "notes": [],
     "passed": true,
-    "run_dir": "TickleBoard\\artifacts\\20260521_142540_SC-06-COLD-FP",
+    "run_dir": "TickleBoard\\artifacts\\20260521_151942_SC-06-COLD-FP",
     "scenario": "SC-06",
     "timing_passed": 2,
     "timing_total": 2
@@ -106,7 +106,7 @@
     "functional_total": 3,
     "notes": [],
     "passed": true,
-    "run_dir": "TickleBoard\\artifacts\\20260521_142602_SC-07-HP-DURING-BURST",
+    "run_dir": "TickleBoard\\artifacts\\20260521_152005_SC-07-HP-DURING-BURST",
     "scenario": "SC-07",
     "timing_passed": 2,
     "timing_total": 2
@@ -118,7 +118,7 @@
     "functional_total": 3,
     "notes": [],
     "passed": true,
-    "run_dir": "TickleBoard\\artifacts\\20260521_142625_SC-07B-HP-DURING-POST-HOLD",
+    "run_dir": "TickleBoard\\artifacts\\20260521_152030_SC-07B-HP-DURING-POST-HOLD",
     "scenario": "SC-07b",
     "timing_passed": 2,
     "timing_total": 2
@@ -130,7 +130,7 @@
     "functional_total": 3,
     "notes": [],
     "passed": true,
-    "run_dir": "TickleBoard\\artifacts\\20260521_142652_SC-08-FP-BEFORE-HP",
+    "run_dir": "TickleBoard\\artifacts\\20260521_152057_SC-08-FP-BEFORE-HP",
     "scenario": "SC-08",
     "timing_passed": 3,
     "timing_total": 3
@@ -142,21 +142,21 @@
     "functional_total": 4,
     "notes": [],
     "passed": true,
-    "run_dir": "TickleBoard\\artifacts\\20260521_142714_SC-09-SEQUENCE-CAP",
+    "run_dir": "TickleBoard\\artifacts\\20260521_152120_SC-09-SEQUENCE-CAP",
     "scenario": "SC-09",
     "timing_passed": 2,
     "timing_total": 2
   },
   {
     "case_id": "SC-10-RECOVERY-AFTER-CAP",
-    "failure_class": "timing_tolerance",
+    "failure_class": "pass",
     "functional_passed": 5,
     "functional_total": 5,
     "notes": [],
-    "passed": false,
-    "run_dir": "TickleBoard\\artifacts\\20260521_142739_SC-10-RECOVERY-AFTER-CAP",
+    "passed": true,
+    "run_dir": "TickleBoard\\artifacts\\20260521_152146_SC-10-RECOVERY-AFTER-CAP",
     "scenario": "SC-10",
-    "timing_passed": 2,
+    "timing_passed": 3,
     "timing_total": 3
   },
   {
@@ -166,7 +166,7 @@
     "functional_total": 2,
     "notes": [],
     "passed": true,
-    "run_dir": "TickleBoard\\artifacts\\20260521_142812_SC-11-SPACING-VS-T",
+    "run_dir": "TickleBoard\\artifacts\\20260521_152219_SC-11-SPACING-VS-T",
     "scenario": "SC-11",
     "timing_passed": 3,
     "timing_total": 3
@@ -178,7 +178,7 @@
     "functional_total": 3,
     "notes": [],
     "passed": true,
-    "run_dir": "TickleBoard\\artifacts\\20260521_142837_SC-12-HP-ONLY-MIN-GAP",
+    "run_dir": "TickleBoard\\artifacts\\20260521_152244_SC-12-HP-ONLY-MIN-GAP",
     "scenario": "SC-12",
     "timing_passed": 2,
     "timing_total": 2
@@ -186,13 +186,13 @@
   {
     "case_id": "SC-13-BOUNCE-DEBOUNCE",
     "failure_class": "logic_mismatch",
-    "functional_passed": 3,
+    "functional_passed": 2,
     "functional_total": 4,
     "notes": [
       "dual_classification_expected: gap_and_burst_ignored_fp_incremented"
     ],
     "passed": false,
-    "run_dir": "TickleBoard\\artifacts\\20260521_142902_SC-13-BOUNCE-DEBOUNCE",
+    "run_dir": "TickleBoard\\artifacts\\20260521_152309_SC-13-BOUNCE-DEBOUNCE",
     "scenario": "SC-13",
     "timing_passed": 2,
     "timing_total": 2
@@ -204,7 +204,7 @@
     "functional_total": 2,
     "notes": [],
     "passed": true,
-    "run_dir": "TickleBoard\\artifacts\\20260521_142922_SC-14-HELD-VS-PULSED-FP",
+    "run_dir": "TickleBoard\\artifacts\\20260521_152330_SC-14-HELD-VS-PULSED-FP",
     "scenario": "SC-14",
     "timing_passed": 3,
     "timing_total": 3
@@ -216,7 +216,7 @@
     "functional_total": 3,
     "notes": [],
     "passed": true,
-    "run_dir": "TickleBoard\\artifacts\\20260521_142940_SC-15-POWER-SAVE-BUDGET",
+    "run_dir": "TickleBoard\\artifacts\\20260521_152350_SC-15-POWER-SAVE-BUDGET",
     "scenario": "SC-15",
     "timing_passed": 2,
     "timing_total": 2
@@ -228,7 +228,7 @@
     "functional_total": 2,
     "notes": [],
     "passed": false,
-    "run_dir": "TickleBoard\\artifacts\\20260521_143000_SC-16-HP-RELEASE-AFTER-FP",
+    "run_dir": "TickleBoard\\artifacts\\20260521_152411_SC-16-HP-RELEASE-AFTER-FP",
     "scenario": "SC-16",
     "timing_passed": 5,
     "timing_total": 6
@@ -240,7 +240,7 @@
     "functional_total": 2,
     "notes": [],
     "passed": true,
-    "run_dir": "TickleBoard\\artifacts\\20260521_143019_SC-17-SHORT-HP-LEAD",
+    "run_dir": "TickleBoard\\artifacts\\20260521_152431_SC-17-SHORT-HP-LEAD",
     "scenario": "SC-17",
     "timing_passed": 3,
     "timing_total": 3
@@ -252,21 +252,21 @@
     "functional_total": 3,
     "notes": [],
     "passed": true,
-    "run_dir": "TickleBoard\\artifacts\\20260521_143041_SC-18-HP-CHATTER-BURST",
+    "run_dir": "TickleBoard\\artifacts\\20260521_152454_SC-18-HP-CHATTER-BURST",
     "scenario": "SC-18",
     "timing_passed": 2,
     "timing_total": 2
   },
   {
     "case_id": "SC-19-NEW-EVENT-AFTER-RELEASE",
-    "failure_class": "timing_tolerance",
+    "failure_class": "pass",
     "functional_passed": 5,
     "functional_total": 5,
     "notes": [],
-    "passed": false,
-    "run_dir": "TickleBoard\\artifacts\\20260521_143105_SC-19-NEW-EVENT-AFTER-RELEASE",
+    "passed": true,
+    "run_dir": "TickleBoard\\artifacts\\20260521_152519_SC-19-NEW-EVENT-AFTER-RELEASE",
     "scenario": "SC-19",
-    "timing_passed": 3,
+    "timing_passed": 4,
     "timing_total": 4
   },
   {
@@ -276,7 +276,7 @@
     "functional_total": 2,
     "notes": [],
     "passed": true,
-    "run_dir": "TickleBoard\\artifacts\\20260521_143134_SC-20-T-GREATER-THAN-Y",
+    "run_dir": "TickleBoard\\artifacts\\20260521_152549_SC-20-T-GREATER-THAN-Y",
     "scenario": "SC-20",
     "timing_passed": 3,
     "timing_total": 3
@@ -288,33 +288,59 @@
     "functional_total": 3,
     "notes": [],
     "passed": true,
-    "run_dir": "TickleBoard\\artifacts\\20260521_143150_AO-BLE-CONNECTED-SC04",
+    "run_dir": "TickleBoard\\artifacts\\20260521_152606_AO-BLE-CONNECTED-SC04",
     "scenario": "ADDON-BLE-CONNECTED",
     "timing_passed": 2,
     "timing_total": 2
   },
   {
     "case_id": "AO-BLE-CONNECTED-SC01",
-    "failure_class": "timing_tolerance",
+    "failure_class": "pass",
     "functional_passed": 3,
     "functional_total": 3,
     "notes": [],
-    "passed": false,
-    "run_dir": "TickleBoard\\artifacts\\20260521_143215_AO-BLE-CONNECTED-SC01",
+    "passed": true,
+    "run_dir": "TickleBoard\\artifacts\\20260521_152632_AO-BLE-CONNECTED-SC01",
     "scenario": "ADDON-BLE-CONNECTED",
-    "timing_passed": 1,
+    "timing_passed": 2,
+    "timing_total": 2
+  },
+  {
+    "case_id": "AO-LATENCY-HP-IN-TO-HP-OUT",
+    "failure_class": "pass",
+    "functional_passed": 1,
+    "functional_total": 1,
+    "notes": [],
+    "passed": true,
+    "run_dir": "TickleBoard\\artifacts\\20260521_152655_AO-LATENCY-HP-IN-TO-HP-OUT",
+    "scenario": "ADDON-LATENCY",
+    "timing_passed": 2,
+    "timing_total": 2
+  },
+  {
+    "case_id": "AO-LATENCY-FP-IN-TO-FP-OUT",
+    "failure_class": "pass",
+    "functional_passed": 3,
+    "functional_total": 3,
+    "notes": [],
+    "passed": true,
+    "run_dir": "TickleBoard\\artifacts\\20260521_152710_AO-LATENCY-FP-IN-TO-FP-OUT",
+    "scenario": "ADDON-LATENCY",
+    "timing_passed": 2,
     "timing_total": 2
   },
   {
     "case_id": "AO-GAP-BOUNDARY-TRIAD",
-    "failure_class": "pass",
-    "functional_passed": 5,
+    "failure_class": "timing_tolerance",
+    "functional_passed": 1,
     "functional_total": 5,
-    "notes": [],
-    "passed": true,
-    "run_dir": "TickleBoard\\artifacts\\20260521_143237_AO-GAP-BOUNDARY-TRIAD",
+    "notes": [
+      "dual_classification_expected: gap_and_burst_ignored_fp_incremented"
+    ],
+    "passed": false,
+    "run_dir": "TickleBoard\\artifacts\\20260521_152719_AO-GAP-BOUNDARY-TRIAD",
     "scenario": "ADDON-GAP-BOUNDARY",
-    "timing_passed": 3,
+    "timing_passed": 1,
     "timing_total": 3
   },
   {
@@ -324,7 +350,7 @@
     "functional_total": 3,
     "notes": [],
     "passed": true,
-    "run_dir": "TickleBoard\\artifacts\\20260521_143305_AO-DEFERRED-CONFIG-WRITES",
+    "run_dir": "TickleBoard\\artifacts\\20260521_152744_AO-DEFERRED-CONFIG-WRITES",
     "scenario": "ADDON-DEFERRED-CONFIG",
     "timing_passed": 2,
     "timing_total": 2
@@ -336,7 +362,7 @@
     "functional_total": 3,
     "notes": [],
     "passed": true,
-    "run_dir": "TickleBoard\\artifacts\\20260521_143328_AO-FACTORY-RESET-AND-COERCION",
+    "run_dir": "TickleBoard\\artifacts\\20260521_152807_AO-FACTORY-RESET-AND-COERCION",
     "scenario": "ADDON-FACTORY-RESET",
     "timing_passed": 2,
     "timing_total": 2

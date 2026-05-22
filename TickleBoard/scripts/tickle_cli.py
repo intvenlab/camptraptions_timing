@@ -13,7 +13,7 @@ from tickleboard.ble_adapter import DutBleAdapter
 from tickleboard.constants import CAMERA_FIELDS
 from tickleboard.fixture_client import FixtureClient
 from tickleboard.reporting import write_csv_rollup, write_markdown_report
-from tickleboard.runner import preflight, run_case, run_sc15_budget
+from tickleboard.runner import classify_ble_requirement, preflight, run_case, run_sc15_budget
 from tickleboard.telemetry import format_snapshot, parse_payload
 from tickleboard.vector_schema import load_suite, load_vector
 
@@ -24,19 +24,24 @@ def _print_suite_progress(
     total: int,
     *,
     started: bool,
+    status: str | None = None,
     passed: bool | None = None,
     run_dir: str | None = None,
     passed_count: int | None = None,
     failed_count: int | None = None,
+    skipped_count: int | None = None,
 ) -> None:
     prefix = f"[{idx}/{total}] {case_id}"
     if started:
         print(f"{prefix}: started...", flush=True)
         return
-    outcome = "PASSED" if passed else "FAILED"
+    if status:
+        outcome = status.upper()
+    else:
+        outcome = "PASSED" if passed else "FAILED"
     print(
         f"{prefix}: {outcome} run_dir={run_dir} "
-        f"(totals: {passed_count} passed, {failed_count} failed)",
+        f"(totals: {passed_count} passed, {failed_count} failed, {skipped_count} skipped)",
         flush=True,
     )
 
@@ -69,6 +74,26 @@ def cmd_preflight(args: argparse.Namespace) -> int:
 
 def cmd_run_case(args: argparse.Namespace) -> int:
     v = load_vector(args.vector)
+    if not args.ble:
+        requires_ble, reasons = classify_ble_requirement(v)
+        if requires_ble:
+            rec = {
+                "run_dir": "",
+                "case_id": v.case_id,
+                "scenario": v.scenario,
+                "status": "skipped",
+                "skipped": True,
+                "skip_reason": "; ".join(reasons),
+                "passed": True,
+                "failure_class": "skipped",
+                "timing_passed": 0,
+                "timing_total": 0,
+                "functional_passed": 0,
+                "functional_total": 0,
+                "notes": ["skipped_no_ble"],
+            }
+            print(json.dumps(rec, indent=2))
+            return 0
     rec = run_case(
         vector=v,
         fixture_port=_resolve_port(args.port),
@@ -78,6 +103,9 @@ def cmd_run_case(args: argparse.Namespace) -> int:
         dut_serial_port=args.dut_serial_port,
         dut_serial_baud=args.dut_serial_baud,
     )
+    rec["status"] = "passed" if rec.get("passed") else "failed"
+    rec["skipped"] = False
+    rec["skip_reason"] = ""
     print(json.dumps(rec, indent=2))
     return 0
 
@@ -89,6 +117,7 @@ def cmd_run_suite(args: argparse.Namespace) -> int:
     total = len(suite_paths)
     passed_count = 0
     failed_count = 0
+    skipped_count = 0
     print(f"Starting suite with {total} case(s)...", flush=True)
     if args.ble:
         adapter = DutBleAdapter(args.ble)
@@ -106,8 +135,11 @@ def cmd_run_suite(args: argparse.Namespace) -> int:
                     dut_serial_port=args.dut_serial_port,
                     dut_serial_baud=args.dut_serial_baud,
                 )
+                rec["status"] = "passed" if rec.get("passed") else "failed"
+                rec["skipped"] = False
+                rec["skip_reason"] = ""
                 records.append(rec)
-                if rec["passed"]:
+                if rec["status"] == "passed":
                     passed_count += 1
                 else:
                     failed_count += 1
@@ -116,15 +148,49 @@ def cmd_run_suite(args: argparse.Namespace) -> int:
                     idx,
                     total,
                     started=False,
+                    status=rec["status"],
                     passed=bool(rec["passed"]),
                     run_dir=str(rec["run_dir"]),
                     passed_count=passed_count,
                     failed_count=failed_count,
+                    skipped_count=skipped_count,
                 )
     else:
         for idx, p in enumerate(suite_paths, start=1):
             v = load_vector(p)
             _print_suite_progress(v.case_id, idx, total, started=True)
+            requires_ble, reasons = classify_ble_requirement(v)
+            if requires_ble:
+                rec = {
+                    "run_dir": "",
+                    "case_id": v.case_id,
+                    "scenario": v.scenario,
+                    "status": "skipped",
+                    "skipped": True,
+                    "skip_reason": "; ".join(reasons),
+                    "passed": True,
+                    "failure_class": "skipped",
+                    "timing_passed": 0,
+                    "timing_total": 0,
+                    "functional_passed": 0,
+                    "functional_total": 0,
+                    "notes": ["skipped_no_ble"] + reasons,
+                }
+                records.append(rec)
+                skipped_count += 1
+                _print_suite_progress(
+                    rec["case_id"],
+                    idx,
+                    total,
+                    started=False,
+                    status=rec["status"],
+                    passed=True,
+                    run_dir=str(rec["run_dir"]),
+                    passed_count=passed_count,
+                    failed_count=failed_count,
+                    skipped_count=skipped_count,
+                )
+                continue
             rec = run_case(
                 vector=v,
                 fixture_port=fixture_port,
@@ -134,8 +200,11 @@ def cmd_run_suite(args: argparse.Namespace) -> int:
                 dut_serial_port=args.dut_serial_port,
                 dut_serial_baud=args.dut_serial_baud,
             )
+            rec["status"] = "passed" if rec.get("passed") else "failed"
+            rec["skipped"] = False
+            rec["skip_reason"] = ""
             records.append(rec)
-            if rec["passed"]:
+            if rec["status"] == "passed":
                 passed_count += 1
             else:
                 failed_count += 1
@@ -144,10 +213,12 @@ def cmd_run_suite(args: argparse.Namespace) -> int:
                 idx,
                 total,
                 started=False,
+                status=rec["status"],
                 passed=bool(rec["passed"]),
                 run_dir=str(rec["run_dir"]),
                 passed_count=passed_count,
                 failed_count=failed_count,
+                skipped_count=skipped_count,
             )
 
     rollup = args.artifacts / "suite_rollup.json"
@@ -155,11 +226,11 @@ def cmd_run_suite(args: argparse.Namespace) -> int:
     write_markdown_report(args.artifacts / "suite_rollup.md", title="TickleBoard Suite Report", records=records)
     write_csv_rollup(args.artifacts / "suite_rollup.csv", records=records)
     print(
-        f"Suite complete: {passed_count} passed, {failed_count} failed, {total} total. "
+        f"Suite complete: {passed_count} passed, {failed_count} failed, {skipped_count} skipped, {total} total. "
         f"Rollup: {rollup}",
         flush=True,
     )
-    return 0 if all(r["passed"] for r in records) else 3
+    return 0 if failed_count == 0 else 3
 
 
 def cmd_report(args: argparse.Namespace) -> int:

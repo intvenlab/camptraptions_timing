@@ -1,0 +1,533 @@
+[
+  {
+    "case_id": "SC-01-NOMINAL",
+    "failure_class": "pass",
+    "functional_passed": 2,
+    "functional_total": 2,
+    "notes": [
+      "telemetry_assertions_skipped_no_ble"
+    ],
+    "passed": true,
+    "run_dir": "TickleBoard\\artifacts\\full_run_no_ble_20260521_1731\\20260521_173026_SC-01-NOMINAL",
+    "scenario": "SC-01",
+    "skip_reason": "",
+    "skipped": false,
+    "status": "passed",
+    "timing_passed": 6,
+    "timing_total": 6
+  },
+  {
+    "case_id": "SC-02-FP-DURING-SEQUENCE",
+    "failure_class": "pass",
+    "functional_passed": 1,
+    "functional_total": 1,
+    "notes": [
+      "telemetry_assertions_skipped_no_ble"
+    ],
+    "passed": true,
+    "run_dir": "TickleBoard\\artifacts\\full_run_no_ble_20260521_1731\\20260521_173040_SC-02-FP-DURING-SEQUENCE",
+    "scenario": "SC-02",
+    "skip_reason": "",
+    "skipped": false,
+    "status": "passed",
+    "timing_passed": 2,
+    "timing_total": 2
+  },
+  {
+    "case_id": "SC-03-FP-FLOOD",
+    "failure_class": "pass",
+    "functional_passed": 1,
+    "functional_total": 1,
+    "notes": [
+      "telemetry_assertions_skipped_no_ble"
+    ],
+    "passed": true,
+    "run_dir": "TickleBoard\\artifacts\\full_run_no_ble_20260521_1731\\20260521_173051_SC-03-FP-FLOOD",
+    "scenario": "SC-03",
+    "skip_reason": "",
+    "skipped": false,
+    "status": "passed",
+    "timing_passed": 2,
+    "timing_total": 2
+  },
+  {
+    "case_id": "SC-04-WAKE-TIMEOUT",
+    "failure_class": "pass",
+    "functional_passed": 1,
+    "functional_total": 1,
+    "notes": [
+      "telemetry_assertions_skipped_no_ble"
+    ],
+    "passed": true,
+    "run_dir": "TickleBoard\\artifacts\\full_run_no_ble_20260521_1731\\20260521_173103_SC-04-WAKE-TIMEOUT",
+    "scenario": "SC-04",
+    "skip_reason": "",
+    "skipped": false,
+    "status": "passed",
+    "timing_passed": 2,
+    "timing_total": 2
+  },
+  {
+    "case_id": "SC-04B-REPEATED-HP",
+    "failure_class": "pass",
+    "functional_passed": 1,
+    "functional_total": 1,
+    "notes": [
+      "telemetry_assertions_skipped_no_ble"
+    ],
+    "passed": true,
+    "run_dir": "TickleBoard\\artifacts\\full_run_no_ble_20260521_1731\\20260521_173116_SC-04B-REPEATED-HP",
+    "scenario": "SC-04b",
+    "skip_reason": "",
+    "skipped": false,
+    "status": "passed",
+    "timing_passed": 2,
+    "timing_total": 2
+  },
+  {
+    "case_id": "SC-05-BACK-TO-BACK",
+    "failure_class": "pass",
+    "functional_passed": 2,
+    "functional_total": 2,
+    "notes": [
+      "telemetry_assertions_skipped_no_ble"
+    ],
+    "passed": true,
+    "run_dir": "TickleBoard\\artifacts\\full_run_no_ble_20260521_1731\\20260521_173136_SC-05-BACK-TO-BACK",
+    "scenario": "SC-05",
+    "skip_reason": "",
+    "skipped": false,
+    "status": "passed",
+    "timing_passed": 5,
+    "timing_total": 5
+  },
+  {
+    "case_id": "SC-05B-FP-DURING-POST-HOLD",
+    "failure_class": "pass",
+    "functional_passed": 2,
+    "functional_total": 2,
+    "notes": [
+      "telemetry_assertions_skipped_no_ble"
+    ],
+    "passed": true,
+    "run_dir": "TickleBoard\\artifacts\\full_run_no_ble_20260521_1731\\20260521_173154_SC-05B-FP-DURING-POST-HOLD",
+    "scenario": "SC-05b",
+    "skip_reason": "",
+    "skipped": false,
+    "status": "passed",
+    "timing_passed": 5,
+    "timing_total": 5
+  },
+  {
+    "case_id": "SC-06-COLD-FP",
+    "failure_class": "pass",
+    "functional_passed": 1,
+    "functional_total": 1,
+    "notes": [
+      "telemetry_assertions_skipped_no_ble"
+    ],
+    "passed": true,
+    "run_dir": "TickleBoard\\artifacts\\full_run_no_ble_20260521_1731\\20260521_173210_SC-06-COLD-FP",
+    "scenario": "SC-06",
+    "skip_reason": "",
+    "skipped": false,
+    "status": "passed",
+    "timing_passed": 2,
+    "timing_total": 2
+  },
+  {
+    "case_id": "SC-07-HP-DURING-BURST",
+    "failure_class": "pass",
+    "functional_passed": 1,
+    "functional_total": 1,
+    "notes": [
+      "telemetry_assertions_skipped_no_ble"
+    ],
+    "passed": true,
+    "run_dir": "TickleBoard\\artifacts\\full_run_no_ble_20260521_1731\\20260521_173221_SC-07-HP-DURING-BURST",
+    "scenario": "SC-07",
+    "skip_reason": "",
+    "skipped": false,
+    "status": "passed",
+    "timing_passed": 2,
+    "timing_total": 2
+  },
+  {
+    "case_id": "SC-07B-HP-DURING-POST-HOLD",
+    "failure_class": "pass",
+    "functional_passed": 1,
+    "functional_total": 1,
+    "notes": [
+      "telemetry_assertions_skipped_no_ble"
+    ],
+    "passed": true,
+    "run_dir": "TickleBoard\\artifacts\\full_run_no_ble_20260521_1731\\20260521_173233_SC-07B-HP-DURING-POST-HOLD",
+    "scenario": "SC-07b",
+    "skip_reason": "",
+    "skipped": false,
+    "status": "passed",
+    "timing_passed": 2,
+    "timing_total": 2
+  },
+  {
+    "case_id": "SC-08-FP-BEFORE-HP",
+    "failure_class": "pass",
+    "functional_passed": 1,
+    "functional_total": 1,
+    "notes": [
+      "telemetry_assertions_skipped_no_ble"
+    ],
+    "passed": true,
+    "run_dir": "TickleBoard\\artifacts\\full_run_no_ble_20260521_1731\\20260521_173248_SC-08-FP-BEFORE-HP",
+    "scenario": "SC-08",
+    "skip_reason": "",
+    "skipped": false,
+    "status": "passed",
+    "timing_passed": 3,
+    "timing_total": 3
+  },
+  {
+    "case_id": "SC-09-SEQUENCE-CAP",
+    "failure_class": "skipped",
+    "functional_passed": 0,
+    "functional_total": 0,
+    "notes": [
+      "skipped_no_ble",
+      "requires non-default camera params: FrameCount=2 (factory=4), MaxSequenceCount=1 (factory=4)"
+    ],
+    "passed": true,
+    "run_dir": "",
+    "scenario": "SC-09",
+    "skip_reason": "requires non-default camera params: FrameCount=2 (factory=4), MaxSequenceCount=1 (factory=4)",
+    "skipped": true,
+    "status": "skipped",
+    "timing_passed": 0,
+    "timing_total": 0
+  },
+  {
+    "case_id": "SC-10-RECOVERY-AFTER-CAP",
+    "failure_class": "skipped",
+    "functional_passed": 0,
+    "functional_total": 0,
+    "notes": [
+      "skipped_no_ble",
+      "requires non-default camera params: FrameCount=2 (factory=4), MaxSequenceCount=1 (factory=4)"
+    ],
+    "passed": true,
+    "run_dir": "",
+    "scenario": "SC-10",
+    "skip_reason": "requires non-default camera params: FrameCount=2 (factory=4), MaxSequenceCount=1 (factory=4)",
+    "skipped": true,
+    "status": "skipped",
+    "timing_passed": 0,
+    "timing_total": 0
+  },
+  {
+    "case_id": "SC-11-SPACING-VS-T",
+    "failure_class": "timing_tolerance",
+    "functional_passed": 0,
+    "functional_total": 1,
+    "notes": [],
+    "passed": false,
+    "run_dir": "TickleBoard\\artifacts\\full_run_no_ble_20260521_1731\\20260521_173259_SC-11-SPACING-VS-T",
+    "scenario": "SC-11",
+    "skip_reason": "",
+    "skipped": false,
+    "status": "failed",
+    "timing_passed": 1,
+    "timing_total": 3
+  },
+  {
+    "case_id": "SC-12-HP-ONLY-MIN-GAP",
+    "failure_class": "pass",
+    "functional_passed": 1,
+    "functional_total": 1,
+    "notes": [
+      "telemetry_assertions_skipped_no_ble"
+    ],
+    "passed": true,
+    "run_dir": "TickleBoard\\artifacts\\full_run_no_ble_20260521_1731\\20260521_173311_SC-12-HP-ONLY-MIN-GAP",
+    "scenario": "SC-12",
+    "skip_reason": "",
+    "skipped": false,
+    "status": "passed",
+    "timing_passed": 2,
+    "timing_total": 2
+  },
+  {
+    "case_id": "SC-13-BOUNCE-DEBOUNCE",
+    "failure_class": "pass",
+    "functional_passed": 1,
+    "functional_total": 1,
+    "notes": [
+      "telemetry_assertions_skipped_no_ble"
+    ],
+    "passed": true,
+    "run_dir": "TickleBoard\\artifacts\\full_run_no_ble_20260521_1731\\20260521_173325_SC-13-BOUNCE-DEBOUNCE",
+    "scenario": "SC-13",
+    "skip_reason": "",
+    "skipped": false,
+    "status": "passed",
+    "timing_passed": 2,
+    "timing_total": 2
+  },
+  {
+    "case_id": "SC-14-HELD-VS-PULSED-FP",
+    "failure_class": "pass",
+    "functional_passed": 1,
+    "functional_total": 1,
+    "notes": [],
+    "passed": true,
+    "run_dir": "TickleBoard\\artifacts\\full_run_no_ble_20260521_1731\\20260521_173334_SC-14-HELD-VS-PULSED-FP",
+    "scenario": "SC-14",
+    "skip_reason": "",
+    "skipped": false,
+    "status": "passed",
+    "timing_passed": 3,
+    "timing_total": 3
+  },
+  {
+    "case_id": "SC-15-POWER-SAVE-BUDGET",
+    "failure_class": "pass",
+    "functional_passed": 1,
+    "functional_total": 1,
+    "notes": [
+      "telemetry_assertions_skipped_no_ble"
+    ],
+    "passed": true,
+    "run_dir": "TickleBoard\\artifacts\\full_run_no_ble_20260521_1731\\20260521_173346_SC-15-POWER-SAVE-BUDGET",
+    "scenario": "SC-15",
+    "skip_reason": "",
+    "skipped": false,
+    "status": "passed",
+    "timing_passed": 2,
+    "timing_total": 2
+  },
+  {
+    "case_id": "SC-16-HP-RELEASE-AFTER-FP",
+    "failure_class": "timing_tolerance",
+    "functional_passed": 1,
+    "functional_total": 1,
+    "notes": [],
+    "passed": false,
+    "run_dir": "TickleBoard\\artifacts\\full_run_no_ble_20260521_1731\\20260521_173355_SC-16-HP-RELEASE-AFTER-FP",
+    "scenario": "SC-16",
+    "skip_reason": "",
+    "skipped": false,
+    "status": "failed",
+    "timing_passed": 4,
+    "timing_total": 6
+  },
+  {
+    "case_id": "SC-17-SHORT-HP-LEAD",
+    "failure_class": "skipped",
+    "functional_passed": 0,
+    "functional_total": 0,
+    "notes": [
+      "skipped_no_ble",
+      "requires non-default camera params: minHalfPressBeforeShutter=2.0s (factory=0.5s)"
+    ],
+    "passed": true,
+    "run_dir": "",
+    "scenario": "SC-17",
+    "skip_reason": "requires non-default camera params: minHalfPressBeforeShutter=2.0s (factory=0.5s)",
+    "skipped": true,
+    "status": "skipped",
+    "timing_passed": 0,
+    "timing_total": 0
+  },
+  {
+    "case_id": "SC-18-HP-CHATTER-BURST",
+    "failure_class": "pass",
+    "functional_passed": 1,
+    "functional_total": 1,
+    "notes": [
+      "telemetry_assertions_skipped_no_ble"
+    ],
+    "passed": true,
+    "run_dir": "TickleBoard\\artifacts\\full_run_no_ble_20260521_1731\\20260521_173409_SC-18-HP-CHATTER-BURST",
+    "scenario": "SC-18",
+    "skip_reason": "",
+    "skipped": false,
+    "status": "passed",
+    "timing_passed": 2,
+    "timing_total": 2
+  },
+  {
+    "case_id": "SC-19-NEW-EVENT-AFTER-RELEASE",
+    "failure_class": "pass",
+    "functional_passed": 2,
+    "functional_total": 2,
+    "notes": [
+      "telemetry_assertions_skipped_no_ble"
+    ],
+    "passed": true,
+    "run_dir": "TickleBoard\\artifacts\\full_run_no_ble_20260521_1731\\20260521_173421_SC-19-NEW-EVENT-AFTER-RELEASE",
+    "scenario": "SC-19",
+    "skip_reason": "",
+    "skipped": false,
+    "status": "passed",
+    "timing_passed": 4,
+    "timing_total": 4
+  },
+  {
+    "case_id": "SC-20-T-GREATER-THAN-Y",
+    "failure_class": "skipped",
+    "functional_passed": 0,
+    "functional_total": 0,
+    "notes": [
+      "skipped_no_ble",
+      "requires non-default camera params: minHalfPressBeforeShutter=2.0s (factory=0.5s), StartFrameSpacingMin=0.2s (factory=1.0s)"
+    ],
+    "passed": true,
+    "run_dir": "",
+    "scenario": "SC-20",
+    "skip_reason": "requires non-default camera params: minHalfPressBeforeShutter=2.0s (factory=0.5s), StartFrameSpacingMin=0.2s (factory=1.0s)",
+    "skipped": true,
+    "status": "skipped",
+    "timing_passed": 0,
+    "timing_total": 0
+  },
+  {
+    "case_id": "AO-BLE-CONNECTED-SC04",
+    "failure_class": "skipped",
+    "functional_passed": 0,
+    "functional_total": 0,
+    "notes": [
+      "skipped_no_ble",
+      "ble-connected scenario"
+    ],
+    "passed": true,
+    "run_dir": "",
+    "scenario": "ADDON-BLE-CONNECTED",
+    "skip_reason": "ble-connected scenario",
+    "skipped": true,
+    "status": "skipped",
+    "timing_passed": 0,
+    "timing_total": 0
+  },
+  {
+    "case_id": "AO-BLE-CONNECTED-SC01",
+    "failure_class": "skipped",
+    "functional_passed": 0,
+    "functional_total": 0,
+    "notes": [
+      "skipped_no_ble",
+      "ble-connected scenario"
+    ],
+    "passed": true,
+    "run_dir": "",
+    "scenario": "ADDON-BLE-CONNECTED",
+    "skip_reason": "ble-connected scenario",
+    "skipped": true,
+    "status": "skipped",
+    "timing_passed": 0,
+    "timing_total": 0
+  },
+  {
+    "case_id": "AO-LATENCY-HP-IN-TO-HP-OUT",
+    "failure_class": "skipped",
+    "functional_passed": 0,
+    "functional_total": 0,
+    "notes": [
+      "skipped_no_ble",
+      "requires non-default camera params: FrameCount=1 (factory=4), wakeHalfPressHoldTime=3s (factory=10s)"
+    ],
+    "passed": true,
+    "run_dir": "",
+    "scenario": "ADDON-LATENCY",
+    "skip_reason": "requires non-default camera params: FrameCount=1 (factory=4), wakeHalfPressHoldTime=3s (factory=10s)",
+    "skipped": true,
+    "status": "skipped",
+    "timing_passed": 0,
+    "timing_total": 0
+  },
+  {
+    "case_id": "AO-LATENCY-FP-IN-TO-FP-OUT",
+    "failure_class": "skipped",
+    "functional_passed": 0,
+    "functional_total": 0,
+    "notes": [
+      "skipped_no_ble",
+      "requires non-default camera params: FrameCount=1 (factory=4), minHalfPressBeforeShutter=0.2s (factory=0.5s)"
+    ],
+    "passed": true,
+    "run_dir": "",
+    "scenario": "ADDON-LATENCY",
+    "skip_reason": "requires non-default camera params: FrameCount=1 (factory=4), minHalfPressBeforeShutter=0.2s (factory=0.5s)",
+    "skipped": true,
+    "status": "skipped",
+    "timing_passed": 0,
+    "timing_total": 0
+  },
+  {
+    "case_id": "AO-GAP-BOUNDARY-TRIAD",
+    "failure_class": "skipped",
+    "functional_passed": 0,
+    "functional_total": 0,
+    "notes": [
+      "skipped_no_ble",
+      "requires non-default camera params: FrameCount=2 (factory=4)"
+    ],
+    "passed": true,
+    "run_dir": "",
+    "scenario": "ADDON-GAP-BOUNDARY",
+    "skip_reason": "requires non-default camera params: FrameCount=2 (factory=4)",
+    "skipped": true,
+    "status": "skipped",
+    "timing_passed": 0,
+    "timing_total": 0
+  },
+  {
+    "case_id": "AO-GAP-CADENCE",
+    "failure_class": "pass",
+    "functional_passed": 1,
+    "functional_total": 1,
+    "notes": [
+      "telemetry_assertions_skipped_no_ble"
+    ],
+    "passed": true,
+    "run_dir": "TickleBoard\\artifacts\\full_run_no_ble_20260521_1731\\20260521_173439_AO-GAP-CADENCE",
+    "scenario": "ADDON-GAP-CADENCE",
+    "skip_reason": "",
+    "skipped": false,
+    "status": "passed",
+    "timing_passed": 3,
+    "timing_total": 3
+  },
+  {
+    "case_id": "AO-DEFERRED-CONFIG-WRITES",
+    "failure_class": "pass",
+    "functional_passed": 1,
+    "functional_total": 1,
+    "notes": [
+      "telemetry_assertions_skipped_no_ble"
+    ],
+    "passed": true,
+    "run_dir": "TickleBoard\\artifacts\\full_run_no_ble_20260521_1731\\20260521_173456_AO-DEFERRED-CONFIG-WRITES",
+    "scenario": "ADDON-DEFERRED-CONFIG",
+    "skip_reason": "",
+    "skipped": false,
+    "status": "passed",
+    "timing_passed": 2,
+    "timing_total": 2
+  },
+  {
+    "case_id": "AO-FACTORY-RESET-AND-COERCION",
+    "failure_class": "skipped",
+    "functional_passed": 0,
+    "functional_total": 0,
+    "notes": [
+      "skipped_no_ble",
+      "requires non-default camera params: inputActivePolarity=1 (factory=0), outputDriveMode=1 (factory=0), activityHalfPressHoldPolicy=1 (factory=0)"
+    ],
+    "passed": true,
+    "run_dir": "",
+    "scenario": "ADDON-FACTORY-RESET",
+    "skip_reason": "requires non-default camera params: inputActivePolarity=1 (factory=0), outputDriveMode=1 (factory=0), activityHalfPressHoldPolicy=1 (factory=0)",
+    "skipped": true,
+    "status": "skipped",
+    "timing_passed": 0,
+    "timing_total": 0
+  }
+]

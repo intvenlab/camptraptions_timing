@@ -10,10 +10,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-static const uint8_t MAX_EVENTS = 64;
-static const uint8_t MAX_EDGES = 80;
-static const uint8_t MAX_ISR_PENDING = 24;
-static const uint16_t RX_BUF_SIZE = 128;
+static const uint8_t MAX_EVENTS = 24;
+static const uint8_t MAX_EDGES = 48;
+static const uint8_t MAX_ISR_PENDING = 16;
+static const uint16_t RX_BUF_SIZE = 64;
 
 enum PolarityMode : uint8_t {
   POL_ACTIVE_LOW = 0,
@@ -32,9 +32,16 @@ struct ScheduledEvent {
   bool active;
 };
 
+enum EdgeSignalId : uint8_t {
+  EDGE_SIG_HP_IN = 0,
+  EDGE_SIG_FP_IN = 1,
+  EDGE_SIG_HP_OUT = 2,
+  EDGE_SIG_FP_OUT = 3
+};
+
 struct EdgeLog {
   uint32_t tUs;
-  const char* sigName;
+  EdgeSignalId sigId;
   bool active;
 };
 
@@ -90,17 +97,13 @@ static inline int levelForActive(bool active) {
   return active ? HIGH : LOW;
 }
 
-static inline const char* sigNameFromId(SignalId sig) {
-  return (sig == SIG_HP) ? "HP" : "FP";
-}
-
-static void logEdge(const char* sig, bool active, uint32_t nowUs) {
+static void logEdge(EdgeSignalId sigId, bool active, uint32_t nowUs) {
   if (edgeCount >= MAX_EDGES) {
     edgeOverflow = true;
     return;
   }
   edges[edgeCount].tUs = nowUs;
-  edges[edgeCount].sigName = sig;
+  edges[edgeCount].sigId = sigId;
   edges[edgeCount].active = active;
   edgeCount++;
 }
@@ -109,10 +112,10 @@ static void setStimSignal(SignalId sig, bool active) {
   int level = levelForActive(active);
   if (sig == SIG_HP) {
     digitalWrite(pinMap.hpStimPin, level);
-    logEdge("HP_IN", active, micros());
+    logEdge(EDGE_SIG_HP_IN, active, micros());
   } else {
     digitalWrite(pinMap.fpStimPin, level);
-    logEdge("FP_IN", active, micros());
+    logEdge(EDGE_SIG_FP_IN, active, micros());
   }
 }
 
@@ -145,16 +148,18 @@ static void resetLogs(void) {
   interrupts();
 }
 
-static void applyPinModes(void) {
-  pinMode(pinMap.hpStimPin, OUTPUT);
-  pinMode(pinMap.fpStimPin, OUTPUT);
-  // Monitor pins track DUT outputs without enabling Uno internal pull-ups.
-  pinMode(pinMap.hpMonPin, INPUT);  // Uno D3 for HP_OUT
-  pinMode(pinMap.fpMonPin, INPUT);  // Uno D2 for FP_OUT
+static void configureStimOutputInactive(uint8_t pin) {
+  // Preload output latch before enabling OUTPUT to avoid startup glitches.
+  digitalWrite(pin, levelForActive(false));
+  pinMode(pin, OUTPUT);
+}
 
-  // Idle stimulus is inactive (released) regardless of polarity.
-  digitalWrite(pinMap.hpStimPin, levelForActive(false));
-  digitalWrite(pinMap.fpStimPin, levelForActive(false));
+static void applyPinModes(void) {
+  configureStimOutputInactive(pinMap.hpStimPin);
+  configureStimOutputInactive(pinMap.fpStimPin);
+  // Bias open-drain DUT outputs to a stable inactive-high baseline on the fixture.
+  pinMode(pinMap.hpMonPin, INPUT_PULLUP);  // Uno D3 for HP_OUT
+  pinMode(pinMap.fpMonPin, INPUT_PULLUP);  // Uno D2 for FP_OUT
 }
 
 static bool parseUint32(const char* s, uint32_t* out) {
@@ -193,11 +198,16 @@ static bool parseStateToken(const char* s, bool* outActive) {
 }
 
 static void printOk(void) {
-  Serial.println("OK");
+  Serial.println(F("OK"));
+}
+
+static void printErr(const __FlashStringHelper* msg) {
+  Serial.print(F("ERR "));
+  Serial.println(msg);
 }
 
 static void printErr(const char* msg) {
-  Serial.print("ERR ");
+  Serial.print(F("ERR "));
   Serial.println(msg);
 }
 
@@ -254,7 +264,7 @@ static void drainPendingIsrEdges(void) {
     ev.active = pendingIsrEdges[pendingIsrTail].active;
     pendingIsrTail = (uint8_t)((pendingIsrTail + 1) % MAX_ISR_PENDING);
     interrupts();
-    logEdge(ev.isHp ? "HP_OUT" : "FP_OUT", ev.active, ev.tUs);
+    logEdge(ev.isHp ? EDGE_SIG_HP_OUT : EDGE_SIG_FP_OUT, ev.active, ev.tUs);
     noInterrupts();
   }
   if (pendingIsrOverflow) {
@@ -269,17 +279,17 @@ static void drainPendingIsrEdges(void) {
 
 static void runSchedule(void) {
   if (!isArmed) {
-    printErr("NOT_ARMED");
+    printErr(F("NOT_ARMED"));
     return;
   }
   if (!monitorPinsSupportIsr()) {
-    printErr("MON_NO_ISR");
+    printErr(F("MON_NO_ISR"));
     return;
   }
 
   runStartUs = micros();
   uint32_t runEndUs = runStartUs + (armCaptureMs * 1000UL);
-  Serial.print("RUN_START ");
+  Serial.print(F("RUN_START "));
   Serial.println(currentRunId);
 
   // Prime monitor state to avoid false edge at t=0.
@@ -312,34 +322,54 @@ static void runSchedule(void) {
   drainPendingIsrEdges();
   detachMonitorInterrupts();
 
-  Serial.print("RUN_OK ");
+  Serial.print(F("RUN_OK "));
   Serial.println(currentRunId);
 }
 
+static void printEdgeSignalName(EdgeSignalId sigId) {
+  switch (sigId) {
+    case EDGE_SIG_HP_IN:
+      Serial.print(F("HP_IN"));
+      break;
+    case EDGE_SIG_FP_IN:
+      Serial.print(F("FP_IN"));
+      break;
+    case EDGE_SIG_HP_OUT:
+      Serial.print(F("HP_OUT"));
+      break;
+    case EDGE_SIG_FP_OUT:
+      Serial.print(F("FP_OUT"));
+      break;
+    default:
+      Serial.print(F("UNKNOWN"));
+      break;
+  }
+}
+
 static void dumpEdges(void) {
-  Serial.print("BEGIN LOG RUNID=");
+  Serial.print(F("BEGIN LOG RUNID="));
   Serial.println(currentRunId);
-  Serial.print("SNAPSHOT HP_IN=");
-  Serial.print(isActiveLevel(digitalRead(pinMap.hpStimPin)) ? "ACTIVE" : "INACTIVE");
-  Serial.print(" FP_IN=");
-  Serial.print(isActiveLevel(digitalRead(pinMap.fpStimPin)) ? "ACTIVE" : "INACTIVE");
-  Serial.print(" HP_OUT=");
-  Serial.print(isActiveLevel(digitalRead(pinMap.hpMonPin)) ? "ACTIVE" : "INACTIVE");
-  Serial.print(" FP_OUT=");
-  Serial.println(isActiveLevel(digitalRead(pinMap.fpMonPin)) ? "ACTIVE" : "INACTIVE");
+  Serial.print(F("SNAPSHOT HP_IN="));
+  Serial.print(isActiveLevel(digitalRead(pinMap.hpStimPin)) ? F("ACTIVE") : F("INACTIVE"));
+  Serial.print(F(" FP_IN="));
+  Serial.print(isActiveLevel(digitalRead(pinMap.fpStimPin)) ? F("ACTIVE") : F("INACTIVE"));
+  Serial.print(F(" HP_OUT="));
+  Serial.print(isActiveLevel(digitalRead(pinMap.hpMonPin)) ? F("ACTIVE") : F("INACTIVE"));
+  Serial.print(F(" FP_OUT="));
+  Serial.println(isActiveLevel(digitalRead(pinMap.fpMonPin)) ? F("ACTIVE") : F("INACTIVE"));
   for (uint8_t i = 0; i < edgeCount; i++) {
     uint32_t relUs = edges[i].tUs - runStartUs;
-    Serial.print("EDGE ");
+    Serial.print(F("EDGE "));
     Serial.print(relUs / 1000UL);
     Serial.print(' ');
-    Serial.print(edges[i].sigName);
+    printEdgeSignalName(edges[i].sigId);
     Serial.print(' ');
-    Serial.println(edges[i].active ? "ACTIVE" : "INACTIVE");
+    Serial.println(edges[i].active ? F("ACTIVE") : F("INACTIVE"));
   }
   if (edgeOverflow) {
-    Serial.println("WARN EDGE_OVERFLOW");
+    Serial.println(F("WARN EDGE_OVERFLOW"));
   }
-  Serial.print("END OK RUNID=");
+  Serial.print(F("END OK RUNID="));
   Serial.println(currentRunId);
 }
 
@@ -372,7 +402,7 @@ static void processCommand(char* line) {
   if (!cmd) return;
 
   if (strcmp(cmd, "ID?") == 0) {
-    Serial.println("ID TickleBoardBits UNO_R3 PROTO=1 CMDS=ID?,MAP,ARM,PULSE,LEVEL,RUN,DUMP,RESET");
+    Serial.println(F("ID TickleBoardBits UNO_R3 PROTO=1 CMDS=ID?,MAP,ARM,PULSE,LEVEL,RUN,DUMP,RESET"));
     return;
   }
 
@@ -393,7 +423,7 @@ static void processCommand(char* line) {
     }
     applyPinModes();
     if (!monitorPinsSupportIsr()) {
-      printErr("MON_NO_ISR");
+      printErr(F("MON_NO_ISR"));
       return;
     }
     printOk();
@@ -404,7 +434,7 @@ static void processCommand(char* line) {
     char* msTok = strtok(nullptr, " ");
     uint32_t captureMs = 0;
     if (!parseUint32(msTok, &captureMs) || captureMs == 0) {
-      printErr("BAD_ARM_MS");
+      printErr(F("BAD_ARM_MS"));
       return;
     }
     armCaptureMs = captureMs;
@@ -412,18 +442,18 @@ static void processCommand(char* line) {
     resetLogs();
     isArmed = true;
     currentRunId = ++runIdCounter;
-    Serial.print("ARMED RUNID=");
+    Serial.print(F("ARMED RUNID="));
     Serial.print(currentRunId);
-    Serial.print(" CAPTURE_MS=");
+    Serial.print(F(" CAPTURE_MS="));
     Serial.println(armCaptureMs);
-    Serial.print("SNAPSHOT HP_IN=");
-    Serial.print(isActiveLevel(digitalRead(pinMap.hpStimPin)) ? "ACTIVE" : "INACTIVE");
-    Serial.print(" FP_IN=");
-    Serial.print(isActiveLevel(digitalRead(pinMap.fpStimPin)) ? "ACTIVE" : "INACTIVE");
-    Serial.print(" HP_OUT=");
-    Serial.print(isActiveLevel(digitalRead(pinMap.hpMonPin)) ? "ACTIVE" : "INACTIVE");
-    Serial.print(" FP_OUT=");
-    Serial.println(isActiveLevel(digitalRead(pinMap.fpMonPin)) ? "ACTIVE" : "INACTIVE");
+    Serial.print(F("SNAPSHOT HP_IN="));
+    Serial.print(isActiveLevel(digitalRead(pinMap.hpStimPin)) ? F("ACTIVE") : F("INACTIVE"));
+    Serial.print(F(" FP_IN="));
+    Serial.print(isActiveLevel(digitalRead(pinMap.fpStimPin)) ? F("ACTIVE") : F("INACTIVE"));
+    Serial.print(F(" HP_OUT="));
+    Serial.print(isActiveLevel(digitalRead(pinMap.hpMonPin)) ? F("ACTIVE") : F("INACTIVE"));
+    Serial.print(F(" FP_OUT="));
+    Serial.println(isActiveLevel(digitalRead(pinMap.fpMonPin)) ? F("ACTIVE") : F("INACTIVE"));
     printOk();
     return;
   }
@@ -436,15 +466,15 @@ static void processCommand(char* line) {
     char* atTok = strtok(nullptr, " ");
     char* durTok = strtok(nullptr, " ");
     if (!isArmed) {
-      printErr("NOT_ARMED");
+      printErr(F("NOT_ARMED"));
       return;
     }
     if (!parseSignal(sigTok, &sig) || !parseUint32(atTok, &atMs) || !parseUint32(durTok, &durMs)) {
-      printErr("BAD_PULSE");
+      printErr(F("BAD_PULSE"));
       return;
     }
     if (!addEvent(sig, atMs, true) || !addEvent(sig, atMs + durMs, false)) {
-      printErr("EVENT_OVERFLOW");
+      printErr(F("EVENT_OVERFLOW"));
       return;
     }
     printOk();
@@ -459,15 +489,15 @@ static void processCommand(char* line) {
     char* atTok = strtok(nullptr, " ");
     char* stTok = strtok(nullptr, " ");
     if (!isArmed) {
-      printErr("NOT_ARMED");
+      printErr(F("NOT_ARMED"));
       return;
     }
     if (!parseSignal(sigTok, &sig) || !parseUint32(atTok, &atMs) || !parseStateToken(stTok, &active)) {
-      printErr("BAD_LEVEL");
+      printErr(F("BAD_LEVEL"));
       return;
     }
     if (!addEvent(sig, atMs, active)) {
-      printErr("EVENT_OVERFLOW");
+      printErr(F("EVENT_OVERFLOW"));
       return;
     }
     printOk();
@@ -484,7 +514,7 @@ static void processCommand(char* line) {
     return;
   }
 
-  printErr("UNKNOWN_CMD");
+  printErr(F("UNKNOWN_CMD"));
 }
 
 void setup() {
@@ -492,7 +522,7 @@ void setup() {
   applyPinModes();
   clearEvents();
   resetLogs();
-  Serial.println("TickleBoardBits ready");
+  Serial.println(F("TickleBoardBits ready"));
 }
 
 void loop() {
@@ -508,7 +538,7 @@ void loop() {
     } else {
       // Overflow-safe command reset.
       rxLen = 0;
-      printErr("RX_OVERFLOW");
+      printErr(F("RX_OVERFLOW"));
     }
   }
 }

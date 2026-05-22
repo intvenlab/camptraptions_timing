@@ -16,5 +16,5 @@ expect:
       wakeHoldMs: 10000
       postFinalFrameHoldMs: 2000
   timing:
-    firstFrameGateDelayMs: { minMs: 450, maxMs: 650 }
-metrics: [hpOutContinuityMs, firstFrameGateDelayMs]
+    firstFrameAfLeadMs: { minMs: 450, maxMs: 650 }
+metrics: [hpOutContinuityMs, firstFrameAfLeadMs]

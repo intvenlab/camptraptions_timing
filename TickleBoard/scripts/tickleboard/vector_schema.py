@@ -27,6 +27,7 @@ class TestVector:
     expect: dict[str, Any] = field(default_factory=dict)
     metrics: list[str] = field(default_factory=list)
     tags: list[str] = field(default_factory=list)
+    requires_ble: bool = False
 
 
 def _require(data: dict[str, Any], key: str) -> Any:
@@ -70,6 +71,7 @@ def parse_vector(data: dict[str, Any]) -> TestVector:
         expect=expect,
         metrics=[str(m) for m in data.get("metrics", [])],
         tags=[str(t) for t in data.get("tags", [])],
+        requires_ble=bool(data.get("requiresBle", data.get("requires_ble", False))),
     )
 
 

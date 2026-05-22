@@ -29,5 +29,6 @@ cases:
   - ../scenarios/AO-LATENCY-HP-IN-TO-HP-OUT.yaml
   - ../scenarios/AO-LATENCY-FP-IN-TO-FP-OUT.yaml
   - ../scenarios/AO-GAP-BOUNDARY-TRIAD.yaml
+  - ../scenarios/AO-GAP-CADENCE.yaml
   - ../scenarios/AO-DEFERRED-CONFIG-WRITES.yaml
   - ../scenarios/AO-FACTORY-RESET-AND-COERCION.yaml

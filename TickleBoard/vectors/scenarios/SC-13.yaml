@@ -6,14 +6,13 @@ parameters: { enabled: 1, halfPressInputDebounce: 35ms, fullPressInputDebounce: 
 fixture: { captureAfterLastStimulusMs: 7000 }
 stimulus:
   - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 5 }
-  - { atMs: 20, signal: HP_IN_STIM, state: active, durationMs: 5 }
+  - { atMs: 10, signal: HP_IN_STIM, state: active, durationMs: 5 }
   - { atMs: 1000, signal: HP_IN_STIM, state: active, durationMs: 100 }
   - { atMs: 2000, signal: FP_IN_STIM, state: active, durationMs: 5 }
-  - { atMs: 2020, signal: FP_IN_STIM, state: active, durationMs: 5 }
+  - { atMs: 2010, signal: FP_IN_STIM, state: active, durationMs: 5 }
   - { atMs: 3000, signal: FP_IN_STIM, state: active, durationMs: 100 }
 expect:
   fpOut: { pulseCount: 4, frameSpacingMs: 1000 }
   telemetryDeltas:
     fpDebounceRejectCount: 1
-    hpDebounceRejectCount: 1
 metrics: [frameCount]

@@ -31,6 +31,7 @@ The design follows `docs/validation-test-plan.md`:
 - mandatory add-on vectors:
   - BLE-connected runtime checks
   - `fullPressIgnoreGap` boundary triad
+  - `fullPressIgnoreGap` cadence sanity (`1000/2000/3000/4000 ms` with `StartFrameSpacingMin=1.0s`)
   - deferred config write case
   - factory reset and reserved-field coercion case
 - suite files:

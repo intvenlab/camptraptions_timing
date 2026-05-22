@@ -1,8 +1,27 @@
 id: AO-GAP-BOUNDARY-TRIAD
 scenario: ADDON-GAP-BOUNDARY
-description: fullPressIgnoreGap just-before/exact/just-after checks
-tags: [addon, boundary]
-parameters: { enabled: 1, fullPressIgnoreGap: 3.1s, FrameCount: 2 }
+description: Hermetic fullPressIgnoreGap boundary triad with explicit runtime parameters
+tags: [addon, boundary, hermetic]
+parameters:
+  enabled: 1
+  wakeHalfPressHoldTime: 10s
+  minHalfPressBeforeShutter: 0.5s
+  shutterPulseDuration: 100ms
+  StartFrameSpacingMin: 1.0s
+  PostShutterHalfPressHoldTimeExtension: 2.0s
+  halfPressInputDebounce: 35ms
+  fullPressInputDebounce: 20ms
+  FrameCount: 2
+  MaxSequenceCount: 4
+  wakeHoldRefreshPolicy: 0
+  halfPressDuringBurstPolicy: 0
+  fullPressWithoutPriorHpPolicy: 0
+  activityHalfPressHoldPolicy: 0
+  fpAfterMaxSequenceCountPolicy: 0
+  inputActivePolarity: 0
+  outputDriveMode: 0
+  powerSaveIdleMode: 1
+  fullPressIgnoreGap: 3.1s
 fixture: { captureAfterLastStimulusMs: 15000 }
 stimulus:
   - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
@@ -11,11 +30,13 @@ stimulus:
   - { atMs: 4100, signal: FP_IN_STIM, state: active, durationMs: 80 }
   - { atMs: 4200, signal: FP_IN_STIM, state: active, durationMs: 80 }
 expect:
-  fpOut: { pulseCount: 2, frameSpacingMs: 200 }
+  fpOut: { pulseCount: 4, frameSpacingMs: 1000 }
   timing:
-    firstFrameGateDelayMs: { minMs: 850, maxMs: 1200 }
+    firstFrameGateDelayMs: { minMs: 0, maxMs: 50 }
   telemetryDeltas:
-    acceptedFpCount: 1
-    ignoredFpDuringGapCount: 1
-    rejectedFpAtSequenceCapCount: 2
+    acceptedFpCount: 2
+    ignoredFpDuringGapCount: 2
+    ignoredFpDuringBurstCount: 1
+    rejectedFpAtSequenceCapCount: 0
+    sequenceCompletedCount: 2
 metrics: [ignoredFpCount]

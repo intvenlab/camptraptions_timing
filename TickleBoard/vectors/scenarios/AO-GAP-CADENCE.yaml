@@ -1,0 +1,39 @@
+id: AO-GAP-CADENCE
+scenario: ADDON-GAP-CADENCE
+description: Hermetic 1 second inter-frame cadence check (1000/2000/3000/4000)
+tags: [addon, cadence, hermetic]
+parameters:
+  enabled: 1
+  wakeHalfPressHoldTime: 10s
+  minHalfPressBeforeShutter: 0.5s
+  shutterPulseDuration: 100ms
+  StartFrameSpacingMin: 1.0s
+  PostShutterHalfPressHoldTimeExtension: 2.0s
+  halfPressInputDebounce: 35ms
+  fullPressInputDebounce: 20ms
+  FrameCount: 4
+  MaxSequenceCount: 4
+  wakeHoldRefreshPolicy: 0
+  halfPressDuringBurstPolicy: 0
+  fullPressWithoutPriorHpPolicy: 0
+  activityHalfPressHoldPolicy: 0
+  fpAfterMaxSequenceCountPolicy: 0
+  inputActivePolarity: 0
+  outputDriveMode: 0
+  powerSaveIdleMode: 1
+  fullPressIgnoreGap: 3.1s
+fixture: { captureAfterLastStimulusMs: 15000 }
+stimulus:
+  - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 1000, signal: FP_IN_STIM, state: active, durationMs: 100 }
+expect:
+  fpOut: { pulseCount: 4, frameSpacingMs: 1000 }
+  timing:
+    firstFrameGateDelayMs: { minMs: 0, maxMs: 50 }
+  telemetryDeltas:
+    acceptedFpCount: 1
+    ignoredFpDuringGapCount: 0
+    ignoredFpDuringBurstCount: 0
+    rejectedFpAtSequenceCapCount: 0
+    sequenceCompletedCount: 1
+metrics: [frameStartSpacingMs, ignoredFpCount]

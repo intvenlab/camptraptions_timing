@@ -92,6 +92,7 @@ def evaluate_case(
     vector_expect: dict[str, Any],
     metrics: dict[str, Any],
     telemetry_deltas: dict[str, int],
+    telemetry_available: bool = True,
     run_id: str = "unknown",
 ) -> list[CheckResult]:
     checks: list[CheckResult] = []
@@ -159,17 +160,18 @@ def evaluate_case(
 
     telemetry_expect = vector_expect.get("telemetryDeltas", {})
     if isinstance(telemetry_expect, dict):
-        for counter_name, expected_delta in telemetry_expect.items():
-            expected = int(expected_delta)
-            actual = int(telemetry_deltas.get(str(counter_name), 0))
-            checks.append(
-                CheckResult(
-                    name=f"telemetryDelta.{counter_name}",
-                    passed=actual == expected,
-                    detail=f"expected {expected}, got {actual}",
-                    category="functional",
+        if telemetry_available:
+            for counter_name, expected_delta in telemetry_expect.items():
+                expected = int(expected_delta)
+                actual = int(telemetry_deltas.get(str(counter_name), 0))
+                checks.append(
+                    CheckResult(
+                        name=f"telemetryDelta.{counter_name}",
+                        passed=actual == expected,
+                        detail=f"expected {expected}, got {actual}",
+                        category="functional",
+                    )
                 )
-            )
 
     timing_expect = vector_expect.get("timing", {})
     if isinstance(timing_expect, dict):

@@ -347,3 +347,110 @@
   - `AO-LATENCY-FP-IN-TO-FP-OUT` for direct `fpInToFpOutLatencyMs` with HP lead pre-satisfied.
 - Included both in `TickleBoard/vectors/suites/full_validation_suite.yaml` and `TickleBoard/vectors/suites/mandatory_addons_suite.yaml`.
 - Both vectors are intended for BLE-enabled authoritative runs (per project preference).
+
+## Connected-mode scheduler hardening 2026-05-21
+- Firmware `Camtraptions_Firmware/Camtraptions_Firmware.ino` now treats camera timing as control plane and BLE service as management plane:
+  - fast-path camera work (`hpPulseFlag`/`fpPulseFlag`/`cameraLogicActive`) executes before BLE notifications/housekeeping each loop;
+  - removed fixed connected `delay(20)` path and switched connected idle waiting to event-driven `__WFE()`;
+  - connected BLE service is now budgeted per mode (active-sequence, post-sequence catch-up, idle-connected);
+  - telemetry/shutter notify paths are decimated under active timing windows (5 Hz cap target via 200 ms minimum interval);
+  - telemetry flash flush is deferred while camera activity is in progress to avoid control-path jitter.
+- Added `lastActivityEndMs` + short post-sequence window to allow catch-up telemetry after activity completion.
+- Compile check passed with Arduino CLI for `Seeeduino:nrf52:xiaonRF52840`.
+
+## TickleBoard Uno SRAM optimization 2026-05-21
+- Updated `TickleBoard/TickleBoardBits/TickleBoardBits.ino` to reduce SRAM pressure while preserving protocol behavior.
+- Buffer sizes trimmed based on observed suite/artifact needs:
+  - `MAX_EVENTS` 64 -> 24 (current vectors peak at 12 queued events),
+  - `MAX_EDGES` 80 -> 48 (observed artifact peak ~27 edges),
+  - `MAX_ISR_PENDING` 24 -> 16,
+  - `RX_BUF_SIZE` 128 -> 64.
+- Replaced `EdgeLog.sigName` (`const char*`) with compact `EdgeSignalId` enum.
+- Moved serial print literals to flash using `F(...)` and added `printErr` overload for flash strings.
+- Compile result on `arduino:avr:uno` after changes: globals 957 bytes (46%), leaving 1091 bytes SRAM (previously 1939 bytes / 94%).
+
+## Flash + spot-check run 2026-05-21
+- Flashed DUT XIAO on `COM3` using `arduino-cli compile --upload --fqbn Seeeduino:nrf52:xiaonRF52840 Camtraptions_Firmware` (DFU hopped to `COM5` during upload).
+- Flashed fixture Uno on `COM7` using `arduino-cli compile --upload --fqbn arduino:avr:uno TickleBoard/TickleBoardBits` (low-RAM warning remains expected).
+- Ran BLE-enabled spot checks with DUT `C9:E0:7E:27:B2:4A` and DUT serial capture on `COM3`:
+  - `SC-01` passed (`TickleBoard/artifacts/20260521_150611_SC-01-NOMINAL/result.json`).
+  - `SC-16` failed `timing_tolerance` (`TickleBoard/artifacts/20260521_150844_SC-16-HP-RELEASE-AFTER-FP/result.json`) on `firstFrameGateDelayMs` = 399 ms vs expected 450–650 ms.
+
+## SC-16 metric correction 2026-05-21
+- Corrected `TickleBoard/vectors/scenarios/SC-16.yaml` timing assertion to use `firstFrameAfLeadMs` (HP_OUT assert -> first FP_OUT assert) instead of `firstFrameGateDelayMs` (FP_IN -> FP_OUT).
+- Reran BLE-enabled `SC-16` on `COM7` with DUT serial capture on `COM3`: pass at `TickleBoard/artifacts/20260521_151238_SC-16-HP-RELEASE-AFTER-FP/result.json`.
+- Corrected check value: `firstFrameAfLeadMs = 499.0 ms` within expected `[450, 650]`.
+
+## Full suite rerun + report refresh 2026-05-21
+- Reran full BLE-enabled suite with DUT serial capture:
+  - Command: `C:\Python314\python.exe TickleBoard/scripts/tickle_cli.py run-suite TickleBoard/vectors/suites/full_validation_suite.yaml --port COM7 --ble C9:E0:7E:27:B2:4A --dut-serial-port COM3 --dut-serial-baud 115200`
+  - Outcome: 30 total, 27 pass, 3 fail (`TickleBoard/artifacts/suite_rollup.json`).
+  - Failing case IDs in this run: `SC-13-BOUNCE-DEBOUNCE`, `SC-16-HP-RELEASE-AFTER-FP`, `AO-GAP-BOUNDARY-TRIAD`.
+- Regenerated markdown report from latest rollup:
+  - `C:\Python314\python.exe TickleBoard/scripts/tickle_cli.py report TickleBoard/artifacts/suite_rollup.json --output-md docs/validation-test-report.md --output-csv TickleBoard/artifacts/suite_rollup.csv --title "Camptraptions Timing Validation Test Report"`.
+- Re-exported validation report DOCX: `dist/Camptraptions-Timing-Test-Report.docx` via `scripts/export-docs.ps1 -Target validationreport`.
+
+## SC-16 HP wake latency attempt 2026-05-21
+- Firmware change attempted in `Camtraptions_Firmware/Camtraptions_Firmware.ino`: added ISR fast-path in `onHpPulse()` to assert `HP_OUT` immediately (`assertPin(HP_OUT_PIN)`, set `hpOutAsserted=true`, `hpAssertedMs=now`) before setting `hpPulseFlag`.
+- Flashed DUT on `COM3` with `arduino-cli compile --upload --fqbn Seeeduino:nrf52:xiaonRF52840 Camtraptions_Firmware --port COM3` (DFU on COM5).
+- Reran BLE-enabled SC-16:
+  - `C:\Python314\python.exe TickleBoard/scripts/tickle_cli.py run-case TickleBoard/vectors/scenarios/SC-16.yaml --port COM7 --ble C9:E0:7E:27:B2:4A --dut-serial-port COM3 --dut-serial-baud 115200`
+  - Artifact: `TickleBoard/artifacts/20260521_154344_SC-16-HP-RELEASE-AFTER-FP/result.json`
+  - Result: still fail (`firstFrameAfLeadMs=441.0ms`, expected `450..650`; `hpInToHpOutLatencyMs=51.0ms`).
+
+## SC-16 fixture pull-up experiment 2026-05-21
+- Updated fixture firmware `TickleBoard/TickleBoardBits/TickleBoardBits.ino` monitor pins to `INPUT_PULLUP` for `HP_OUT` and `FP_OUT` sampling stability.
+- Flashed fixture Uno on `COM7` with `arduino-cli compile --upload --fqbn arduino:avr:uno TickleBoard/TickleBoardBits --port COM7`.
+- Reran BLE-enabled SC-16 after fixture change:
+  - `C:\Python314\python.exe TickleBoard/scripts/tickle_cli.py run-case TickleBoard/vectors/scenarios/SC-16.yaml --port COM7 --ble C9:E0:7E:27:B2:4A --dut-serial-port COM3 --dut-serial-baud 115200`
+  - Artifact: `TickleBoard/artifacts/20260521_155026_SC-16-HP-RELEASE-AFTER-FP/result.json`
+  - Result: still fail with effectively unchanged onset (`HP_IN->HP_OUT=51ms`, `firstFrameAfLeadMs=442ms`).
+
+## SC-16 debounce removal check 2026-05-21
+- User removed HP debounce logic in `onHpPulse()`; compile initially failed due undefined `now` variable.
+- Applied minimal compile fix only: reintroduced `uint32_t now = millis();` and used `lastHpMs = now`.
+- Flashed DUT on `COM3` (`arduino-cli compile --upload --fqbn Seeeduino:nrf52:xiaonRF52840 Camtraptions_Firmware --port COM3`).
+- Reran BLE-enabled SC-16:
+  - `C:\Python314\python.exe TickleBoard/scripts/tickle_cli.py run-case TickleBoard/vectors/scenarios/SC-16.yaml --port COM7 --ble C9:E0:7E:27:B2:4A --dut-serial-port COM3 --dut-serial-baud 115200`
+  - Artifact: `TickleBoard/artifacts/20260521_163026_SC-16-HP-RELEASE-AFTER-FP/result.json`
+  - Result: still fail; effectively unchanged (`HP_IN->HP_OUT=50ms`, `firstFrameAfLeadMs=441ms`).
+
+## No-BLE startup timing probes 2026-05-21
+- Re-ran SC-16 without BLE twice (`...164004...` and `...164758...`): DUT consistently entered run already in `CAM_WAKE_AF` (`hpOutAsserted=1` from first serial samples), so no `HP_OUT ACTIVE` edge is captured in-run.
+- Added temporary 5s delay in `TickleBoard/scripts/tickleboard/runner.py` immediately after starting DUT serial capture thread and before fixture `RESET`.
+- No-BLE rerun with delay (`TickleBoard/artifacts/20260521_165329_SC-16-HP-RELEASE-AFTER-FP/result.json`) still starts pre-woken; metrics become even more pre-biased (`firstFrameAfLeadMs=101ms`, `hpOutContinuityMs=5197ms`, no `HP_OUT ACTIVE` edge).
+
+## Uno stim-startup glitch fix 2026-05-21
+- Fixed fixture startup drive sequencing in `TickleBoard/TickleBoardBits/TickleBoardBits.ino`:
+  - Added `configureStimOutputInactive(pin)` helper that preloads output latch to inactive level using `digitalWrite(..., levelForActive(false))` before `pinMode(..., OUTPUT)`.
+  - `applyPinModes()` now uses this helper for `hpStimPin` and `fpStimPin` to avoid transient active pulses during output-enable.
+- Removed temporary 5s runner sleep from `TickleBoard/scripts/tickleboard/runner.py`.
+- Flashed fixture Uno on `COM7` and reran no-BLE SC-16:
+  - Artifact: `TickleBoard/artifacts/20260521_165921_SC-16-HP-RELEASE-AFTER-FP/result.json`
+  - Result: PASS; `HP_OUT ACTIVE` now captured at `t=0`, `firstFrameAfLeadMs=499ms`, `hpOutContinuityMs=9989ms`.
+
+## AO gap boundary + cadence hardening 2026-05-21
+- Split add-on intent into two hermetic vectors:
+  - `AO-GAP-BOUNDARY-TRIAD`: explicit boundary classification around `fullPressIgnoreGap` with deterministic telemetry expectations.
+  - `AO-GAP-CADENCE`: dedicated 1.0s inter-frame cadence check (`1000/2000/3000/4000` expected starts for `FrameCount=4`).
+- Added explicit parameter pinning in AO gap vectors so suite default changes in runner do not silently mutate expectations.
+- Added `AO-GAP-CADENCE` to `mandatory_addons_suite.yaml` and `full_validation_suite.yaml`.
+- Firmware telemetry now emits dedicated event code `TEL_EVT_FP_ACCEPTED_AT_GAP_BOUNDARY` (13) when FP is accepted exactly at `fullPressIgnoreUntilMs` boundary.
+- Updated Python telemetry decode map and validation planning docs to describe both boundary and cadence add-ons.
+
+## SC-13 debounce gate update 2026-05-21
+- HP debounce reject logic was removed in firmware for performance; validation should no longer assert `hpDebounceRejectCount` as a pass/fail gate.
+- `SC-13` now gates on `fpDebounceRejectCount` only; HP chatter in this scenario is treated as state-stability coverage, not debounce-counter coverage.
+
+## No-BLE suite behavior update 2026-05-21
+- User wants no-BLE execution to run as many cases as possible and skip BLE-required cases cleanly.
+- Framework updated to classify BLE-required vectors (explicit `requiresBle`, `ble-connected` tag, or non-default camera params vs assumed factory defaults) and mark them `skipped` when `--ble` is not provided.
+- Telemetry delta assertions are now omitted when telemetry is unavailable (no BLE), and result notes include `telemetry_assertions_skipped_no_ble`.
+- Suite/report outputs now include per-case `status` plus skip metadata (`skipped`, `skip_reason`) and overall skipped counts.
+
+## Validation report refresh 2026-05-21
+- Regenerated `docs/validation-test-report.md` from BLE full-suite rollup `TickleBoard/artifacts/full_run_ble_20260521_1719/suite_rollup.json`.
+- Current BLE authoritative report state: 31 passed, 0 failed, 0 skipped; timing 86/86; functional 109/109.
+
+## Debug serial output toggle 2026-05-21
+- Disabled firmware pin-debug serial logs by commenting out `#define DEBUG_CAMERA_LOGIC_PINS` in `Camtraptions_Firmware/Camtraptions_Firmware.ino`.

@@ -1,0 +1,15 @@
+78 [DBG_HP_SAMPLE] t=1326531 hpOutPin=0 hpOutAsserted=1 camState=1 logicActive=1 activityActive=0 msUntilWakeDeadline=2900
+210 [DBG_HP_SAMPLE] t=1326641 hpOutPin=0 hpOutAsserted=1 camState=1 logicActive=1 activityActive=0 msUntilWakeDeadline=2790
+288 [DBG_HP_SAMPLE] t=1326741 hpOutPin=0 hpOutAsserted=1 camState=1 logicActive=1 activityActive=0 msUntilWakeDeadline=2690
+420 [DBG_HP_SAMPLE] t=1326851 hpOutPin=0 hpOutAsserted=1 camState=1 logicActive=1 activityActive=0 msUntilWakeDeadline=2580
+498 [DBG_HP_SAMPLE] t=1326951 hpOutPin=0 hpOutAsserted=1 camState=1 logicActive=1 activityActive=0 msUntilWakeDeadline=2480
+630 [DBG_HP_SAMPLE] t=1327061 hpOutPin=0 hpOutAsserted=1 camState=1 logicActive=1 activityActive=0 msUntilWakeDeadline=2370
+708 [DBG_HP_SAMPLE] t=1327161 hpOutPin=0 hpOutAsserted=1 camState=1 logicActive=1 activityActive=0 msUntilWakeDeadline=2270
+809 [DBG_HP_SAMPLE] t=1327261 hpOutPin=0 hpOutAsserted=1 camState=1 logicActive=1 activityActive=0 msUntilWakeDeadline=2170
+908 [DBG_HP_SAMPLE] t=1327361 hpOutPin=0 hpOutAsserted=1 camState=1 logicActive=1 activityActive=0 msUntilWakeDeadline=2070
+1009 [DBG_HP_SAMPLE] t=1327461 hpOutPin=0 hpOutAsserted=1 camState=1 logicActive=1 activityActive=0 msUntilWakeDeadline=1970
+1108 [DBG_HP_SAMPLE] t=1327561 hpOutPin=0 hpOutAsserted=1 camState=1 logicActive=1 activityActive=0 msUntilWakeDeadline=1870
+1208 [DBG_HP_SAMPLE] t=1327661 hpOutPin=0 hpOutAsserted=1 camState=1 logicActive=1 activityActive=0 msUntilWakeDeadline=1770
+1308 [DBG_HP_SAMPLE] t=1327761 hpOutPin=0 hpOutAsserted=1 camState=1 logicActive=1 activityActive=0 msUntilWakeDeadline=1670
+1408 [DBG_HP_SAMPLE] t=1327861 hpOutPin=0 hpOutAsserted=1 camState=1 logicActive=1 activityActive=0 msUntilWakeDeadline=1570
+1509 [DBG_HP_SAMPLE] t=1327961 hpOutPin=0 hpOutAsserted=1 camState=1 logicActive=1 activityActive=0 msUntilWakeDeadline=1470
