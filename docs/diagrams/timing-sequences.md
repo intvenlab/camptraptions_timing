@@ -26,7 +26,7 @@ Waveform-style views cross-linked to [scenarios.md](../scenarios.md). Use [param
 | Parameter | Default | Role in this diagram |
 |-----------------|------|----------------------|
 | `minHalfPressBeforeShutter` (T) | 0.5 s | Gates frame 1 only if HP lead too short |
-| `StartFrameSpacingMin` (Y) | 1.0 s | Min start-to-start between frames 2…N |
+| `StartFrameSpacingMin` (Y) | 1.0 s | Min pulse-end-to-next-start between frames 2…N |
 | `FrameCount` (N) | 4 | Shutter pulses per sequence |
 | `PostShutterHalfPressHoldTimeExtension` (Z) | 2.0 s | HP hold after last frame |
 | `shutterPulseDuration` | 100 ms | FP OUT pulse width |
@@ -114,9 +114,9 @@ sequenceDiagram
 | FP in (cold) | 0.0 |
 | HP OUT ON (R3) | 0.0 |
 | Frame 1 FP OUT start | 0.5 (after T) |
-| Frame 2 FP OUT start | 1.5 |
-| Frame 3 FP OUT start | 2.5 |
-| Frame 4 FP OUT start | 3.5 |
+| Frame 2 FP OUT start | 1.6 |
+| Frame 3 FP OUT start | 2.7 |
+| Frame 4 FP OUT start | 3.8 |
 | HP OUT OFF (after Z) | ~5.5 |
 
 ```mermaid
@@ -130,7 +130,7 @@ sequenceDiagram
     MCU->>HPo: ON immediately
     Note over MCU: wait minHalfPressBeforeShutter T
     MCU->>FPo: frame 1
-    Note over MCU: frames 2..N at StartFrameSpacingMin HP stays on
+    Note over MCU: frames 2..N at StartFrameSpacingMin after prior pulse end HP stays on
 ```
 
 ## C — SC-01: Wake then FP at 1 s
@@ -175,11 +175,11 @@ SC-03: many FP inputs during burst → still only `FrameCount` frames — see [s
 |-------|------|
 | HP asserted | 0.0 s |
 | Frame 1 OUT | 0.5 s (after T) |
-| Frame 2 OUT | 1.5 s |
-| Frame 3 OUT | 2.5 s |
-| Frame 4 OUT | 3.5 s |
+| Frame 2 OUT | 1.6 s |
+| Frame 3 OUT | 2.7 s |
+| Frame 4 OUT | 3.8 s |
 
-Frames 2…N use **Y only** — no second T-wait. See [behavior-spec](../behavior-spec.md#burst-frame-scheduling-within-one-sequence).
+Frames 2…N use **Y from prior pulse release** — no second T-wait. See [behavior-spec](../behavior-spec.md#burst-frame-scheduling-within-one-sequence).
 
 **Camera outputs (SC-11)**
 
@@ -192,9 +192,9 @@ sequenceDiagram
 
     Note over HPo: ON latched entire burst R7
     Note over FPo: frame 1 at 0.5s after T
-    Note over FPo: frame 2 at 1.5s +Y from prev start
-    Note over FPo: frame 3 at 2.5s
-    Note over FPo: frame 4 at 3.5s
+    Note over FPo: frame 2 at 1.6s +Y from prev release
+    Note over FPo: frame 3 at 2.7s
+    Note over FPo: frame 4 at 3.8s
 ```
 
 ## F — SC-05: Back-to-back sequence

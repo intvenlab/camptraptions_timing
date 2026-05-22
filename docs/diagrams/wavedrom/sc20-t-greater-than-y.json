@@ -11,5 +11,5 @@
       { "name": "FP out", "wave": "0......10.10.10.10" }
     ]
   ],
-  "foot": { "text": "When T > Y, only frame 1 is delayed by T. Frames 2..N remain spaced by Y from frame-1 start." }
+  "foot": { "text": "When T > Y, only frame 1 is delayed by T. Frames 2..N remain spaced by Y from each prior pulse end." }
 }

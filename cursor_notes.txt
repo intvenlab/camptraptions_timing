@@ -4,6 +4,7 @@
 - **Read the current docs before editing.** Prefer small, targeted patches (StrReplace / section edits).
 - **Do not full-file rewrite** (`Write` over an entire doc) unless the user asks for a rewrite — easy to undo their section order, wording, and other edits.
 - Before any large change: read the file on disk, note structure and recent user edits, then change only what the task requires.
+- **DO NOT RELAX TESTS WITHOUT ASKING FOR PERMISSION FIRST. EVER.** No `--non-strict-camera`, loosened tolerances, skipped assertions, or workaround flags to make a run "pass" unless the user explicitly approves that approach.
 
 ## 2026-05-18
 - Repo purpose: document inline timing MCU between Camtraptions motion trigger and camera (HP/FP).
@@ -475,3 +476,64 @@
   - timing grid: `StartFrameSpacingMin x shutterPulseDuration x FrameCount`
   - cap/gap grid: `MaxSequenceCount x fullPressIgnoreGap`
 - Generated suite path: `TickleBoard/vectors/suites/parameter_sweep_suite.yaml` with case files under `TickleBoard/vectors/generated/parameter_sweep/` (47 cases).
+
+## StartFrameSpacing semantics + bounds update 2026-05-22
+- `StartFrameSpacingMin` semantics changed to pulse-end-to-next-start (R6), replacing start-to-start scheduling.
+- Firmware scheduler now computes next frame target from `fpOutReleaseMs + StartFrameSpacingMin`.
+- Both `shutterPulseDuration` and `StartFrameSpacingMin` are now clamped to 10..30000 ms.
+- Camera config wire contract bumped to `CAMERA_SETTINGS_VERSION = 3` with 22-byte payload:
+  - `shutterPulseDuration` moved to LE uint16 at bytes 4..5 (x10ms ticks).
+  - `StartFrameSpacingMin` moved to LE uint16 at bytes 6..7 (x10ms ticks).
+- Timeout-on-cap budget updated to one full burst estimate: `((FrameCount - 1) * (StartFrameSpacingMin + shutterPulseDuration)) + shutterPulseDuration`.
+- TickleBoard updated for v3 camera payload (len 22, new field offsets/scales), evaluator now validates `frameEndToStartSpacingMs` for `frameSpacingMs`.
+- Added add-on boundary vectors:
+  - `AO-BOUNDS-COERCE-MIN.yaml`
+  - `AO-BOUNDS-COERCE-MAX.yaml`
+
+## Camera config protocol v3 harness sync 2026-05-22
+- Firmware now rejects invalid camera-config writes (NACK via `ca50000e`) instead of silently coercing on write.
+- TickleBoard harness updated: build payload from factory defaults (not stale device read), pre-write validation mirroring firmware, read `00e` status after write, strict readback only on ACK_APPLIED.
+- `AO-FACTORY-RESET-AND-COERCION` still requests reserved-field values `1`; under v3 protocol that write is rejected client-side or by firmware — vector needs redesign if still run.
+
+## Camera config protocol test harness 2026-05-22
+- Added `camera_config_protocol.py` + vector `cameraConfigProtocol` steps (`writeNamed`, `writeRaw`, `factoryReset`, `assertReadbackNamed`, `writeNamedDuringActivity`).
+- `ble_adapter.write_camera_config_raw()` bypasses client validation for intentional bad payloads.
+- Vectors: `AO-FACTORY-RESET-AND-COERCION` (fixed), `AO-DEFERRED-CONFIG-WRITES` (ACK_DEFERRED during burst), `AO-CAMCFG-NACK-BAD-VERSION`, `AO-CAMCFG-NACK-BAD-LENGTH` (allows ATT transport reject), `AO-CAMCFG-NACK-OUT-OF-RANGE`.
+- Bench verified passing (strict): NACK bad version, NACK bad length, NACK out-of-range (3 sub-steps). Factory reset + deferred need re-run when DUT/fixture available.
+- Port map (2026-05-22): COM3 = DUT USB serial (XIAO), COM7 = Arduino Uno fixture. Do not use COM3 for fixture preflight.
+- Reflashed DUT 2026-05-22: `arduino-cli compile --upload --fqbn Seeeduino:nrf52:xiaonRF52840 Camtraptions_Firmware --port COM3` (DFU on COM5). Post-flash: BLE `C9:E0:7E:27:B2:4A`, camera config len 22, telemetry len 76.
+- FrameCount=2 NACK investigation: rejected payload `03010a050a006400142314020200000000000000011f` differs from factory default ONLY at bytes 11-12 (FrameCount/MaxSequenceCount 4→2). Static C sanitize says valid. Same suite also shows other FrameCount≠4 writes not sticking (SC-09, AO-GAP). Needs live isolated BLE test when DUT advertising.
+
+## Default camera logic ON + flash 2026-05-22
+- Firmware default mode now boots with camera logic enabled by default:
+  - `DeviceConfig.deviceType` default set to `1` (CAMERA) in `loadSettings()` and `resetToDefaults()`.
+  - `CameraConfig.enabled` default set to `1` in `resetCameraToDefaults()`.
+- Flashed updated DUT firmware using Arduino CLI:
+  - Board detected as `Seeed XIAO nRF52840` on `COM8`.
+  - Upload command: `arduino-cli compile --upload --fqbn Seeeduino:nrf52:xiaonRF52840 Camtraptions_Firmware --port COM8`.
+  - DFU upload hopped to `COM9` during transfer and completed successfully.
+
+## Firmware source split 2026-05-22
+- Refactored monolithic `Camtraptions_Firmware.ino` (~2000 lines) into modules: `config.h`, `build_info.h`, `battery.*`, `storage.*`, `camera.*`, `gatt.*`; main `.ino` is now ~110 lines.
+- BLE module must be named `gatt.*` — a file named `ble.h` in the sketch folder shadows Bluefruit's internal `ble.h` and breaks compilation.
+- Verified compile: `arduino-cli compile --clean --fqbn Seeeduino:nrf52:xiaonRF52840 Camtraptions_Firmware` (128060 bytes flash, 15912 bytes RAM).
+
+- Firmware now exposes camera-config write status characteristic `ca50000e-0000-0000-0000-000000000000` (read + notify, 1 byte).
+- `onCamCfgWrite` now rejects invalid writes with explicit status instead of silent ignore/coercion:
+  - `0xE1` = bad format (payload length/version mismatch)
+  - `0xE2` = bad value range or unsupported reserved-field value
+- Success codes:
+  - `0x00` = applied immediately
+  - `0x01` = accepted but deferred until camera activity is idle
+- Verified compile success: `arduino-cli compile --fqbn Seeeduino:nrf52:xiaonRF52840 Camtraptions_Firmware`.
+
+## Telemetry boot counter 2026-05-22
+- Added `bootCount` as trailing `uint32_t` in `CameraTelemetryCounters`; bumped `TELEMETRY_VERSION` to `2`.
+- Boot count increments once in `setup()` immediately after `loadTelemetry()` and is persisted right away with `saveTelemetry()`.
+- Factory reset behavior updated: telemetry reset keeps current boot count; `saveTelemetry()` is called during factory reset so preserved boot count remains on flash.
+- TickleBoard telemetry parser updated for new payload size (80 bytes) and counter layout (`<B3x13I`).
+
+## Camera-config busy write policy 2026-05-22
+- User decision: camera-config writes during active camera activity must be rejected immediately (no deferred apply queue).
+- Firmware now returns `CAMCFG_NACK_BUSY (0xE3)` when busy; accepted status remains `CAMCFG_ACK_APPLIED (0x00)` only.
+- Updated harness/docs to treat mid-activity config writes as busy-rejected and verify config remains unchanged.

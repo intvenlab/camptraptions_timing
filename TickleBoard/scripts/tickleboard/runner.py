@@ -15,6 +15,7 @@ except ImportError:  # pragma: no cover
 
 from .artifacts import create_run_dir, write_json, write_text
 from .ble_adapter import DutBleAdapter, DutBleSession
+from .camera_config_protocol import execute_camera_config_protocol
 from .debug_log import debug_log
 from .evaluator import evaluate_case, evaluate_sc15_power_save_delta
 from .fixture_client import FixtureClient
@@ -55,6 +56,9 @@ def classify_ble_requirement(vector: TestVector) -> tuple[bool, list[str]]:
     reasons: list[str] = []
     if vector.requires_ble:
         reasons.append("vector explicitly marked requiresBle=true")
+
+    if vector.camera_config_protocol:
+        reasons.append("camera config protocol steps")
 
     tags = {t.strip().lower() for t in vector.tags}
     if "ble-connected" in tags:
@@ -185,6 +189,8 @@ def run_case(
     before_tel = None
     after_tel = None
     camera_rw: dict[str, Any] = {}
+    protocol_checks: list[Any] = []
+    protocol_log: list[dict[str, Any]] = []
     try:
         with ExitStack() as stack:
             # region agent log
@@ -224,11 +230,21 @@ def run_case(
                 _wait_for_idle_ble(active_ble, timeout_s=15.0, run_id=vector.case_id)
                 before_payload = active_ble.read_telemetry_payload()
                 before_tel = parse_payload(before_payload)
-                # Start every case from a known baseline so omitted vector params
-                # do not inherit stale values from prior scenarios.
-                requested_params = dict(DEFAULT_CASE_CAMERA_PARAMS)
-                requested_params.update(vector.parameters)
-                camera_rw = active_ble.write_camera_config_params(requested_params, strict=strict_camera_readback)
+
+                if vector.camera_config_protocol:
+                    protocol_checks, protocol_log = execute_camera_config_protocol(
+                        vector.camera_config_protocol,
+                        active_ble,
+                        fixture=fixture,
+                        run_id=vector.case_id,
+                    )
+
+                if vector.baseline_config_write:
+                    # Start every case from a known baseline so omitted vector params
+                    # do not inherit stale values from prior scenarios.
+                    requested_params = dict(DEFAULT_CASE_CAMERA_PARAMS)
+                    requested_params.update(vector.parameters)
+                    camera_rw = active_ble.write_camera_config_params(requested_params, strict=strict_camera_readback)
 
             result = run_vector_on_fixture(
                 fixture,
@@ -247,9 +263,30 @@ def run_case(
         delta_notes = validate_delta_rules(deltas)
         if not telemetry_available and isinstance(vector.expect.get("telemetryDeltas"), dict):
             delta_notes.append("telemetry_assertions_skipped_no_ble")
-        checks = evaluate_case(
+        sequence_start_hints = [
+            int(step.at_ms)
+            for step in vector.stimulus
+            if (step.signal.upper() in {"FP_IN_STIM", "FP_IN"}) and (step.state == "active")
+        ]
+        expected_sequence_count: int | None = None
+        if telemetry_available:
+            expected_sequence_count = int(deltas.get("acceptedFpCount", 0))
+        else:
+            sequences_expect = vector.expect.get("sequences")
+            if sequences_expect is not None:
+                expected_sequence_count = int(sequences_expect)
+
+        metrics = extract_metrics(
+            result["dump"].edges,
+            run_id=vector.case_id,
+            fp_sequence_start_hints=sequence_start_hints,
+            expected_sequence_count=expected_sequence_count,
+        )
+        result["metrics"] = metrics
+
+        checks = protocol_checks + evaluate_case(
             vector.expect,
-            result["metrics"],
+            metrics,
             deltas,
             telemetry_available=telemetry_available,
             run_id=vector.case_id,
@@ -258,8 +295,10 @@ def run_case(
         passed = all(c.passed for c in checks)
         timing_total = sum(1 for c in checks if c.category == "timing")
         timing_passed = sum(1 for c in checks if c.category == "timing" and c.passed)
-        functional_total = sum(1 for c in checks if c.category != "timing")
-        functional_passed = sum(1 for c in checks if c.category != "timing" and c.passed)
+        functional_total = sum(1 for c in checks if c.category not in ("timing", "protocol"))
+        functional_passed = sum(1 for c in checks if c.category not in ("timing", "protocol") and c.passed)
+        protocol_total = sum(1 for c in checks if c.category == "protocol")
+        protocol_passed = sum(1 for c in checks if c.category == "protocol" and c.passed)
         failed_timing = any((c.category == "timing") and (not c.passed) for c in checks)
         failure_class = "pass" if passed else ("timing_tolerance" if failed_timing else "logic_mismatch")
         # region agent log
@@ -297,9 +336,12 @@ def run_case(
                 "timing_total": timing_total,
                 "functional_passed": functional_passed,
                 "functional_total": functional_total,
+                "protocol_passed": protocol_passed,
+                "protocol_total": protocol_total,
             },
             "failure_class": failure_class,
             "camera_rw": camera_rw,
+            "camera_config_protocol_log": protocol_log,
             "passed": passed,
         }
         write_json(case_dir / "result.json", payload)

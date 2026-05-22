@@ -40,7 +40,7 @@ stateDiagram-v2
     end note
 ```
 
-**Burst substates (nominal):** After frame 1, `WaitSchedule` waits **StartFrameSpacingMin** only — not another full `minHalfPressBeforeShutter` unless HP was released (`WaitMinHalfPress`).
+**Burst substates (nominal):** After frame 1, `WaitSchedule` waits **StartFrameSpacingMin from prior FP pulse release** — not another full `minHalfPressBeforeShutter` unless HP was released (`WaitMinHalfPress`).
 
 ## Decision flow (nominal path highlighted)
 
@@ -55,7 +55,7 @@ flowchart TD
     F --> H[Burst loop]
     G --> H
     H --> I{more frames?}
-    I -->|Yes| J[wait StartFrameSpacingMin]
+    I -->|Yes| J[wait StartFrameSpacingMin from FP release]
     J --> K[FP OUT pulse]
     K --> H
     I -->|No| L[PostShutter extension HP stays ON]
@@ -63,7 +63,7 @@ flowchart TD
     M -->|Yes| D
     L --> P{sequences less than MaxSequenceCount?}
     P -->|Yes FP SC05| H
-    P -->|No cap SC09| Q[timeout lockout duration Y times N]
+    P -->|No cap SC09| Q[timeout lockout one burst budget]
     Q --> R[ignore FP and HP inputs]
     R --> S{timeout elapsed?}
     S -->|Yes SC10| H

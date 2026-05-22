@@ -26,7 +26,7 @@ parameters:
   inputActivePolarity: 0
   outputDriveMode: 0
   powerSaveIdleMode: 1
-  fullPressIgnoreGap: 3.1s
+  fullPressIgnoreGap: 2300ms
 fixture:
   captureAfterLastStimulusMs: 12000
 stimulus:
@@ -55,6 +55,7 @@ expect:
 metrics:
 - frameCount
 - fpPulseWidthMs
+- frameEndToStartSpacingMs
 - frameStartSpacingMs
 - firstFrameGateDelayMs
 - sequenceCount

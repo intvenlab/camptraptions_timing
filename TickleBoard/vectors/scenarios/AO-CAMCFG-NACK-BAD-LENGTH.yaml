@@ -1,0 +1,19 @@
+id: AO-CAMCFG-NACK-BAD-LENGTH
+scenario: ADDON-CAMCFG-PROTOCOL
+description: Camera config write with wrong payload length returns NACK_BAD_FORMAT or is rejected at ATT
+tags: [addon, camcfg-protocol]
+requiresBle: true
+baselineConfigWrite: false
+cameraConfigProtocol:
+  - writeRaw:
+      payloadFromDefaults: true
+      mutate:
+        truncateTo: 20
+      expectStatus: NACK_BAD_FORMAT
+      allowTransportError: true
+      configUnchanged: true
+parameters: {}
+fixture:
+  captureAfterLastStimulusMs: 1000
+stimulus: []
+expect: {}

@@ -3,6 +3,23 @@
 ## Overview
 This guide explains how to modify the Camtraptions camera trap firmware, focusing on the camera logic state machine and I/O behavior. The firmware is currently at **Phase 3** with dual battery monitoring and a complete camera I/O framework.
 
+## Source layout
+The sketch is split across module files in `Camtraptions_Firmware/`:
+
+| File | Responsibility |
+|---|---|
+| `Camtraptions_Firmware.ino` | `setup()` / `loop()` orchestration only |
+| `config.h` | Pins, constants, shared structs/enums, extern globals |
+| `build_info.h` | Compile-time build timestamp (`BUILD_*`) |
+| `battery.h` / `battery.cpp` | ADC reads, SoC curves, calibration persistence |
+| `storage.h` / `storage.cpp` | LittleFS: device/camera settings + telemetry counters |
+| `camera.h` / `camera.cpp` | ISRs, state machine, I/O helpers, runtime pin wiring |
+| `gatt.h` / `gatt.cpp` | BLE GATT, advertising beacon, write callbacks, connected scheduler |
+
+**Note:** the BLE module is named `gatt.*` (not `ble.*`) to avoid colliding with Bluefruit's internal `ble.h` on the Arduino include path.
+
+Debug serial pin logging: uncomment `#define DEBUG_CAMERA_LOGIC_PINS` in `config.h`.
+
 ## Current Features
 - ✅ Dual battery monitoring (CR2032 internal + LiPo external)
 - ✅ Camera state machine with 5 states
@@ -51,7 +68,7 @@ CAM_POST_SHUTTER_EXT // Z hold / between-sequence window
 ```
 
 ### State Variables
-Located at top of file as global static variables:
+Defined in `camera.cpp` (declared `extern` in `config.h`):
 ```cpp
 static CameraState cameraState        = CAM_IDLE;
 static bool        cameraLogicActive  = false;  // Prevents sleep/advertising
@@ -104,15 +121,15 @@ struct DeviceConfig {
 };
 ```
 
-### CameraConfig (stored in /camera.bin, 20 bytes)
+### CameraConfig (stored in /camera.bin, 22 bytes)
 ```cpp
 struct CameraConfig {
-  uint8_t version;                      // CAMERA_SETTINGS_VERSION (2)
+  uint8_t version;                      // CAMERA_SETTINGS_VERSION (3)
   uint8_t enabled;                      // 0=pass-through, 1=state-machine
   uint8_t wakeHalfPressHoldSec;         // X seconds max HP hold
   uint8_t minHalfPressBeforeShutter;    // T ×100ms min HP before shutter
-  uint8_t shutterPulseDuration;         // ×10ms FP pulse width
-  uint8_t startFrameSpacingTenths;      // Y ×100ms start-to-start
+  uint16_t shutterPulseDuration;        // ×10ms FP pulse width (1..3000 => 10..30000ms)
+  uint16_t startFrameSpacingTicks;      // Y ×10ms pulse-end->next-start (1..3000 => 10..30000ms)
   uint8_t postShutterHpHoldTenths;      // Z ×100ms HP hold after burst
   uint8_t hpDebounceMs;                 // HP input debounce
   uint8_t fpDebounceMs;                 // FP input debounce
@@ -180,7 +197,7 @@ struct CameraConfig {
 - Do not require a second FP input
 
 ### CAM_BURST_ACTIVE
-**Purpose:** Firing `FrameCount` frames with R6 start-to-start spacing  
+**Purpose:** Firing `FrameCount` frames with R6 end-to-start spacing  
 **Exit to CAM_POST_SHUTTER_EXT:** All frames fired and FP_OUT released
 
 **Actions:**
@@ -189,7 +206,7 @@ struct CameraConfig {
 - Each frame:
   - `assertPin(FP_OUT)`
   - `fpOutReleaseMs = now + shutterPulseDuration * 10`
-  - `nextFrameMs = now + startFrameSpacingTenths * 100`
+  - `nextFrameMs = fpOutReleaseMs + startFrameSpacingTicks * 10`
 - HP input during burst is ignored for scheduling (R14)
 - FP input during the R10 window is ignored
 - Transition when: `framesFired >= frameCount && fpOutReleaseMs == 0`
@@ -407,7 +424,7 @@ case CAM_BURST_ACTIVE:
       releasePin(FP_OUT_PIN); // Release on odd frames
     }
     // Schedule next edge
-    nextFrameMs = now + (camCfg.startFrameSpacingTenths * 100) / 2;
+    nextFrameMs = fpOutReleaseMs + (camCfg.startFrameSpacingTicks * 10) / 2;
     framesFired++;
   }
   break;
@@ -435,7 +452,7 @@ case CAM_BURST_ACTIVE:
       : camCfg.shutterPulseDuration * 10;   // Normal for others
     
     fpOutReleaseMs = now + pulseMs;
-    nextFrameMs = now + (camCfg.startFrameSpacingTenths * 100);
+    nextFrameMs = fpOutReleaseMs + (camCfg.startFrameSpacingTicks * 10);
     framesFired++;
   }
   break;
@@ -614,7 +631,7 @@ Print pin states periodically:
 - [ ] Cold FP enters `CAM_COLD_FP_WAIT`, asserts HP, waits T, then fires burst
 - [ ] FP trigger in wake state starts one sequence and does not move wake hold deadline
 - [ ] Burst fires correct number of frames
-- [ ] Frame spacing is start-to-start (`StartFrameSpacingMin`)
+- [ ] Frame spacing is pulse-end-to-next-start (`StartFrameSpacingMin`)
 - [ ] Post-shutter HP hold accepts another FP after R10 if under cap
 - [ ] Timeout returns to IDLE
 - [ ] Sequence limit prevents additional bursts

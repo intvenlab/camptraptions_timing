@@ -1,0 +1,32 @@
+id: AO-BOUNDS-COERCE-MIN
+scenario: ADDON-BOUNDS-COERCE
+description: Verify 10ms lower-bound coercion for shutterPulseDuration and StartFrameSpacingMin
+tags: [addon, bounds, coercion]
+requiresBle: true
+parameters:
+  enabled: 1
+  wakeHalfPressHoldTime: 10s
+  minHalfPressBeforeShutter: 0.5s
+  shutterPulseDuration: 1ms
+  StartFrameSpacingMin: 1ms
+  PostShutterHalfPressHoldTimeExtension: 2.0s
+  FrameCount: 2
+  MaxSequenceCount: 4
+  fullPressIgnoreGap: 0.5s
+fixture:
+  captureAfterLastStimulusMs: 8000
+stimulus:
+  - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 1000, signal: FP_IN_STIM, state: active, durationMs: 100 }
+expect:
+  fpOut:
+    pulseCount: 2
+    pulseWidthMs: 10
+    frameSpacingMs: 10
+  telemetryDeltas:
+    acceptedFpCount: 1
+    sequenceCompletedCount: 1
+metrics:
+  - frameCount
+  - fpPulseWidthMs
+  - frameEndToStartSpacingMs

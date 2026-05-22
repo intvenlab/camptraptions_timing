@@ -11,5 +11,5 @@
       { "name": "FP out", "wave": "0..10.10.10.10|." }
     ]
   ],
-  "foot": { "text": "Frame 1 @0.5 s (T); frames 2–4 @+Y=1.0 s start-to-start (R6). No extra T between frames when HP held." }
+  "foot": { "text": "Frame 1 @0.5 s (T); frames 2–4 fire at +Y=1.0 s from prior pulse end (R6). No extra T between frames when HP held." }
 }

@@ -1,18 +1,36 @@
 id: AO-FACTORY-RESET-AND-COERCION
 scenario: ADDON-FACTORY-RESET
-description: Verify factory reset behavior and reserved field coercion
-tags: [addon, reset, coercion]
+description: Factory reset restores factory defaults; subsequent baseline write applies test params
+tags: [addon, reset]
+requiresBle: true
+cameraConfigProtocol:
+  - writeNamed:
+      params:
+        StartFrameSpacingMin: 2.0s
+        PostShutterHalfPressHoldTimeExtension: 3.0s
+      expectStatus: ACK_APPLIED
+  - factoryReset: true
+  - assertReadbackNamed:
+      params:
+        enabled: 1
+        StartFrameSpacingMin: 1.0s
+        PostShutterHalfPressHoldTimeExtension: 2.0s
+        FrameCount: 4
+        MaxSequenceCount: 4
+        inputActivePolarity: 0
+        outputDriveMode: 0
+        activityHalfPressHoldPolicy: 0
 parameters:
   enabled: 1
-  inputActivePolarity: 1
-  outputDriveMode: 1
-  activityHalfPressHoldPolicy: 1
-fixture: { captureAfterLastStimulusMs: 8000 }
+fixture:
+  captureAfterLastStimulusMs: 8000
 stimulus:
   - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
   - { atMs: 1000, signal: FP_IN_STIM, state: active, durationMs: 100 }
 expect:
-  fpOut: { pulseCount: 4, frameSpacingMs: 1000 }
+  fpOut:
+    pulseCount: 4
+    frameSpacingMs: 1000
   telemetryDeltas:
     acceptedFpCount: 1
 metrics: [frameCount]

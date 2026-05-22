@@ -62,17 +62,17 @@ HP **input release** is not mirrored to camera HP OUT in state-machine mode. HP 
 | R3 | FP may arrive **without** prior HP input. |
 | R4 | Before any FP **output** pulse, camera HP must have been active for at least `minHalfPressBeforeShutter`. In the common latched-HP path, this typically gates frame 1 only; later frames follow `StartFrameSpacingMin` unless HP had been dropped. |
 | R5 | Each FP pulse to the camera lasts `shutterPulseDuration` (no overlapping FP outputs). |
-| R6 | In a sequence, schedule successive FP **output** pulse **starts** at least `StartFrameSpacingMin` apart (rising edge to rising edge). Spacing is **start-to-start** and does **not** include `shutterPulseDuration`; actual interval may be longer if R4 or HP release delays the next start. |
+| R6 | In a sequence, schedule successive FP **output** pulse starts so each next start occurs at least `StartFrameSpacingMin` after the prior pulse end (falling edge to next rising edge). Spacing is **pulse-end-to-next-start**; start-to-start interval therefore includes `shutterPulseDuration` and may be longer if R4 or HP release delays the next start. |
 | R7 | During a sequence burst, **keep camera HP OUT asserted** between frames; do not release HP because of trigger activations (original §4b). |
 | R9 | During burst, **do not drop HP** merely because another FP input arrives (HP latch is independent of ignored FP). |
-| R10 | From **sequence start** (accepted FP that schedules the burst), ignore all FP **inputs** for `fullPressIgnoreGap` — no second sequence and no extra frames in that window. Telemetry reject counters may still increment for those ignored inputs. Covers PIR retrigger flood when PIR **Gap = minimum**. Set **≥** typical burst length; default estimate `(FrameCount - 1) × StartFrameSpacingMin + shutterPulseDuration`. |
+| R10 | From **sequence start** (accepted FP that schedules the burst), ignore all FP **inputs** for `fullPressIgnoreGap` — no second sequence and no extra frames in that window. Telemetry reject counters may still increment for those ignored inputs. Covers PIR retrigger flood when PIR **Gap = minimum**. Set **≥** typical burst length; default estimate `(FrameCount - 1) × (StartFrameSpacingMin + shutterPulseDuration) + shutterPulseDuration`. |
 | R10b | An FP **input** is accepted and **starts a new sequence** only when the burst schedule is not in progress, `fullPressIgnoreGap` has elapsed since that sequence’s start, `sequencesStartedThisActivity < MaxSequenceCount`, and R4/R12 gates pass. A retrigger while HP is still latched is taken as soon as these gates clear. |
 | R11 | After the last frame of a sequence’s burst schedule, hold HP for `PostShutterHalfPressHoldTimeExtension`. If another sequence may still start (under `MaxSequenceCount`), HP may remain latched; release HP only when activity ends. |
 | R12 | A new **sequence** begins when an FP is accepted after the prior sequence’s burst **schedule** is complete and normal gates pass. R4 applies before the first FP output of that sequence. |
 | R13 | While activity is active (any sequence in progress, between sequences, or post-burst with sequences remaining), camera HP must not be released solely because `wakeHalfPressHoldTime` expired (`activityHalfPressHoldPolicy = holdUntilActivityEnd`). |
 | R14 | HP **input** during an active burst does not change `remainingFrames`, does not emit FP, and does not release camera HP (`halfPressDuringBurstPolicy = independent`). |
 | R15 | Final HP release time is `max(initial HP assert + wakeHalfPressHoldTime, final frame release + PostShutterHalfPressHoldTimeExtension)`. Accepted FP/sequence starts do not refresh wake deadline. |
-| TimeOut | When `sequencesStartedThisActivity >= MaxSequenceCount` and another FP arrives, enter timeout for `StartFrameSpacingMin * FrameCount`. During timeout, ignore FP and HP inputs for sequence triggering. After timeout expires, normal acceptance resumes. |
+| TimeOut | When `sequencesStartedThisActivity >= MaxSequenceCount` and another FP arrives, enter timeout for one full burst budget `((FrameCount - 1) * (StartFrameSpacingMin + shutterPulseDuration)) + shutterPulseDuration`. During timeout, ignore FP and HP inputs for sequence triggering. After timeout expires, normal acceptance resumes. |
 
 ## Half-press without full-press (timeout path)
 
@@ -111,10 +111,10 @@ sequenceDiagram
 **Default estimate** for `fullPressIgnoreGap` (tunable — set longer in the field if needed):
 
 ```text
-(FrameCount - 1) × StartFrameSpacingMin + shutterPulseDuration
+(FrameCount - 1) × (StartFrameSpacingMin + shutterPulseDuration) + shutterPulseDuration
 ```
 
-Example: `FrameCount = 4`, `StartFrameSpacingMin = 1.0 s`, `shutterPulseDuration = 0.1 s` → default **3.1 s**. With `shutterPulseDuration = 0.2 s` → **3.2 s**. Increase if `minHalfPressBeforeShutter` or other gates stretch real burst spacing beyond this estimate.
+Example: `FrameCount = 4`, `StartFrameSpacingMin = 1.0 s`, `shutterPulseDuration = 0.1 s` → default **3.4 s**. With `shutterPulseDuration = 0.2 s` → **3.8 s**. Increase if `minHalfPressBeforeShutter` or other gates stretch real burst spacing beyond this estimate.
 
 **Example** (`FrameCount = 4`):
 
@@ -134,23 +134,23 @@ Normative timing for firmware — avoids reading `minHalfPressBeforeShutter` as 
 
 ### Normal case (HP latched for whole sequence)
 
-This matches the original spec: half press stays up; **N** frames every **Y** seconds.
+Half press stays up; frames fire with a minimum idle gap **Y** after each pulse release.
 
 1. Sequence starts → camera HP OUT **on** (wake path or cold-FP path).
-2. **Sequence start:** Begin R10 FP ignore for `fullPressIgnoreGap` (default ≈ `(FrameCount - 1) × StartFrameSpacingMin + shutterPulseDuration`).
+2. **Sequence start:** Begin R10 FP ignore for `fullPressIgnoreGap` (default ≈ `(FrameCount - 1) × (StartFrameSpacingMin + shutterPulseDuration) + shutterPulseDuration`).
 3. **Frame 1:** Wait until `minHalfPressBeforeShutter` satisfied → FP OUT pulse (`shutterPulseDuration`).
-4. **Frames 2…N:** At each scheduled time `t_prev + StartFrameSpacingMin`, fire the next FP OUT pulse (R6). **Do not** wait another full `minHalfPressBeforeShutter` if HP never dropped — R4 is already satisfied.
+4. **Frames 2…N:** At each scheduled time `t_prev_release + StartFrameSpacingMin`, fire the next FP OUT pulse (R6). **Do not** wait another full `minHalfPressBeforeShutter` if HP never dropped — R4 is already satisfied.
 5. **Sequence end:** After frame **N** → `PostShutterHalfPressHoldTimeExtension` (R11). R10 ignore ends when `fullPressIgnoreGap` elapses (burst may finish earlier).
 
-Example (`minHalfPressBeforeShutter` = 0.5 s, `StartFrameSpacingMin` = 1.0 s, `FrameCount` = 4, HP held throughout):
+Example (`minHalfPressBeforeShutter` = 0.5 s, `StartFrameSpacingMin` = 1.0 s, `shutterPulseDuration` = 0.1 s, `FrameCount` = 4, HP held throughout):
 
 | Event | Time (illustrative) |
 |-------|---------------------|
 | HP asserted | 0.0 s |
 | Frame 1 OUT | 0.5 s (after T) |
-| Frame 2 OUT | 1.5 s |
-| Frame 3 OUT | 2.5 s |
-| Frame 4 OUT | 3.5 s |
+| Frame 2 OUT | 1.6 s |
+| Frame 3 OUT | 2.7 s |
+| Frame 4 OUT | 3.8 s |
 
 `StartFrameSpacingMin` sets the schedule. **`minHalfPressBeforeShutter` does not override or replace `StartFrameSpacingMin`** in this case.
 

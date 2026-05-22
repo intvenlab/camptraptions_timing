@@ -42,7 +42,7 @@ Primary specification artifact for timing behavior. Each scenario has a stable I
 | `StartFrameSpacingMin` | 1.0 s |
 | `PostShutterHalfPressHoldTimeExtension` | 2.0 s |
 | `MaxSequenceCount` | 4 per activity |
-| `fullPressIgnoreGap` | 3.1 s (estimate (N-1)×Y + pulse) |
+| `fullPressIgnoreGap` | 3.4 s (estimate (N-1)×(Y + pulse) + pulse) |
 | `shutterPulseDuration` | 100 ms |
 | PIR Gap | minimum (0.5 s) — see [pir-sensor-settings.md](pir-sensor-settings.md) |
 
@@ -80,7 +80,7 @@ Each defined scenario uses:
 
 1. On HP: assert camera HP ON; start `wakeHalfPressHoldTime` (R1, R13).
 2. At t=1.0 s: HP lead ≥ `minHalfPressBeforeShutter` → **sequence 1** starts; schedule `FrameCount` frames (R4, R10b). Accepted FP does not refresh wake timer (R15).
-3. Fire frames on `StartFrameSpacingMin` schedule (rising-edge to rising-edge on FP OUT starts, R6) with `shutterPulseDuration` each (R5); HP latched throughout (R7); `minHalfPressBeforeShutter` only gates frame 1 if needed (see behavior-spec burst scheduling).
+3. Fire frames on `StartFrameSpacingMin` schedule measured from prior FP OUT pulse end to next start (R6) with `shutterPulseDuration` each (R5); HP latched throughout (R7); `minHalfPressBeforeShutter` only gates frame 1 if needed (see behavior-spec burst scheduling).
 4. After last frame: hold HP for `PostShutterHalfPressHoldTimeExtension` (R11). Activity ends; release HP → idle.
 
 **Outputs:** 1 sequence, 4 frames (if `FrameCount=4`). HP latched from t=0 through post-burst hold.
@@ -429,7 +429,7 @@ sequenceDiagram
 
 - On cap hit (`sequencesStartedThisActivity >= MaxSequenceCount`), firmware enters **TimeOut**.
 - During TimeOut, both FP and HP inputs are ignored for sequence triggering.
-- TimeOut duration is `StartFrameSpacingMin * FrameCount`.
+- TimeOut duration is `((FrameCount - 1) * (StartFrameSpacingMin + shutterPulseDuration)) + shutterPulseDuration`.
 
 **Example:** `MaxSequenceCount = 4`, `FrameCount = 4` → up to **4 sequences**, up to **16 frames** in one activity if every sequence runs full burst.
 
@@ -462,7 +462,7 @@ sequenceDiagram
 
 **Status:** defined
 
-**Intent:** Confirm burst schedule: `StartFrameSpacingMin` is the **minimum** start-to-start spacing (excludes `shutterPulseDuration`); `minHalfPressBeforeShutter` is a per-frame gate only, not added between every frame when HP stays latched. Actual spacing may exceed Y if T (or HP release) delays the next start — e.g. between sequences when `PostShutterHalfPressHoldTimeExtension` is low and T > Y.
+**Intent:** Confirm burst schedule: `StartFrameSpacingMin` is the **minimum** pulse-end-to-next-start spacing; start-to-start therefore includes `shutterPulseDuration`. `minHalfPressBeforeShutter` is a per-frame gate only, not added between every frame when HP stays latched. Actual spacing may exceed Y if T (or HP release) delays the next start — e.g. between sequences when `PostShutterHalfPressHoldTimeExtension` is low and T > Y.
 
 **Preconditions:** Sequence in progress; HP OUT held through burst (normal).
 
@@ -470,7 +470,7 @@ sequenceDiagram
 
 | Scope | Rule |
 |-------|------|
-| **Within sequence** | Frame k+1 FP OUT start at t_k + `StartFrameSpacingMin` (R6, rising-edge to rising-edge); no extra T wait if HP never dropped |
+| **Within sequence** | Frame k+1 FP OUT start at prior frame release + `StartFrameSpacingMin` (R6); no extra T wait if HP never dropped |
 | **Between sequences** | Prior sequence burst complete + `PostShutterHalfPressHoldTimeExtension` before next sequence (SC-05) |
 
 **Parameters:** `StartFrameSpacingMin`, `minHalfPressBeforeShutter`, `PostShutterHalfPressHoldTimeExtension`, `FrameCount`, `shutterPulseDuration`
@@ -753,7 +753,7 @@ Record debounce settings, temperature, and supply voltage in the log. Outliers f
 |-------|----------|
 | HP OUT | No drop when HP IN releases; held through burst and Z |
 | First FP OUT | Starts no earlier than `HP_OUT assert + minHalfPressBeforeShutter` |
-| Frames 2..N | Start-to-start spacing follows `StartFrameSpacingMin` |
+| Frames 2..N | Pulse-end-to-next-start spacing follows `StartFrameSpacingMin` |
 | Sequence count | 1 |
 
 **Parameters:** `minHalfPressBeforeShutter`, `FrameCount`, `StartFrameSpacingMin`, `PostShutterHalfPressHoldTimeExtension`
@@ -807,7 +807,7 @@ first FP_OUT start = max(FP accept time, HP_OUT assert time + minHalfPressBefore
 Frames 2..N follow:
 
 ```text
-next FP_OUT start >= previous FP_OUT start + StartFrameSpacingMin
+next FP_OUT start >= previous FP_OUT release + StartFrameSpacingMin
 ```
 
 **Parameters:** `minHalfPressBeforeShutter`, `StartFrameSpacingMin`, `FrameCount`
@@ -836,7 +836,7 @@ next FP_OUT start >= previous FP_OUT start + StartFrameSpacingMin
 
 - `halfPressDuringBurstPolicy = independent`: HP input during the burst is ignored for scheduling (R14).
 - Camera HP OUT does not drop because of HP input release or chatter (R7, R13).
-- `frameStartSpacingMs` remains governed by `StartFrameSpacingMin`.
+- `frameEndToStartSpacingMs` remains governed by `StartFrameSpacingMin`.
 - No frames are inserted, skipped, or delayed because of HP input activity.
 
 **Parameters:** `halfPressDuringBurstPolicy`, `StartFrameSpacingMin`, `halfPressInputDebounce`
@@ -885,8 +885,8 @@ next FP_OUT start >= previous FP_OUT start + StartFrameSpacingMin
 
 | Variant | Stimulus | Expected |
 |---------|----------|----------|
-| Warm latched HP | HP lead already greater than T before FP | Frame 1 starts on FP accept; frames 2..N follow Y |
-| Cold/short lead | FP before adequate HP lead | Frame 1 waits T; frames 2..N follow Y from frame 1 start |
+| Warm latched HP | HP lead already greater than T before FP | Frame 1 starts on FP accept; frames 2..N follow Y from each prior pulse end |
+| Cold/short lead | FP before adequate HP lead | Frame 1 waits T; frames 2..N follow Y from each prior pulse end |
 
 **Expected behavior**
 

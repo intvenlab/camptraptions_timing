@@ -28,6 +28,8 @@ class TestVector:
     metrics: list[str] = field(default_factory=list)
     tags: list[str] = field(default_factory=list)
     requires_ble: bool = False
+    camera_config_protocol: list[dict[str, Any]] = field(default_factory=list)
+    baseline_config_write: bool = True
 
 
 def _require(data: dict[str, Any], key: str) -> Any:
@@ -72,6 +74,8 @@ def parse_vector(data: dict[str, Any]) -> TestVector:
         metrics=[str(m) for m in data.get("metrics", [])],
         tags=[str(t) for t in data.get("tags", [])],
         requires_ble=bool(data.get("requiresBle", data.get("requires_ble", False))),
+        camera_config_protocol=[dict(s) for s in data.get("cameraConfigProtocol", [])],
+        baseline_config_write=bool(data.get("baselineConfigWrite", True)),
     )
 
 

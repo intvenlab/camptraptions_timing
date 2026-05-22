@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import time
 from dataclasses import dataclass
 from typing import Any
 
@@ -10,8 +11,25 @@ except ImportError:  # pragma: no cover
     BleakClient = None  # type: ignore[assignment]
     BleakScanner = None  # type: ignore[assignment]
 
-from .camera_config import apply_named_parameters, default_camera_config_bytes, diff_readback
-from .constants import CHAR_CAMERA_CONFIG_UUID, CHAR_FACTORY_RESET_UUID, CHAR_TELEMETRY_UUID, SERVICE_UUID
+from .camera_config import (
+    build_camera_config_payload,
+    camera_config_has_invalid_values,
+    diff_readback,
+)
+from .constants import (
+    CAMCFG_ACK_APPLIED,
+    CAMCFG_NACK_BAD_FORMAT,
+    CAMCFG_NACK_BUSY,
+    CAMCFG_NACK_OUT_OF_RANGE,
+    CAMCFG_STATUS_NAMES,
+    CAMERA_CONFIG_LEN,
+    CAMERA_CONFIG_READBACK_DELAY_S,
+    CHAR_CAMERA_CONFIG_STATUS_UUID,
+    CHAR_CAMERA_CONFIG_UUID,
+    CHAR_FACTORY_RESET_UUID,
+    CHAR_TELEMETRY_UUID,
+    SERVICE_UUID,
+)
 
 
 @dataclass
@@ -54,23 +72,80 @@ class DutBleSession:
         client = self._require_client()
         return bytes(self._runner.run(client.read_gatt_char(CHAR_CAMERA_CONFIG_UUID)))
 
+    def read_camera_config_status(self) -> int:
+        client = self._require_client()
+        raw = bytes(self._runner.run(client.read_gatt_char(CHAR_CAMERA_CONFIG_STATUS_UUID)))
+        if not raw:
+            raise RuntimeError("camera config status readback was empty")
+        return int(raw[0])
+
     def write_camera_config_params(self, params: dict[str, object], strict: bool = True) -> dict[str, object]:
         client = self._require_client()
-        current = bytes(self._runner.run(client.read_gatt_char(CHAR_CAMERA_CONFIG_UUID)))
-        if len(current) < 20:
-            current = bytes(default_camera_config_bytes())
-        payload, requested_norm = apply_named_parameters(current[:20], params)
+        payload, requested_norm = build_camera_config_payload(params)
+        if len(payload) != CAMERA_CONFIG_LEN:
+            raise RuntimeError(f"camera config payload length {len(payload)} != {CAMERA_CONFIG_LEN}")
+        if payload[0] != 3:
+            raise RuntimeError(f"camera config version byte must be 3, got {payload[0]}")
+        if camera_config_has_invalid_values(payload):
+            raise RuntimeError(
+                "camera config payload would be rejected by firmware (out-of-range/reserved-field values)"
+            )
+
         self._runner.run(client.write_gatt_char(CHAR_CAMERA_CONFIG_UUID, payload, response=True))
+        write_status = self.read_camera_config_status()
+        if write_status in (CAMCFG_ACK_APPLIED, CAMCFG_ACK_DEFERRED):
+            time.sleep(CAMERA_CONFIG_READBACK_DELAY_S)
         readback = bytes(self._runner.run(client.read_gatt_char(CHAR_CAMERA_CONFIG_UUID)))
-        d = diff_readback(readback[:20], requested_norm)
-        if strict and d.mismatches:
+        if len(readback) < CAMERA_CONFIG_LEN:
+            raise RuntimeError(f"camera config readback length {len(readback)} < {CAMERA_CONFIG_LEN}")
+        readback_eval = readback[:CAMERA_CONFIG_LEN]
+
+        if strict:
+            if write_status == CAMCFG_NACK_BAD_FORMAT:
+                raise RuntimeError("camera config write rejected: CAMCFG_NACK_BAD_FORMAT")
+            if write_status == CAMCFG_NACK_OUT_OF_RANGE:
+                raise RuntimeError("camera config write rejected: CAMCFG_NACK_OUT_OF_RANGE")
+            if write_status == CAMCFG_NACK_BUSY:
+                raise RuntimeError("camera config write rejected: CAMCFG_NACK_BUSY")
+            if write_status != CAMCFG_ACK_APPLIED:
+                raise RuntimeError(f"camera config write rejected: status=0x{write_status:02x}")
+
+        d = diff_readback(readback_eval, requested_norm)
+        if strict and write_status == CAMCFG_ACK_APPLIED and d.mismatches:
+            for _ in range(4):
+                time.sleep(CAMERA_CONFIG_READBACK_DELAY_S)
+                readback = bytes(self._runner.run(client.read_gatt_char(CHAR_CAMERA_CONFIG_UUID)))
+                readback_eval = readback[:CAMERA_CONFIG_LEN]
+                d = diff_readback(readback_eval, requested_norm)
+                if not d.mismatches:
+                    break
+        if strict and write_status == CAMCFG_ACK_APPLIED and d.mismatches:
             raise RuntimeError(f"camera config readback mismatch: {d.mismatches}")
         return {
             "requested_norm": d.requested,
             "readback_norm": d.readback,
             "mismatches": d.mismatches,
+            "write_status": write_status,
+            "write_status_name": CAMCFG_STATUS_NAMES.get(write_status, f"UNKNOWN_0x{write_status:02X}"),
             "payload_written_hex": payload.hex(),
-            "payload_readback_hex": readback[:20].hex(),
+            "payload_readback_hex": readback_eval.hex(),
+        }
+
+    def write_camera_config_raw(self, payload: bytes) -> dict[str, object]:
+        """Write a raw camera-config payload without client-side validation."""
+        client = self._require_client()
+        self._runner.run(client.write_gatt_char(CHAR_CAMERA_CONFIG_UUID, payload, response=True))
+        write_status = self.read_camera_config_status()
+        if write_status in (CAMCFG_ACK_APPLIED, CAMCFG_ACK_DEFERRED):
+            time.sleep(CAMERA_CONFIG_READBACK_DELAY_S)
+        readback = bytes(self._runner.run(client.read_gatt_char(CHAR_CAMERA_CONFIG_UUID)))
+        readback_eval = readback[:CAMERA_CONFIG_LEN] if len(readback) >= CAMERA_CONFIG_LEN else readback
+        return {
+            "write_status": write_status,
+            "write_status_name": CAMCFG_STATUS_NAMES.get(write_status, f"UNKNOWN_0x{write_status:02X}"),
+            "payload_written_hex": payload.hex(),
+            "payload_written_len": len(payload),
+            "payload_readback_hex": readback_eval.hex(),
         }
 
     def read_telemetry_payload(self) -> bytes:

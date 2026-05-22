@@ -1,0 +1,478 @@
+{
+  "camera_config_protocol_log": [
+    {
+      "camera_rw": {
+        "mismatches": {},
+        "payload_readback_hex": "03010a050a006400142314040400000000000000011f",
+        "payload_written_hex": "03010a050a006400142314040400000000000000011f",
+        "readback_norm": {
+          "FrameCount": 4,
+          "StartFrameSpacingMin": 100,
+          "enabled": 1
+        },
+        "requested_norm": {
+          "FrameCount": 4,
+          "StartFrameSpacingMin": 100,
+          "enabled": 1
+        },
+        "write_status": 0,
+        "write_status_name": "ACK_APPLIED"
+      },
+      "step": "protocol[0]",
+      "type": "writeNamed"
+    },
+    {
+      "activityActiveAtWrite": true,
+      "camera_rw": {
+        "mismatches": {
+          "FrameCount": [
+            8,
+            4
+          ]
+        },
+        "payload_readback_hex": "03010a050a006400142314040400000000000000011f",
+        "payload_written_hex": "03010a050a006400142314080400000000000000011f",
+        "readback_norm": {
+          "FrameCount": 4
+        },
+        "requested_norm": {
+          "FrameCount": 8
+        },
+        "write_status": 1,
+        "write_status_name": "ACK_DEFERRED"
+      },
+      "step": "protocol[1]",
+      "telemetryAtWrite": {
+        "camera_state": 3,
+        "flags": 3
+      },
+      "writeAtMs": 1500
+    }
+  ],
+  "camera_rw": {
+    "mismatches": {},
+    "payload_readback_hex": "03010a050a006400142314080400000000000000011f",
+    "payload_written_hex": "03010a050a006400142314080400000000000000011f",
+    "readback_norm": {
+      "FrameCount": 8,
+      "MaxSequenceCount": 4,
+      "PostShutterHalfPressHoldTimeExtension": 20,
+      "StartFrameSpacingMin": 100,
+      "activityHalfPressHoldPolicy": 0,
+      "enabled": 1,
+      "fpAfterMaxSequenceCountPolicy": 0,
+      "fullPressIgnoreGap": 31,
+      "fullPressInputDebounce": 20,
+      "fullPressWithoutPriorHpPolicy": 0,
+      "halfPressDuringBurstPolicy": 0,
+      "halfPressInputDebounce": 35,
+      "inputActivePolarity": 0,
+      "minHalfPressBeforeShutter": 5,
+      "outputDriveMode": 0,
+      "powerSaveIdleMode": 1,
+      "shutterPulseDuration": 10,
+      "wakeHalfPressHoldTime": 10,
+      "wakeHoldRefreshPolicy": 0
+    },
+    "requested_norm": {
+      "FrameCount": 8,
+      "MaxSequenceCount": 4,
+      "PostShutterHalfPressHoldTimeExtension": 20,
+      "StartFrameSpacingMin": 100,
+      "activityHalfPressHoldPolicy": 0,
+      "enabled": 1,
+      "fpAfterMaxSequenceCountPolicy": 0,
+      "fullPressIgnoreGap": 31,
+      "fullPressInputDebounce": 20,
+      "fullPressWithoutPriorHpPolicy": 0,
+      "halfPressDuringBurstPolicy": 0,
+      "halfPressInputDebounce": 35,
+      "inputActivePolarity": 0,
+      "minHalfPressBeforeShutter": 5,
+      "outputDriveMode": 0,
+      "powerSaveIdleMode": 1,
+      "shutterPulseDuration": 10,
+      "wakeHalfPressHoldTime": 10,
+      "wakeHoldRefreshPolicy": 0
+    },
+    "write_status": 1,
+    "write_status_name": "ACK_DEFERRED"
+  },
+  "case_id": "AO-DEFERRED-CONFIG-WRITES",
+  "check_summary": {
+    "functional_passed": 2,
+    "functional_total": 3,
+    "protocol_passed": 4,
+    "protocol_total": 4,
+    "timing_passed": 2,
+    "timing_total": 2
+  },
+  "checks": [
+    {
+      "category": "protocol",
+      "detail": "expected ACK_APPLIED (0x00), got ACK_APPLIED (0x00)",
+      "name": "protocol[0].writeStatus",
+      "passed": true
+    },
+    {
+      "category": "protocol",
+      "detail": "camera_state=3 flags=0x03",
+      "name": "protocol[1].activityActiveAtWrite",
+      "passed": true
+    },
+    {
+      "category": "protocol",
+      "detail": "expected ACK_DEFERRED (0x01), got ACK_DEFERRED (0x01)",
+      "name": "protocol[1].writeStatus",
+      "passed": true
+    },
+    {
+      "category": "protocol",
+      "detail": "expected 8, got 8",
+      "name": "protocol[1].readback.FrameCount",
+      "passed": true
+    },
+    {
+      "category": "functional",
+      "detail": "expected 8, got 8",
+      "name": "frameCount",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "expected 1000.0 +/- 10.0, got 998.9",
+      "name": "frameEndToStartSpacingMs",
+      "passed": true
+    },
+    {
+      "category": "functional",
+      "detail": "expected 1, got 2",
+      "name": "telemetryDelta.acceptedFpCount",
+      "passed": false
+    },
+    {
+      "category": "timing",
+      "detail": "expected >= 0 when measurable, got 50.0",
+      "name": "hpInToHpOutLatencyMs_non_negative",
+      "passed": true
+    },
+    {
+      "category": "functional",
+      "detail": "deltas={'wakeTimeoutCount': 2, 'acceptedFpCount': 2, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'MaxSequenceExceededCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 2, 'activityCompletedCount': 2}",
+      "name": "telemetry_delta_sanity",
+      "passed": true
+    }
+  ],
+  "description": "Config write during active burst returns ACK_DEFERRED and applies after idle",
+  "failure_class": "logic_mismatch",
+  "fixture_dump": {
+    "edges": [
+      {
+        "signal": "HP_IN",
+        "state": "ACTIVE",
+        "t_ms": 0
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 50
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 100
+      },
+      {
+        "signal": "FP_IN",
+        "state": "ACTIVE",
+        "t_ms": 1000
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 1000
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 1099
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 1100
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 2098
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 2197
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 3196
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 3297
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 4296
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 4395
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 5394
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 5495
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 6493
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 6593
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 7592
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 7691
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 8690
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 8791
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 10789
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 12000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 12000
+      }
+    ],
+    "malformed_lines": [],
+    "run_id": 2,
+    "snapshots": [
+      "SNAPSHOT HP_IN=INACTIVE FP_IN=INACTIVE HP_OUT=INACTIVE FP_OUT=INACTIVE"
+    ],
+    "warnings": []
+  },
+  "metrics": {
+    "firstFrameAfLeadMs": 950.0,
+    "firstFrameGateDelayMs": 0.0,
+    "fpInToFpOutLatencyMs": 0.0,
+    "fpInToHpOutLatencyMs": -950.0,
+    "fpPulseWidthMs": 99.875,
+    "frameCount": 8,
+    "frameEndToStartSpacingMs": 998.8571428571429,
+    "frameStartSpacingMs": 1098.5714285714287,
+    "hpAssertToFinalFrameReleaseMs": 8741.0,
+    "hpHoldAfterLastFrameMs": 1998.0,
+    "hpHoldAfterLastFrameReason": null,
+    "hpInToHpOutLatencyMs": 50.0,
+    "hpInToHpOutLatencyReason": null,
+    "hpOutContinuityMs": 10739.0,
+    "hpOutPreAssertedBeforeHpIn": false,
+    "hpReleaseBeforeFinalFrameDetected": false,
+    "ignoredFpCount": 0,
+    "interSequenceGapMs": null,
+    "secondSequenceStartDelayMs": null,
+    "sequenceCount": 1,
+    "wakeOnlyHoldMs": null
+  },
+  "passed": false,
+  "scenario": "ADDON-DEFERRED-CONFIG",
+  "telemetry_after": {
+    "camera_state": 0,
+    "counters": {
+      "MaxSequenceExceededCount": 0,
+      "acceptedFpCount": 3,
+      "activityCompletedCount": 3,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "sequenceCompletedCount": 3,
+      "version": 1,
+      "wakeTimeoutCount": 3
+    },
+    "flags": 0,
+    "frames_fired_this_sequence": 0,
+    "last_event_code": 4,
+    "last_scenario_hint": 1,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 0,
+    "sequences_started_this_activity": 0,
+    "version": 1
+  },
+  "telemetry_before": {
+    "camera_state": 0,
+    "counters": {
+      "MaxSequenceExceededCount": 0,
+      "acceptedFpCount": 1,
+      "activityCompletedCount": 1,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "sequenceCompletedCount": 1,
+      "version": 1,
+      "wakeTimeoutCount": 1
+    },
+    "flags": 0,
+    "frames_fired_this_sequence": 0,
+    "last_event_code": 4,
+    "last_scenario_hint": 1,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 0,
+    "sequences_started_this_activity": 0,
+    "version": 1
+  },
+  "telemetry_deltas": {
+    "MaxSequenceExceededCount": 0,
+    "acceptedFpCount": 2,
+    "activityCompletedCount": 2,
+    "coldFpSequenceCount": 0,
+    "fpDebounceRejectCount": 0,
+    "hpDebounceRejectCount": 0,
+    "hpIgnoredDuringBurstCount": 0,
+    "hpRefreshCount": 0,
+    "ignoredFpDuringBurstCount": 0,
+    "ignoredFpDuringGapCount": 0,
+    "sequenceCompletedCount": 2,
+    "wakeTimeoutCount": 2
+  },
+  "telemetry_notes": [],
+  "vector": {
+    "baseline_config_write": true,
+    "camera_config_protocol": [
+      {
+        "writeNamed": {
+          "expectStatus": "ACK_APPLIED",
+          "params": {
+            "FrameCount": 4,
+            "StartFrameSpacingMin": "1.0s",
+            "enabled": 1
+          }
+        }
+      },
+      {
+        "writeNamedDuringActivity": {
+          "assertReadbackAfterIdle": {
+            "FrameCount": 8
+          },
+          "captureAfterLastStimulusMs": 12000,
+          "expectStatus": "ACK_DEFERRED",
+          "params": {
+            "FrameCount": 8
+          },
+          "stimulus": [
+            {
+              "atMs": 0,
+              "durationMs": 100,
+              "signal": "HP_IN_STIM",
+              "state": "active"
+            },
+            {
+              "atMs": 1000,
+              "durationMs": 100,
+              "signal": "FP_IN_STIM",
+              "state": "active"
+            }
+          ],
+          "writeAtMs": 1500
+        }
+      }
+    ],
+    "case_id": "AO-DEFERRED-CONFIG-WRITES",
+    "description": "Config write during active burst returns ACK_DEFERRED and applies after idle",
+    "expect": {
+      "fpOut": {
+        "frameSpacingMs": 1000,
+        "pulseCount": 8
+      },
+      "telemetryDeltas": {
+        "acceptedFpCount": 1
+      }
+    },
+    "fixture": {
+      "captureAfterLastStimulusMs": 12000
+    },
+    "metrics": [
+      "frameCount"
+    ],
+    "parameters": {
+      "FrameCount": 8,
+      "StartFrameSpacingMin": "1.0s",
+      "enabled": 1
+    },
+    "requires_ble": true,
+    "scenario": "ADDON-DEFERRED-CONFIG",
+    "stimulus": [
+      {
+        "at_ms": 0,
+        "duration_ms": 100,
+        "signal": "HP_IN_STIM",
+        "state": "active"
+      },
+      {
+        "at_ms": 1000,
+        "duration_ms": 100,
+        "signal": "FP_IN_STIM",
+        "state": "active"
+      }
+    ],
+    "tags": [
+      "addon",
+      "config-write"
+    ]
+  }
+}

@@ -7,7 +7,7 @@
 | `wakeHalfPressHoldTime` | X | 10 | s |
 | `wakeHoldRefreshPolicy` | — | `legacy-no-op` | enum |
 | `minHalfPressBeforeShutter` | T | 0.5 | s |
-| `fullPressIgnoreGap` | — | 3.1 | s |
+| `fullPressIgnoreGap` | — | 3.4 | s |
 | `FrameCount` | N | 4 | frames |
 | `MaxSequenceCount` | — | 4 | sequences |
 | `StartFrameSpacingMin` | Y | 1.0 | s |
@@ -42,7 +42,7 @@ Legacy field retained for backward compatibility. In current requirement-aligned
 
 #### `fullPressIgnoreGap`
 
-After **sequence start**, FP **inputs** are ignored for this duration (R10). The PIR **Gap** menu value is a **minimum** — see [pir-sensor-settings.md](pir-sensor-settings.md). Default **3.1 s** is an estimate (recalculate when burst params change): `(FrameCount - 1) × StartFrameSpacingMin + shutterPulseDuration` (e.g. 3×1.0 + 0.1 s with registry defaults). Set longer if retriggers persist after the burst or gates stretch spacing.
+After **sequence start**, FP **inputs** are ignored for this duration (R10). The PIR **Gap** menu value is a **minimum** — see [pir-sensor-settings.md](pir-sensor-settings.md). Default **3.4 s** is an estimate (recalculate when burst params change): `(FrameCount - 1) × (StartFrameSpacingMin + shutterPulseDuration) + shutterPulseDuration` (e.g. 3×(1.0 + 0.1) + 0.1 s with registry defaults). Set longer if retriggers persist after the burst or gates stretch spacing.
 
 #### `FrameCount`
 
@@ -54,11 +54,13 @@ Maximum number of full-press **sequences** accepted before cap timeout behavior 
 
 - Valid range: `1..64`
 - Default: `4`
-- On cap hit (`sequencesStartedThisActivity >= MaxSequenceCount`), firmware enters **TimeOut** and ignores FP/HP inputs for `StartFrameSpacingMin * FrameCount`, then resumes normal acceptance.
+- On cap hit (`sequencesStartedThisActivity >= MaxSequenceCount`), firmware enters **TimeOut** and ignores FP/HP inputs for one burst budget `((FrameCount - 1) * (StartFrameSpacingMin + shutterPulseDuration)) + shutterPulseDuration`, then resumes normal acceptance.
 
 #### `StartFrameSpacingMin`
 
-**Minimum** time from **start** of one FP OUT pulse to **start** of the next (R6), measured **rising-edge to rising-edge** on FP OUT pulse starts. Does **not** include `shutterPulseDuration`. Actual spacing may exceed this if `minHalfPressBeforeShutter` or HP release delays the next start — e.g. when `PostShutterHalfPressHoldTimeExtension` is low/zero and T > Y between sequences.
+**Minimum** time from **end** of one FP OUT pulse to **start** of the next (R6), measured **falling-edge to next rising-edge** on FP OUT. Start-to-start spacing therefore includes `shutterPulseDuration`. Actual spacing may exceed this if `minHalfPressBeforeShutter` or HP release delays the next start — e.g. when `PostShutterHalfPressHoldTimeExtension` is low/zero and T > Y between sequences.
+
+Range: **10ms..30000ms**.
 
 #### `PostShutterHalfPressHoldTimeExtension`
 
@@ -67,6 +69,8 @@ After the last shutter in a sequence, hold camera HP for this duration (R11). Fi
 #### `shutterPulseDuration`
 
 How long each FP output pulse is held (camera single-shot; the MCU generates pulses).
+
+Range: **10ms..30000ms**.
 
 #### `halfPressInputDebounce`
 
@@ -112,7 +116,7 @@ Only this value is currently implemented. Other policy encodings are reserved an
 
 Legacy compatibility byte retained in camera config layout. Runtime cap handling is now timeout-based and does not branch behavior by this field.
 
-**Current behavior:** when cap is reached, firmware enters TimeOut for `StartFrameSpacingMin * FrameCount`, ignores FP/HP inputs during that window, then resumes normal sequence acceptance.
+**Current behavior:** when cap is reached, firmware enters TimeOut for one burst budget `((FrameCount - 1) * (StartFrameSpacingMin + shutterPulseDuration)) + shutterPulseDuration`, ignores FP/HP inputs during that window, then resumes normal sequence acceptance.
 
 #### `inputActivePolarity`
 

@@ -43,6 +43,23 @@ def _spacings(times: list[int]) -> list[int]:
     return [times[i] - times[i - 1] for i in range(1, len(times))]
 
 
+def _end_to_start_spacings(
+    fp_out_active: list[int],
+    fp_out_inactive: list[int],
+    start_spacings: list[int],
+    threshold: int,
+) -> list[int]:
+    gaps: list[int] = []
+    pair_count = min(len(fp_out_inactive), max(0, len(fp_out_active) - 1))
+    for i in range(pair_count):
+        if i >= len(start_spacings):
+            break
+        if start_spacings[i] >= threshold:
+            continue
+        gaps.append(fp_out_active[i + 1] - fp_out_inactive[i])
+    return gaps
+
+
 def _sequence_gap_threshold(spacings: list[int]) -> int:
     if not spacings:
         return 500
@@ -65,6 +82,49 @@ def _sequence_starts(fp_out_active: list[int]) -> list[int]:
     return starts
 
 
+def _sequence_starts_from_hints(fp_out_active: list[int], hints: list[int]) -> list[int]:
+    if not fp_out_active or not hints:
+        return []
+    starts: list[int] = []
+    edge_idx = 0
+    for hint in sorted(int(t) for t in hints):
+        while edge_idx < len(fp_out_active) and fp_out_active[edge_idx] < hint:
+            edge_idx += 1
+        if edge_idx >= len(fp_out_active):
+            break
+        candidate = fp_out_active[edge_idx]
+        if not starts or candidate != starts[-1]:
+            starts.append(candidate)
+    return starts
+
+
+def _select_sequence_starts(
+    fp_out_active: list[int],
+    *,
+    fp_sequence_start_hints: list[int] | None,
+    expected_sequence_count: int | None,
+) -> tuple[list[int], str]:
+    heuristic_starts = _sequence_starts(fp_out_active)
+    hinted_starts = _sequence_starts_from_hints(fp_out_active, fp_sequence_start_hints or [])
+    if len(hinted_starts) >= 2:
+        selected = hinted_starts
+        source = "hinted"
+    elif len(heuristic_starts) >= 2:
+        selected = heuristic_starts
+        source = "heuristic"
+    elif hinted_starts:
+        selected = hinted_starts
+        source = "hinted_single"
+    else:
+        selected = heuristic_starts
+        source = "heuristic_single" if heuristic_starts else "none"
+
+    expected = int(expected_sequence_count) if expected_sequence_count is not None else None
+    if expected is not None and expected >= 0 and len(selected) != expected:
+        source = f"{source}_expected_{expected}_got_{len(selected)}"
+    return selected, source
+
+
 def _first_signal_time(*series: list[int]) -> int | None:
     vals = [v for arr in series for v in arr]
     if not vals:
@@ -72,7 +132,13 @@ def _first_signal_time(*series: list[int]) -> int | None:
     return min(vals)
 
 
-def extract_metrics(edges: list[EdgeRecord], run_id: str = "unknown") -> dict[str, float | int | bool | str | None]:
+def extract_metrics(
+    edges: list[EdgeRecord],
+    run_id: str = "unknown",
+    *,
+    fp_sequence_start_hints: list[int] | None = None,
+    expected_sequence_count: int | None = None,
+) -> dict[str, float | int | bool | str | None]:
     hp_in_a = _active_times(edges, "HP_IN")
     fp_in_a = _active_times(edges, "FP_IN")
     hp_out_a = _active_times(edges, "HP_OUT")
@@ -84,7 +150,12 @@ def extract_metrics(edges: list[EdgeRecord], run_id: str = "unknown") -> dict[st
     fp_spacings_all = _spacings(fp_out_a)
     seq_gap_threshold = _sequence_gap_threshold(fp_spacings_all)
     fp_spacings = [s for s in fp_spacings_all if s < seq_gap_threshold]
-    seq_starts = _sequence_starts(fp_out_a)
+    fp_end_to_start_spacings = _end_to_start_spacings(fp_out_a, fp_out_i, fp_spacings_all, seq_gap_threshold)
+    seq_starts, seq_start_source = _select_sequence_starts(
+        fp_out_a,
+        fp_sequence_start_hints=fp_sequence_start_hints,
+        expected_sequence_count=expected_sequence_count,
+    )
     # region agent log
     debug_log(
         run_id=run_id,
@@ -184,6 +255,9 @@ def extract_metrics(edges: list[EdgeRecord], run_id: str = "unknown") -> dict[st
         "firstFrameGateDelayMs": _latency(fp_in_a, fp_out_a),
         "fpPulseWidthMs": float(mean(fp_widths)) if fp_widths else None,
         "frameStartSpacingMs": float(mean(fp_spacings)) if fp_spacings else None,
+        "frameEndToStartSpacingMs": (
+            float(mean(fp_end_to_start_spacings)) if fp_end_to_start_spacings else None
+        ),
         "hpHoldAfterLastFrameMs": hp_hold_after_last_frame,
         "hpReleaseBeforeFinalFrameDetected": hp_release_before_final_frame_detected,
         "hpHoldAfterLastFrameReason": hp_hold_after_last_frame_reason,
@@ -211,8 +285,13 @@ def extract_metrics(edges: list[EdgeRecord], run_id: str = "unknown") -> dict[st
         data={
             "fpPulseWidthMs": out["fpPulseWidthMs"],
             "frameStartSpacingMs": out["frameStartSpacingMs"],
+            "frameEndToStartSpacingMs": out["frameEndToStartSpacingMs"],
             "fpInToFpOutLatencyMs": out["fpInToFpOutLatencyMs"],
             "frameCount": out["frameCount"],
+            "sequenceStarts": seq_starts,
+            "sequenceStartSource": seq_start_source,
+            "expectedSequenceCount": expected_sequence_count,
+            "sequenceStartHints": fp_sequence_start_hints or [],
         },
     )
     # endregion

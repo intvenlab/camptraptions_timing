@@ -1,0 +1,30 @@
+id: AO-CAMCFG-NACK-OUT-OF-RANGE
+scenario: ADDON-CAMCFG-PROTOCOL
+description: Camera config write with invalid reserved/out-of-range fields returns NACK_OUT_OF_RANGE
+tags: [addon, camcfg-protocol]
+requiresBle: true
+baselineConfigWrite: false
+cameraConfigProtocol:
+  - writeRaw:
+      payloadFromDefaults: true
+      mutate:
+        inputActivePolarity: 1
+      expectStatus: NACK_OUT_OF_RANGE
+      configUnchanged: true
+  - writeRaw:
+      payloadFromDefaults: true
+      mutate:
+        shutterPulseDuration: 0
+      expectStatus: NACK_OUT_OF_RANGE
+      configUnchanged: true
+  - writeRaw:
+      payloadFromDefaults: true
+      mutate:
+        StartFrameSpacingMin: 4000
+      expectStatus: NACK_OUT_OF_RANGE
+      configUnchanged: true
+parameters: {}
+fixture:
+  captureAfterLastStimulusMs: 1000
+stimulus: []
+expect: {}

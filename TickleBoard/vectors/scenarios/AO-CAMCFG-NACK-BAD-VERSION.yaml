@@ -1,0 +1,18 @@
+id: AO-CAMCFG-NACK-BAD-VERSION
+scenario: ADDON-CAMCFG-PROTOCOL
+description: Camera config write with wrong version byte returns NACK_BAD_FORMAT
+tags: [addon, camcfg-protocol]
+requiresBle: true
+baselineConfigWrite: false
+cameraConfigProtocol:
+  - writeRaw:
+      payloadFromDefaults: true
+      mutate:
+        version: 2
+      expectStatus: NACK_BAD_FORMAT
+      configUnchanged: true
+parameters: {}
+fixture:
+  captureAfterLastStimulusMs: 1000
+stimulus: []
+expect: {}

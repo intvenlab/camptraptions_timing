@@ -26,9 +26,9 @@ parameters:
   inputActivePolarity: 0
   outputDriveMode: 0
   powerSaveIdleMode: 1
-  fullPressIgnoreGap: 3.1s
+  fullPressIgnoreGap: 9600ms
 fixture:
-  captureAfterLastStimulusMs: 16000
+  captureAfterLastStimulusMs: 17500
 stimulus:
 - atMs: 0
   signal: HP_IN_STIM
@@ -55,6 +55,7 @@ expect:
 metrics:
 - frameCount
 - fpPulseWidthMs
+- frameEndToStartSpacingMs
 - frameStartSpacingMs
 - firstFrameGateDelayMs
 - sequenceCount

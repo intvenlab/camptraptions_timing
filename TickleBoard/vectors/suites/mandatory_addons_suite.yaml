@@ -9,3 +9,8 @@ cases:
   - ../scenarios/AO-GAP-CADENCE.yaml
   - ../scenarios/AO-DEFERRED-CONFIG-WRITES.yaml
   - ../scenarios/AO-FACTORY-RESET-AND-COERCION.yaml
+  - ../scenarios/AO-BOUNDS-COERCE-MIN.yaml
+  - ../scenarios/AO-BOUNDS-COERCE-MAX.yaml
+  - ../scenarios/AO-CAMCFG-NACK-BAD-VERSION.yaml
+  - ../scenarios/AO-CAMCFG-NACK-BAD-LENGTH.yaml
+  - ../scenarios/AO-CAMCFG-NACK-OUT-OF-RANGE.yaml

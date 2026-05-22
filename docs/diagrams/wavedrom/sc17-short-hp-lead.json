@@ -11,5 +11,5 @@
       { "name": "FP out", "wave": "0......10.10.10.10" }
     ]
   ],
-  "foot": { "text": "FP arrives before enough HP lead; frame 1 is visibly delayed by T. Frames 2..N still follow StartFrameSpacingMin cadence." }
+  "foot": { "text": "FP arrives before enough HP lead; frame 1 is visibly delayed by T. Frames 2..N still follow StartFrameSpacingMin from prior pulse release." }
 }

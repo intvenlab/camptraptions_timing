@@ -20,8 +20,9 @@ def _timing_case(
 
     fixture_ms = 12000
     if frame_count > 1:
-        burst_window = (frame_count - 1) * spacing_ms + shutter_pulse_ms
+        burst_window = ((frame_count - 1) * (spacing_ms + shutter_pulse_ms)) + shutter_pulse_ms
         fixture_ms = max(fixture_ms, int(1000 + burst_window + 7000))
+    ignore_gap_ms = max(500, ((frame_count - 1) * (spacing_ms + shutter_pulse_ms)) + shutter_pulse_ms + 100)
 
     expect: dict[str, Any] = {
         "fpOut": {
@@ -69,7 +70,7 @@ def _timing_case(
             "inputActivePolarity": 0,
             "outputDriveMode": 0,
             "powerSaveIdleMode": 1,
-            "fullPressIgnoreGap": "3.1s",
+            "fullPressIgnoreGap": f"{ignore_gap_ms}ms",
         },
         "fixture": {"captureAfterLastStimulusMs": fixture_ms},
         "stimulus": [
@@ -80,6 +81,7 @@ def _timing_case(
         "metrics": [
             "frameCount",
             "fpPulseWidthMs",
+            "frameEndToStartSpacingMs",
             "frameStartSpacingMs",
             "firstFrameGateDelayMs",
             "sequenceCount",

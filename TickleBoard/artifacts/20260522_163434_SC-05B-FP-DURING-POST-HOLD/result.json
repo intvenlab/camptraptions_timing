@@ -1,0 +1,446 @@
+{
+  "camera_config_protocol_log": [],
+  "camera_rw": {
+    "mismatches": {},
+    "payload_readback_hex": "03010a050a006400142314040400000000000000011f",
+    "payload_written_hex": "03010a050a006400142314040400000000000000011f",
+    "readback_norm": {
+      "FrameCount": 4,
+      "MaxSequenceCount": 4,
+      "PostShutterHalfPressHoldTimeExtension": 20,
+      "StartFrameSpacingMin": 100,
+      "activityHalfPressHoldPolicy": 0,
+      "enabled": 1,
+      "fpAfterMaxSequenceCountPolicy": 0,
+      "fullPressIgnoreGap": 31,
+      "fullPressInputDebounce": 20,
+      "fullPressWithoutPriorHpPolicy": 0,
+      "halfPressDuringBurstPolicy": 0,
+      "halfPressInputDebounce": 35,
+      "inputActivePolarity": 0,
+      "minHalfPressBeforeShutter": 5,
+      "outputDriveMode": 0,
+      "powerSaveIdleMode": 1,
+      "shutterPulseDuration": 10,
+      "wakeHalfPressHoldTime": 10,
+      "wakeHoldRefreshPolicy": 0
+    },
+    "requested_norm": {
+      "FrameCount": 4,
+      "MaxSequenceCount": 4,
+      "PostShutterHalfPressHoldTimeExtension": 20,
+      "StartFrameSpacingMin": 100,
+      "activityHalfPressHoldPolicy": 0,
+      "enabled": 1,
+      "fpAfterMaxSequenceCountPolicy": 0,
+      "fullPressIgnoreGap": 31,
+      "fullPressInputDebounce": 20,
+      "fullPressWithoutPriorHpPolicy": 0,
+      "halfPressDuringBurstPolicy": 0,
+      "halfPressInputDebounce": 35,
+      "inputActivePolarity": 0,
+      "minHalfPressBeforeShutter": 5,
+      "outputDriveMode": 0,
+      "powerSaveIdleMode": 1,
+      "shutterPulseDuration": 10,
+      "wakeHalfPressHoldTime": 10,
+      "wakeHoldRefreshPolicy": 0
+    },
+    "write_status": 0,
+    "write_status_name": "ACK_APPLIED"
+  },
+  "case_id": "SC-05B-FP-DURING-POST-HOLD",
+  "check_summary": {
+    "functional_passed": 3,
+    "functional_total": 7,
+    "protocol_passed": 0,
+    "protocol_total": 0,
+    "timing_passed": 5,
+    "timing_total": 5
+  },
+  "checks": [
+    {
+      "category": "functional",
+      "detail": "expected 8, got 8",
+      "name": "frameCount",
+      "passed": true
+    },
+    {
+      "category": "functional",
+      "detail": "expected 2, got 1",
+      "name": "sequenceCount.telemetryAcceptedFpCount",
+      "passed": false
+    },
+    {
+      "category": "functional",
+      "detail": "expected 8, got 8",
+      "name": "sequenceCount.fpOutPulseCount",
+      "passed": true
+    },
+    {
+      "category": "functional",
+      "detail": "expected 2, got 1",
+      "name": "sequenceCount",
+      "passed": false
+    },
+    {
+      "category": "functional",
+      "detail": "expected 2, got 1",
+      "name": "telemetryDelta.acceptedFpCount",
+      "passed": false
+    },
+    {
+      "category": "functional",
+      "detail": "expected 2, got 0",
+      "name": "telemetryDelta.sequenceCompletedCount",
+      "passed": false
+    },
+    {
+      "category": "timing",
+      "detail": "expected range [1800.0, 2600.0], got 1804.0",
+      "name": "interSequenceGapMs",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "expected >= 0 when measurable, got 47.0",
+      "name": "hpInToHpOutLatencyMs_non_negative",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "expected False, got False",
+      "name": "hold.noHpReleaseBeforeFinalFrame",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "hpHoldAfterLastFrameMs=1997.0 reason=None",
+      "name": "hold.requirePostFinalFrameHpRelease",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "expected HP_OUT continuity by rule max(10000.0, 9549.0+2000.0) = 11549.0 +/- 115.5, got 11546.0",
+      "name": "hold.dropTimeRule",
+      "passed": true
+    },
+    {
+      "category": "functional",
+      "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 2, 'ignoredFpDuringBurstCount': 0, 'MaxSequenceExceededCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 0, 'activityCompletedCount': 2, 'bootCount': 1}",
+      "name": "telemetry_delta_sanity",
+      "passed": true
+    }
+  ],
+  "description": "FP during post-shutter hold can start next sequence",
+  "failure_class": "logic_mismatch",
+  "fixture_dump": {
+    "edges": [
+      {
+        "signal": "HP_IN",
+        "state": "ACTIVE",
+        "t_ms": 0
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 47
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 100
+      },
+      {
+        "signal": "FP_IN",
+        "state": "ACTIVE",
+        "t_ms": 1000
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 1000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 1100
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 1100
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 2099
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 2198
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 3197
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 3297
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 4296
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 4396
+      },
+      {
+        "signal": "FP_IN",
+        "state": "ACTIVE",
+        "t_ms": 6200
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 6200
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 6299
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 6300
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 7298
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 7398
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 8397
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 8496
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 9495
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 9596
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 11593
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 14000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 14000
+      }
+    ],
+    "malformed_lines": [],
+    "run_id": 1,
+    "snapshots": [
+      "SNAPSHOT HP_IN=INACTIVE FP_IN=INACTIVE HP_OUT=INACTIVE FP_OUT=INACTIVE"
+    ],
+    "warnings": []
+  },
+  "metrics": {
+    "firstFrameAfLeadMs": 953.0,
+    "firstFrameGateDelayMs": 0.0,
+    "fpInToFpOutLatencyMs": 0.0,
+    "fpInToHpOutLatencyMs": -953.0,
+    "fpPulseWidthMs": 99.75,
+    "frameCount": 8,
+    "frameEndToStartSpacingMs": 1114.0,
+    "frameStartSpacingMs": 1213.5714285714287,
+    "hpAssertToFinalFrameReleaseMs": 9549.0,
+    "hpHoldAfterLastFrameMs": 1997.0,
+    "hpHoldAfterLastFrameReason": null,
+    "hpInToHpOutLatencyMs": 47.0,
+    "hpInToHpOutLatencyReason": null,
+    "hpOutContinuityMs": 11546.0,
+    "hpOutPreAssertedBeforeHpIn": false,
+    "hpReleaseBeforeFinalFrameDetected": false,
+    "ignoredFpCount": 0,
+    "interSequenceGapMs": 1804.0,
+    "secondSequenceStartDelayMs": 0.0,
+    "sequenceCount": 2,
+    "wakeOnlyHoldMs": null
+  },
+  "passed": false,
+  "scenario": "SC-05b",
+  "telemetry_after": {
+    "camera_state": 0,
+    "counters": {
+      "MaxSequenceExceededCount": 0,
+      "acceptedFpCount": 4,
+      "activityCompletedCount": 5,
+      "bootCount": 4,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 5,
+      "sequenceCompletedCount": 0,
+      "version": 1,
+      "wakeTimeoutCount": 1
+    },
+    "flags": 0,
+    "frames_fired_this_sequence": 0,
+    "last_event_code": 4,
+    "last_scenario_hint": 1,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 0,
+    "sequences_started_this_activity": 0,
+    "version": 1
+  },
+  "telemetry_before": {
+    "camera_state": 0,
+    "counters": {
+      "MaxSequenceExceededCount": 0,
+      "acceptedFpCount": 3,
+      "activityCompletedCount": 3,
+      "bootCount": 3,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 3,
+      "sequenceCompletedCount": 0,
+      "version": 1,
+      "wakeTimeoutCount": 1
+    },
+    "flags": 0,
+    "frames_fired_this_sequence": 0,
+    "last_event_code": 4,
+    "last_scenario_hint": 1,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 0,
+    "sequences_started_this_activity": 0,
+    "version": 1
+  },
+  "telemetry_deltas": {
+    "MaxSequenceExceededCount": 0,
+    "acceptedFpCount": 1,
+    "activityCompletedCount": 2,
+    "bootCount": 1,
+    "coldFpSequenceCount": 0,
+    "fpDebounceRejectCount": 0,
+    "hpDebounceRejectCount": 0,
+    "hpIgnoredDuringBurstCount": 0,
+    "hpRefreshCount": 0,
+    "ignoredFpDuringBurstCount": 0,
+    "ignoredFpDuringGapCount": 2,
+    "sequenceCompletedCount": 0,
+    "wakeTimeoutCount": 0
+  },
+  "telemetry_notes": [],
+  "vector": {
+    "baseline_config_write": true,
+    "camera_config_protocol": [],
+    "case_id": "SC-05B-FP-DURING-POST-HOLD",
+    "description": "FP during post-shutter hold can start next sequence",
+    "expect": {
+      "fpOut": {
+        "pulseCount": 8
+      },
+      "holdExpect": {
+        "dropTimeRule": {
+          "postFinalFrameHoldMs": 2000,
+          "wakeHoldMs": 10000
+        },
+        "noHpReleaseBeforeFinalFrame": true,
+        "requirePostFinalFrameHpRelease": true
+      },
+      "sequences": 2,
+      "telemetryDeltas": {
+        "acceptedFpCount": 2,
+        "sequenceCompletedCount": 2
+      },
+      "timing": {
+        "interSequenceGapMs": {
+          "maxMs": 2600,
+          "minMs": 1800
+        }
+      }
+    },
+    "fixture": {
+      "captureAfterLastStimulusMs": 14000
+    },
+    "metrics": [
+      "sequenceCount",
+      "hpHoldAfterLastFrameMs"
+    ],
+    "parameters": {
+      "FrameCount": 4,
+      "MaxSequenceCount": 4,
+      "PostShutterHalfPressHoldTimeExtension": "2.0s",
+      "enabled": 1,
+      "wakeHalfPressHoldTime": "10s"
+    },
+    "requires_ble": false,
+    "scenario": "SC-05b",
+    "stimulus": [
+      {
+        "at_ms": 0,
+        "duration_ms": 100,
+        "signal": "HP_IN_STIM",
+        "state": "active"
+      },
+      {
+        "at_ms": 1000,
+        "duration_ms": 100,
+        "signal": "FP_IN_STIM",
+        "state": "active"
+      },
+      {
+        "at_ms": 6200,
+        "duration_ms": 100,
+        "signal": "FP_IN_STIM",
+        "state": "active"
+      }
+    ],
+    "tags": [
+      "variant",
+      "multi-sequence"
+    ]
+  }
+}

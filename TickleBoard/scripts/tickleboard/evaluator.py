@@ -142,9 +142,9 @@ def evaluate_case(
     if exp_frame_spacing is not None:
         _timing_check(
             checks,
-            check_name="frameStartSpacingMs",
-            metric_name="frameStartSpacingMs",
-            metric_value=metrics.get("frameStartSpacingMs"),
+            check_name="frameEndToStartSpacingMs",
+            metric_name="frameEndToStartSpacingMs",
+            metric_value=metrics.get("frameEndToStartSpacingMs"),
             expect_spec=exp_frame_spacing,
         )
 

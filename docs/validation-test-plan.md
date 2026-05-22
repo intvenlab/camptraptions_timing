@@ -38,10 +38,10 @@ Use this matrix as the pre-run consistency gate and keep it updated when scenari
 
 | Scenario family | Rules | Primary parameters | Required fixture metrics | Required telemetry deltas | Expected state path |
 |----------------|-------|--------------------|---------------------------|---------------------------|--------------------|
-| SC-01/05/05b (nominal + multi-sequence) | R1, R4-R7, R10, R11, R12, R15 | `FrameCount`, `StartFrameSpacingMin`, `PostShutterHalfPressHoldTimeExtension`, `MaxSequenceCount` | `frameCount`, `frameStartSpacingMs`, `hpHoldAfterLastFrameMs`, `sequenceCount` | `acceptedFpCount`, `sequenceCompletedCount`, `activityCompletedCount` | `CAM_WAKE_AF -> CAM_BURST_ACTIVE -> CAM_POST_SHUTTER_EXT` (repeat as needed) |
+| SC-01/05/05b (nominal + multi-sequence) | R1, R4-R7, R10, R11, R12, R15 | `FrameCount`, `StartFrameSpacingMin`, `PostShutterHalfPressHoldTimeExtension`, `MaxSequenceCount` | `frameCount`, `frameEndToStartSpacingMs`, `hpHoldAfterLastFrameMs`, `sequenceCount` | `acceptedFpCount`, `sequenceCompletedCount`, `activityCompletedCount` | `CAM_WAKE_AF -> CAM_BURST_ACTIVE -> CAM_POST_SHUTTER_EXT` (repeat as needed) |
 | SC-02/03/14 (FP ignore behavior) | R10, R10b, R13 | `fullPressIgnoreGap`, `FrameCount`, `fullPressInputDebounce` | `ignoredFpCount`, `frameCount` | `ignoredFpDuringGapCount`, `ignoredFpDuringBurstCount` | `CAM_BURST_ACTIVE` remains stable |
 | SC-04/04b/12 (wake-only hold) | R1, R2 | `wakeHalfPressHoldTime`, `wakeHoldRefreshPolicy` | `wakeOnlyHoldMs`, `hpInToHpOutLatencyMs` | `wakeTimeoutCount`, `hpRefreshCount` | `CAM_WAKE_AF -> CAM_IDLE` |
-| SC-06/08/16/17/19/20 (AF gate paths) | R3, R4, R6, R7 | `minHalfPressBeforeShutter`, `StartFrameSpacingMin`, `fullPressWithoutPriorHpPolicy` | `firstFrameAfLeadMs`, `firstFrameGateDelayMs`, `frameStartSpacingMs` | `coldFpSequenceCount`, `acceptedFpCount` | `CAM_COLD_FP_WAIT` and/or warm `CAM_WAKE_AF` path |
+| SC-06/08/16/17/19/20 (AF gate paths) | R3, R4, R6, R7 | `minHalfPressBeforeShutter`, `StartFrameSpacingMin`, `fullPressWithoutPriorHpPolicy` | `firstFrameAfLeadMs`, `firstFrameGateDelayMs`, `frameEndToStartSpacingMs` | `coldFpSequenceCount`, `acceptedFpCount` | `CAM_COLD_FP_WAIT` and/or warm `CAM_WAKE_AF` path |
 | SC-07/07b/18 (HP during burst/post-hold) | R1, R11, R13, R14 | `halfPressDuringBurstPolicy`, `wakeHoldRefreshPolicy` | `hpOutContinuityMs`, `frameCount` | `hpIgnoredDuringBurstCount`, `hpRefreshCount` | `CAM_BURST_ACTIVE` / `CAM_POST_SHUTTER_EXT` stability |
 | SC-09/10 (sequence cap handling) | R10b, R12, R13, TimeOut | `MaxSequenceCount`, `StartFrameSpacingMin`, `FrameCount` | `sequenceCount`, `frameCount`, `interSequenceGapMs` | `MaxSequenceExceededCount`, `activityCompletedCount` | Cap reached, timeout window, recovery |
 | SC-13 (debounce) | R1, R10b | `halfPressInputDebounce`, `fullPressInputDebounce` | Reject/accept edge outcomes | `fpDebounceRejectCount` | No unintended state transitions |
@@ -107,7 +107,7 @@ The Windows client should treat DUT configuration as an adapter layer. The valid
 | `wakeHalfPressHoldTime` | `wakeHalfPressHoldSec` x 1000 ms |
 | `minHalfPressBeforeShutter` | `minHalfPressBeforeShutter` x 100 ms |
 | `shutterPulseDuration` | `shutterPulseDuration` x 10 ms |
-| `StartFrameSpacingMin` | `startFrameSpacingTenths` x 100 ms |
+| `StartFrameSpacingMin` | `startFrameSpacingTicks` x 10 ms |
 | `PostShutterHalfPressHoldTimeExtension` | `postShutterHpHoldTenths` x 100 ms |
 | `halfPressInputDebounce` | `hpDebounceMs` x 1 ms |
 | `fullPressInputDebounce` | `fpDebounceMs` x 1 ms |
@@ -154,9 +154,9 @@ The harness must evaluate at least one explicit timing assertion for every timin
 | SC-06, SC-08, SC-17, SC-20 | `firstFrameAfLeadMs` and/or `firstFrameGateDelayMs` | range gate (`minMs`/`maxMs`) or target +/- tolerance |
 | SC-09, SC-10, SC-19 | sequence-aware timing (`interSequenceGapMs`, `secondSequenceStartDelayMs`) plus cap/recovery telemetry | +/-1% or +/-5 ms floor for spacing/delay checks |
 | SC-13 | FP debounce counter as timing-proxy gate (`fpDebounceRejectCount`) | exact telemetry delta match |
-| AO-BLE-CONNECTED-SC01, AO-DEFERRED-CONFIG-WRITES, AO-FACTORY-RESET-AND-COERCION | parity timing checks vs nominal behavior (`frameStartSpacingMs`, `fpPulseWidthMs` when pulses exist) | same tolerance as corresponding SC baseline |
+| AO-BLE-CONNECTED-SC01, AO-DEFERRED-CONFIG-WRITES, AO-FACTORY-RESET-AND-COERCION | parity timing checks vs nominal behavior (`frameEndToStartSpacingMs`, `fpPulseWidthMs` when pulses exist) | same tolerance as corresponding SC baseline |
 | AO-GAP-BOUNDARY-TRIAD | edge-of-gap classification with hermetic params (`ignoreGap - epsilon`, `ignoreGap`, `ignoreGap + epsilon`) and explicit telemetry balance | range gate around first boundary acceptance plus telemetry exact match |
-| AO-GAP-CADENCE | accepted-burst cadence check with hermetic params (`FrameCount=4`, `StartFrameSpacingMin=1.0s`) | +/-1% or +/-5 ms floor on `frameStartSpacingMs` plus exact pulse count |
+| AO-GAP-CADENCE | accepted-burst cadence check with hermetic params (`FrameCount=4`, `StartFrameSpacingMin=1.0s`) | +/-1% or +/-5 ms floor on `frameEndToStartSpacingMs` plus exact pulse count |
 
 ### Machine-readable timing expectation schema
 
@@ -210,7 +210,8 @@ If tolerance is not specified in a vector, use this plan's metric-specific defau
 | `fpInToFpOutLatencyMs` | Accepted FP IN active edge to first FP OUT active edge | SC-01, SC-11, SC-15 P3 |
 | `firstFrameAfLeadMs` | HP OUT active edge to first FP OUT active edge | SC-06, SC-08, SC-11 |
 | `fpPulseWidthMs` | FP OUT active duration | SC-01, SC-11, SC-14 |
-| `frameStartSpacingMs` | FP OUT active-edge to active-edge spacing | SC-01, SC-11 |
+| `frameStartSpacingMs` | FP OUT active-edge to active-edge spacing (diagnostic only; expected ~`StartFrameSpacingMin + shutterPulseDuration`) | SC-01, SC-11 |
+| `frameEndToStartSpacingMs` | FP OUT inactive-edge to next active-edge spacing (normative R6 metric) | SC-01, SC-11 |
 | `hpHoldAfterLastFrameMs` | Time from final FP OUT release to first HP OUT release that occurs at/after that final frame release | SC-01, SC-05, SC-05b |
 | `hpOutContinuityMs` | Continuous HP OUT active time across HP input release/chatter | SC-16, SC-18 |
 | `firstFrameGateDelayMs` | Difference between first FP OUT start and `max(FP accept, HP OUT assert + T)` | SC-16, SC-17, SC-19, SC-20 |
@@ -276,7 +277,7 @@ parameters:
   StartFrameSpacingMin: 1.0s
   PostShutterHalfPressHoldTimeExtension: 2.0s
   shutterPulseDuration: 100ms
-  fullPressIgnoreGap: 3.1s
+  fullPressIgnoreGap: 3.4s
   powerSaveIdleMode: enabled
 fixture:
   idleBeforeMs: 1000
@@ -302,7 +303,7 @@ expect:
 metrics:
   - hpInToHpOutLatencyMs
   - fpPulseWidthMs
-  - frameStartSpacingMs
+  - frameEndToStartSpacingMs
   - hpHoldAfterLastFrameMs
 ```
 
@@ -346,7 +347,7 @@ Use this set unless a scenario or sweep overrides it.
 | `wakeHalfPressHoldTime` | 10 s |
 | `wakeHoldRefreshPolicy` | `legacy-no-op` |
 | `minHalfPressBeforeShutter` | 0.5 s |
-| `fullPressIgnoreGap` | 3.1 s |
+| `fullPressIgnoreGap` | 3.4 s |
 | `FrameCount` | 4 |
 | `MaxSequenceCount` | 4 |
 | `StartFrameSpacingMin` | 1.0 s |
@@ -509,7 +510,7 @@ Expected output:
 |--------|----------|
 | HP OUT | Active near t=0; no release when HP IN releases; remains active through burst and Z |
 | First FP OUT | No earlier than `HP_OUT assert + minHalfPressBeforeShutter` |
-| Frames 2..N | Start-to-start spacing follows `StartFrameSpacingMin` |
+| Frames 2..N | Pulse-end-to-next-start spacing follows `StartFrameSpacingMin` |
 | Activity | One sequence; normal post-burst HP release |
 
 ### SC-17 - First frame gated by short HP lead
@@ -529,7 +530,7 @@ For every variant, calculate `expectedFirstFpOut = max(FP accept time, HP OUT as
 
 Run a normal sequence and inject HP IN pulses and releases between FP OUT frames. Include at least one HP pulse between frame 1 and frame 2 and at least one period where HP IN is inactive while the burst continues.
 
-Expected output: HP OUT remains active continuously; FP OUT count remains exactly `FrameCount`; `frameStartSpacingMs` remains within `StartFrameSpacingMin` tolerance; no extra FP OUT pulses occur.
+Expected output: HP OUT remains active continuously; FP OUT count remains exactly `FrameCount`; `frameEndToStartSpacingMs` remains within `StartFrameSpacingMin` tolerance; no extra FP OUT pulses occur.
 
 ### SC-19 - New event after HP release
 
@@ -573,7 +574,7 @@ Run a dedicated cadence case with one accepted FP sequence and fixed timing para
 
 - `FrameCount = 4`
 - `StartFrameSpacingMin = 1.0 s`
-- Expected FP OUT frame starts near `1000/2000/3000/4000 ms` (within tolerance)
+- Expected FP OUT frame starts near `1000/2100/3200/4300 ms` (within tolerance)
 - No additional accepted FP during the case
 
 ### Mid-activity and mid-burst config writes
@@ -581,8 +582,8 @@ Run a dedicated cadence case with one accepted FP sequence and fixed timing para
 Issue camera-config writes while sequence/activity is active and verify:
 
 - no immediate timing mutation in the active burst/activity
-- new settings apply only after DUT is idle
-- readback after idle matches deferred write payload
+- write is rejected with busy status (`NACK_BUSY`)
+- readback remains unchanged from pre-write values
 
 ### Factory reset behavior (idle and active)
 
@@ -621,7 +622,7 @@ Run these sweeps after nominal scenarios pass. Use one parameter at a time unles
 For the long `fullPressIgnoreGap` case, calculate at least:
 
 ```text
-(FrameCount - 1) * StartFrameSpacingMin + shutterPulseDuration
+(FrameCount - 1) * (StartFrameSpacingMin + shutterPulseDuration) + shutterPulseDuration
 ```
 
 Increase the configured value if the selected sweep values stretch the real burst beyond that estimate.
@@ -634,7 +635,7 @@ Run targeted pairwise combinations after single-parameter sweeps.
 |-------------|----------------|----------------|
 | `T x Y` (`minHalfPressBeforeShutter` x `StartFrameSpacingMin`) | Verifies frame-1 gate versus inter-frame schedule | SC-11 + SC-20 warm and cold variants |
 | `Z x inter-sequence timing` | Determines whether post-hold window allows quick second sequence | SC-05 / SC-05b at short and long Z |
-| `MaxSequenceCount x timeoutDuration` | Defines lockout and recovery after cap | SC-09 and SC-10 with `StartFrameSpacingMin * FrameCount` timing checks |
+| `MaxSequenceCount x timeoutDuration` | Defines lockout and recovery after cap | SC-09 and SC-10 with `((FrameCount - 1) * (StartFrameSpacingMin + shutterPulseDuration)) + shutterPulseDuration` timing checks |
 | `debounce x held input` | Distinguishes bounce rejection from true accept | SC-13 + SC-14 with threshold-near stimuli |
 | `powerSaveIdleMode x latency path` | Quantifies wake overhead by path | SC-15 P1/P2/P3 with same fixture wiring |
 
@@ -642,11 +643,11 @@ Run targeted pairwise combinations after single-parameter sweeps.
 
 | Quantity | Formula |
 |----------|---------|
-| Nominal burst duration from frame 1 start to last FP release | `(FrameCount - 1) * StartFrameSpacingMin + shutterPulseDuration` |
+| Nominal burst duration from frame 1 start to last FP release | `(FrameCount - 1) * (StartFrameSpacingMin + shutterPulseDuration) + shutterPulseDuration` |
 | Cold first-frame earliest start | `HP OUT assert + minHalfPressBeforeShutter` |
 | Warm first-frame earliest start | `max(FP accept, HP OUT assert + minHalfPressBeforeShutter)` |
 | First-frame gate delay | `actual first FP OUT start - max(FP accept, HP OUT assert + minHalfPressBeforeShutter)` |
-| Latched burst frame spacing | `current FP OUT start - previous FP OUT start`, expected `>= StartFrameSpacingMin` |
+| Latched burst frame spacing | `next FP OUT start - previous FP OUT release`, expected `>= StartFrameSpacingMin` |
 | Post-burst earliest HP release | `last FP OUT release + PostShutterHalfPressHoldTimeExtension` |
 | Wake-only release | `initial HP OUT assert + wakeHalfPressHoldTime` |
 | Final HP release target (with frames) | `max(initial HP OUT assert + wakeHalfPressHoldTime, last FP OUT release + PostShutterHalfPressHoldTimeExtension)` |
@@ -701,7 +702,7 @@ A firmware/documentation release passes validation when:
 1. All required SC-01 through SC-20 nominal tests pass.
 2. Required practical parameter sweeps pass.
 3. SC-15 meets the power-save latency budget or has an approved waiver with scope/logic-analyzer evidence.
-4. Mandatory add-on cases (BLE-connected behavior, boundary triad, cadence sanity, deferred config writes, factory reset behavior, reserved-field coercion) pass.
+4. Mandatory add-on cases (BLE-connected behavior, boundary triad, cadence sanity, busy-rejected config writes, factory reset behavior, reserved-field coercion) pass.
 5. All failures are linked to a bug, documentation correction, or accepted product decision.
 6. The final report includes raw captures, telemetry before/after snapshots, and exact parameter readbacks for every case.
 

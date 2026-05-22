@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 import struct
 
+from .constants import TELEMETRY_PAYLOAD_LEN
+
 
 COUNTER_NAMES = [
     "wakeTimeoutCount",
@@ -17,6 +19,7 @@ COUNTER_NAMES = [
     "hpDebounceRejectCount",
     "sequenceCompletedCount",
     "activityCompletedCount",
+    "bootCount",
 ]
 
 CAMERA_STATE_NAMES = {
@@ -72,7 +75,7 @@ class TelemetrySnapshot:
 
 
 def parse_payload(payload: bytes) -> TelemetrySnapshot:
-    if len(payload) < 76:
+    if len(payload) < TELEMETRY_PAYLOAD_LEN:
         raise ValueError(f"telemetry payload too short: {len(payload)} bytes")
     version = payload[0]
     camera_state = payload[1]
@@ -82,11 +85,9 @@ def parse_payload(payload: bytes) -> TelemetrySnapshot:
     evt = payload[5]
     hint = payload[6]
     ms_wake, ms_gap, ms_next, ms_hold = struct.unpack_from("<IIII", payload, 8)
-    counters_raw = struct.unpack_from("<B3x12I", payload, 24)
-    ctr_version = counters_raw[0]
-    ctr_values = counters_raw[1:]
-    counters = {name: int(v) for name, v in zip(COUNTER_NAMES, ctr_values)}
-    counters["version"] = int(ctr_version)
+    counters_raw = struct.unpack_from("<13I", payload, 24)
+    counters = {name: int(v) for name, v in zip(COUNTER_NAMES, counters_raw)}
+    counters["version"] = int(version)
     return TelemetrySnapshot(
         version=version,
         camera_state=camera_state,

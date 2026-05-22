@@ -1,0 +1,411 @@
+{
+  "camera_config_protocol_log": [],
+  "camera_rw": {
+    "mismatches": {},
+    "payload_readback_hex": "03010a050a006400142314020100000000000000011f",
+    "payload_written_hex": "03010a050a006400142314020100000000000000011f",
+    "readback_norm": {
+      "FrameCount": 2,
+      "MaxSequenceCount": 1,
+      "PostShutterHalfPressHoldTimeExtension": 20,
+      "StartFrameSpacingMin": 100,
+      "activityHalfPressHoldPolicy": 0,
+      "enabled": 1,
+      "fpAfterMaxSequenceCountPolicy": 0,
+      "fullPressIgnoreGap": 31,
+      "fullPressInputDebounce": 20,
+      "fullPressWithoutPriorHpPolicy": 0,
+      "halfPressDuringBurstPolicy": 0,
+      "halfPressInputDebounce": 35,
+      "inputActivePolarity": 0,
+      "minHalfPressBeforeShutter": 5,
+      "outputDriveMode": 0,
+      "powerSaveIdleMode": 1,
+      "shutterPulseDuration": 10,
+      "wakeHalfPressHoldTime": 10,
+      "wakeHoldRefreshPolicy": 0
+    },
+    "requested_norm": {
+      "FrameCount": 2,
+      "MaxSequenceCount": 1,
+      "PostShutterHalfPressHoldTimeExtension": 20,
+      "StartFrameSpacingMin": 100,
+      "activityHalfPressHoldPolicy": 0,
+      "enabled": 1,
+      "fpAfterMaxSequenceCountPolicy": 0,
+      "fullPressIgnoreGap": 31,
+      "fullPressInputDebounce": 20,
+      "fullPressWithoutPriorHpPolicy": 0,
+      "halfPressDuringBurstPolicy": 0,
+      "halfPressInputDebounce": 35,
+      "inputActivePolarity": 0,
+      "minHalfPressBeforeShutter": 5,
+      "outputDriveMode": 0,
+      "powerSaveIdleMode": 1,
+      "shutterPulseDuration": 10,
+      "wakeHalfPressHoldTime": 10,
+      "wakeHoldRefreshPolicy": 0
+    },
+    "write_status": 0,
+    "write_status_name": "ACK_APPLIED"
+  },
+  "case_id": "SC-10-RECOVERY-AFTER-CAP",
+  "check_summary": {
+    "functional_passed": 3,
+    "functional_total": 7,
+    "protocol_passed": 0,
+    "protocol_total": 0,
+    "timing_passed": 3,
+    "timing_total": 3
+  },
+  "checks": [
+    {
+      "category": "functional",
+      "detail": "expected 4, got 4",
+      "name": "frameCount",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "expected 1000.0 +/- 10.0, got 999.0",
+      "name": "frameEndToStartSpacingMs",
+      "passed": true
+    },
+    {
+      "category": "functional",
+      "detail": "expected 2, got 1",
+      "name": "sequenceCount.telemetryAcceptedFpCount",
+      "passed": false
+    },
+    {
+      "category": "functional",
+      "detail": "expected 4, got 4",
+      "name": "sequenceCount.fpOutPulseCount",
+      "passed": true
+    },
+    {
+      "category": "functional",
+      "detail": "expected 2, got 1",
+      "name": "sequenceCount",
+      "passed": false
+    },
+    {
+      "category": "functional",
+      "detail": "expected 2, got 1",
+      "name": "telemetryDelta.acceptedFpCount",
+      "passed": false
+    },
+    {
+      "category": "functional",
+      "detail": "expected 1, got 0",
+      "name": "telemetryDelta.MaxSequenceExceededCount",
+      "passed": false
+    },
+    {
+      "category": "timing",
+      "detail": "expected range [2000.0, inf], got 5600.0",
+      "name": "interSequenceGapMs",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "expected >= 0 when measurable, got 0.0",
+      "name": "hpInToHpOutLatencyMs_non_negative",
+      "passed": true
+    },
+    {
+      "category": "functional",
+      "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 2, 'ignoredFpDuringBurstCount': 0, 'MaxSequenceExceededCount': 0, 'coldFpSequenceCount': 1, 'hpRefreshCount': 1, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 0, 'activityCompletedCount': 2, 'bootCount': 2}",
+      "name": "telemetry_delta_sanity",
+      "passed": true
+    }
+  ],
+  "description": "Recovery after cap timeout resumes sequence starts",
+  "failure_class": "logic_mismatch",
+  "fixture_dump": {
+    "edges": [
+      {
+        "signal": "HP_IN",
+        "state": "ACTIVE",
+        "t_ms": 0
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 0
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 100
+      },
+      {
+        "signal": "FP_IN",
+        "state": "ACTIVE",
+        "t_ms": 1000
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 1000
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 1099
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 1100
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 2098
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 2198
+      },
+      {
+        "signal": "FP_IN",
+        "state": "ACTIVE",
+        "t_ms": 5000
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 5000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 5100
+      },
+      {
+        "signal": "FP_IN",
+        "state": "ACTIVE",
+        "t_ms": 7300
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 7300
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 7400
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 7798
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 7899
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 8898
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 8997
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 17288
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 20000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 20000
+      }
+    ],
+    "malformed_lines": [],
+    "run_id": 1,
+    "snapshots": [
+      "SNAPSHOT HP_IN=INACTIVE FP_IN=INACTIVE HP_OUT=INACTIVE FP_OUT=INACTIVE"
+    ],
+    "warnings": []
+  },
+  "metrics": {
+    "firstFrameAfLeadMs": 1000.0,
+    "firstFrameGateDelayMs": 0.0,
+    "fpInToFpOutLatencyMs": 0.0,
+    "fpInToHpOutLatencyMs": -1000.0,
+    "fpPulseWidthMs": 99.75,
+    "frameCount": 4,
+    "frameEndToStartSpacingMs": 999.0,
+    "frameStartSpacingMs": 1099.0,
+    "hpAssertToFinalFrameReleaseMs": 8997.0,
+    "hpHoldAfterLastFrameMs": 8291.0,
+    "hpHoldAfterLastFrameReason": null,
+    "hpInToHpOutLatencyMs": 0.0,
+    "hpInToHpOutLatencyReason": null,
+    "hpOutContinuityMs": 17288.0,
+    "hpOutPreAssertedBeforeHpIn": false,
+    "hpReleaseBeforeFinalFrameDetected": true,
+    "ignoredFpCount": 0,
+    "interSequenceGapMs": 5600.0,
+    "secondSequenceStartDelayMs": 2798.0,
+    "sequenceCount": 2,
+    "wakeOnlyHoldMs": null
+  },
+  "passed": false,
+  "scenario": "SC-10",
+  "telemetry_after": {
+    "camera_state": 0,
+    "counters": {
+      "MaxSequenceExceededCount": 4,
+      "acceptedFpCount": 15,
+      "activityCompletedCount": 17,
+      "bootCount": 17,
+      "coldFpSequenceCount": 2,
+      "fpDebounceRejectCount": 1,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 4,
+      "hpRefreshCount": 4,
+      "ignoredFpDuringBurstCount": 4,
+      "ignoredFpDuringGapCount": 17,
+      "sequenceCompletedCount": 0,
+      "version": 1,
+      "wakeTimeoutCount": 1
+    },
+    "flags": 0,
+    "frames_fired_this_sequence": 0,
+    "last_event_code": 4,
+    "last_scenario_hint": 1,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 0,
+    "sequences_started_this_activity": 0,
+    "version": 1
+  },
+  "telemetry_before": {
+    "camera_state": 0,
+    "counters": {
+      "MaxSequenceExceededCount": 4,
+      "acceptedFpCount": 14,
+      "activityCompletedCount": 15,
+      "bootCount": 15,
+      "coldFpSequenceCount": 1,
+      "fpDebounceRejectCount": 1,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 4,
+      "hpRefreshCount": 3,
+      "ignoredFpDuringBurstCount": 4,
+      "ignoredFpDuringGapCount": 15,
+      "sequenceCompletedCount": 0,
+      "version": 1,
+      "wakeTimeoutCount": 1
+    },
+    "flags": 0,
+    "frames_fired_this_sequence": 0,
+    "last_event_code": 4,
+    "last_scenario_hint": 1,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 0,
+    "sequences_started_this_activity": 0,
+    "version": 1
+  },
+  "telemetry_deltas": {
+    "MaxSequenceExceededCount": 0,
+    "acceptedFpCount": 1,
+    "activityCompletedCount": 2,
+    "bootCount": 2,
+    "coldFpSequenceCount": 1,
+    "fpDebounceRejectCount": 0,
+    "hpDebounceRejectCount": 0,
+    "hpIgnoredDuringBurstCount": 0,
+    "hpRefreshCount": 1,
+    "ignoredFpDuringBurstCount": 0,
+    "ignoredFpDuringGapCount": 2,
+    "sequenceCompletedCount": 0,
+    "wakeTimeoutCount": 0
+  },
+  "telemetry_notes": [],
+  "vector": {
+    "baseline_config_write": true,
+    "camera_config_protocol": [],
+    "case_id": "SC-10-RECOVERY-AFTER-CAP",
+    "description": "Recovery after cap timeout resumes sequence starts",
+    "expect": {
+      "fpOut": {
+        "frameSpacingMs": 1000,
+        "pulseCount": 4
+      },
+      "sequences": 2,
+      "telemetryDeltas": {
+        "MaxSequenceExceededCount": 1,
+        "acceptedFpCount": 2
+      },
+      "timing": {
+        "interSequenceGapMs": {
+          "minMs": 2000
+        }
+      }
+    },
+    "fixture": {
+      "captureAfterLastStimulusMs": 20000
+    },
+    "metrics": [
+      "sequenceCount",
+      "frameCount"
+    ],
+    "parameters": {
+      "FrameCount": 2,
+      "MaxSequenceCount": 1,
+      "StartFrameSpacingMin": "1.0s",
+      "enabled": 1
+    },
+    "requires_ble": false,
+    "scenario": "SC-10",
+    "stimulus": [
+      {
+        "at_ms": 0,
+        "duration_ms": 100,
+        "signal": "HP_IN_STIM",
+        "state": "active"
+      },
+      {
+        "at_ms": 1000,
+        "duration_ms": 100,
+        "signal": "FP_IN_STIM",
+        "state": "active"
+      },
+      {
+        "at_ms": 5000,
+        "duration_ms": 100,
+        "signal": "FP_IN_STIM",
+        "state": "active"
+      },
+      {
+        "at_ms": 7300,
+        "duration_ms": 100,
+        "signal": "FP_IN_STIM",
+        "state": "active"
+      }
+    ],
+    "tags": [
+      "core",
+      "cap"
+    ]
+  }
+}

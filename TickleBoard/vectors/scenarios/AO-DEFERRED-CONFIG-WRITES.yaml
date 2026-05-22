@@ -1,14 +1,40 @@
 id: AO-DEFERRED-CONFIG-WRITES
 scenario: ADDON-DEFERRED-CONFIG
-description: Write config during active flow and verify defer/reject behavior
+description: Config write during active burst is rejected with NACK_BUSY and leaves config unchanged
 tags: [addon, config-write]
-parameters: { enabled: 1, FrameCount: 4, StartFrameSpacingMin: 1.0s }
-fixture: { captureAfterLastStimulusMs: 9000 }
+requiresBle: true
+cameraConfigProtocol:
+  - writeNamed:
+      params:
+        enabled: 1
+        FrameCount: 4
+        StartFrameSpacingMin: 1.0s
+      expectStatus: ACK_APPLIED
+  - writeNamedDuringActivity:
+      params:
+        FrameCount: 8
+      expectStatus: NACK_BUSY
+      configUnchanged: true
+      writeAtMs: 1500
+      captureAfterLastStimulusMs: 12000
+      stimulus:
+        - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
+        - { atMs: 1000, signal: FP_IN_STIM, state: active, durationMs: 100 }
+      assertReadbackAfterIdle:
+        FrameCount: 4
+parameters:
+  enabled: 1
+  FrameCount: 4
+  StartFrameSpacingMin: 1.0s
+fixture:
+  captureAfterLastStimulusMs: 12000
 stimulus:
   - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
   - { atMs: 1000, signal: FP_IN_STIM, state: active, durationMs: 100 }
 expect:
-  fpOut: { pulseCount: 4, frameSpacingMs: 1000 }
+  fpOut:
+    pulseCount: 4
+    frameSpacingMs: 1000
   telemetryDeltas:
     acceptedFpCount: 1
 metrics: [frameCount]
