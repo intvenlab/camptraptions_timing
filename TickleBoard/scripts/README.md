@@ -13,6 +13,7 @@
 - `ble-smoke` - discover + read/write/readback/restore BLE parameter smoke test
 - `ble-telemetry-smoke` - read beacon + telemetry payload and print decoded runtime details
 - `gen-parameter-sweep` - generate a comprehensive parameter-sweep vector pack + suite
+- `flash-dut` - flash DUT firmware and capture post-flash boot serial banner
 - `report <rollup.json>` - render markdown/csv report from rollup JSON
 
 ## Python modules (`tickleboard/`)
@@ -33,8 +34,10 @@ By default artifacts are written under `TickleBoard/artifacts/`:
 
 - per-case `result.json`
 - per-case `raw_edges.log`
+- per-case `dut_serial.log` (when DUT serial is available; auto-detected unless overridden)
 - suite rollups in `.json`, `.md`, `.csv`
 - generated sweep vectors under `TickleBoard/vectors/generated/parameter_sweep/`
+- flash artifacts under timestamped `*_FLASH_DUT/` directories (`upload_stdout.log`, `upload_stderr.log`, `post_flash_serial.log`, `flash_result.json`)
 
 ### Parameter sweep generator
 
@@ -54,3 +57,4 @@ By default artifacts are written under `TickleBoard/artifacts/`:
   - `ble-connected` tag,
   - non-default `parameters` that require runtime camera config writes.
 - When telemetry is unavailable (no BLE), `expect.telemetryDeltas` assertions are skipped and noted in case output.
+- `expect.telemetryFields` can assert parsed telemetry fields (`equals`, `ranges`) and emit a full field-value report into checks via `reportValues: true`.

@@ -17,6 +17,7 @@ from .camera_config import (
     diff_readback,
 )
 from .constants import (
+    BLE_SETTING_CHANGE_SETTLE_S,
     CAMCFG_ACK_APPLIED,
     CAMCFG_NACK_BAD_FORMAT,
     CAMCFG_NACK_BUSY,
@@ -92,8 +93,10 @@ class DutBleSession:
             )
 
         self._runner.run(client.write_gatt_char(CHAR_CAMERA_CONFIG_UUID, payload, response=True))
+        # Give firmware loop time to apply side-effects like runtime I/O reconfiguration.
+        time.sleep(BLE_SETTING_CHANGE_SETTLE_S)
         write_status = self.read_camera_config_status()
-        if write_status in (CAMCFG_ACK_APPLIED, CAMCFG_ACK_DEFERRED):
+        if write_status == CAMCFG_ACK_APPLIED:
             time.sleep(CAMERA_CONFIG_READBACK_DELAY_S)
         readback = bytes(self._runner.run(client.read_gatt_char(CHAR_CAMERA_CONFIG_UUID)))
         if len(readback) < CAMERA_CONFIG_LEN:
@@ -135,8 +138,10 @@ class DutBleSession:
         """Write a raw camera-config payload without client-side validation."""
         client = self._require_client()
         self._runner.run(client.write_gatt_char(CHAR_CAMERA_CONFIG_UUID, payload, response=True))
+        # Keep raw-write protocol behavior aligned with named config writes.
+        time.sleep(BLE_SETTING_CHANGE_SETTLE_S)
         write_status = self.read_camera_config_status()
-        if write_status in (CAMCFG_ACK_APPLIED, CAMCFG_ACK_DEFERRED):
+        if write_status == CAMCFG_ACK_APPLIED:
             time.sleep(CAMERA_CONFIG_READBACK_DELAY_S)
         readback = bytes(self._runner.run(client.read_gatt_char(CHAR_CAMERA_CONFIG_UUID)))
         readback_eval = readback[:CAMERA_CONFIG_LEN] if len(readback) >= CAMERA_CONFIG_LEN else readback
@@ -150,11 +155,15 @@ class DutBleSession:
 
     def read_telemetry_payload(self) -> bytes:
         client = self._require_client()
+        # Protocol guard: telemetry characteristic can be stale for up to 200ms.
+        # Wait 250ms before each read to ensure fresh snapshot semantics.
+        time.sleep(0.25)
         return bytes(self._runner.run(client.read_gatt_char(CHAR_TELEMETRY_UUID)))
 
     def factory_reset(self) -> None:
         client = self._require_client()
         self._runner.run(client.write_gatt_char(CHAR_FACTORY_RESET_UUID, bytes([1]), response=True))
+        time.sleep(BLE_SETTING_CHANGE_SETTLE_S)
 
 
 class DutBleAdapter:

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from .debug_log import debug_log
+from .telemetry import decode_boot_reset_raw, decode_boot_temp_c_x100
 
 
 @dataclass
@@ -88,6 +89,29 @@ def _timing_check(
     )
 
 
+def _flatten_telemetry_snapshot(snapshot: Any) -> dict[str, int]:
+    counters_raw = getattr(snapshot, "counters", {}) or {}
+    counters: dict[str, int] = {}
+    if isinstance(counters_raw, dict):
+        counters = {str(k): int(v) for k, v in counters_raw.items()}
+    return {
+        "version": int(getattr(snapshot, "version", 0)),
+        "camera_state": int(getattr(snapshot, "camera_state", 0)),
+        "flags": int(getattr(snapshot, "flags", 0)),
+        "frames_fired_this_sequence": int(getattr(snapshot, "frames_fired_this_sequence", 0)),
+        "sequences_started_this_activity": int(getattr(snapshot, "sequences_started_this_activity", 0)),
+        "last_event_code": int(getattr(snapshot, "last_event_code", 0)),
+        "last_scenario_hint": int(getattr(snapshot, "last_scenario_hint", 0)),
+        "ms_until_wake_deadline": int(getattr(snapshot, "ms_until_wake_deadline", 0)),
+        "ms_until_fp_ignore_clear": int(getattr(snapshot, "ms_until_fp_ignore_clear", 0)),
+        "ms_until_next_frame": int(getattr(snapshot, "ms_until_next_frame", 0)),
+        "ms_until_post_hold_end": int(getattr(snapshot, "ms_until_post_hold_end", 0)),
+        "boot_reset_raw": int(getattr(snapshot, "boot_reset_raw", 0)),
+        "boot_temp_c_x100": int(getattr(snapshot, "boot_temp_c_x100", 0)),
+        **{f"counters.{name}": int(value) for name, value in counters.items()},
+    }
+
+
 def evaluate_case(
     vector_expect: dict[str, Any],
     metrics: dict[str, Any],
@@ -95,6 +119,8 @@ def evaluate_case(
     telemetry_available: bool = True,
     run_id: str = "unknown",
     vector_parameters: dict[str, Any] | None = None,
+    telemetry_before: Any | None = None,
+    telemetry_after: Any | None = None,
 ) -> list[CheckResult]:
     checks: list[CheckResult] = []
 
@@ -331,6 +357,104 @@ def evaluate_case(
                 category="functional",
             )
         )
+
+    telemetry_fields_expect = vector_expect.get("telemetryFields", {})
+    if isinstance(telemetry_fields_expect, dict):
+        if not telemetry_available or telemetry_before is None or telemetry_after is None:
+            checks.append(
+                CheckResult(
+                    name="telemetryFields.available",
+                    passed=False,
+                    detail="telemetry fields check requested but telemetry snapshots are unavailable",
+                )
+            )
+            return checks
+
+        phase = str(telemetry_fields_expect.get("phase", "after")).strip().lower()
+        snapshot = telemetry_before if phase == "before" else telemetry_after
+        flat = _flatten_telemetry_snapshot(snapshot)
+
+        require_all_present = bool(telemetry_fields_expect.get("requireAllPresent", False))
+        if require_all_present:
+            missing = [name for name, value in flat.items() if value is None]
+            checks.append(
+                CheckResult(
+                    name=f"telemetryFields.{phase}.requireAllPresent",
+                    passed=len(missing) == 0,
+                    detail="all parsed telemetry fields present" if len(missing) == 0 else f"missing: {missing}",
+                )
+            )
+
+        equals_expect = telemetry_fields_expect.get("equals", {})
+        if isinstance(equals_expect, dict):
+            for name, expected_raw in equals_expect.items():
+                key = str(name)
+                if key not in flat:
+                    checks.append(
+                        CheckResult(
+                            name=f"telemetryFields.{phase}.equals.{key}",
+                            passed=False,
+                            detail="field not found in parsed telemetry snapshot",
+                        )
+                    )
+                    continue
+                expected = int(expected_raw)
+                actual = int(flat[key])
+                checks.append(
+                    CheckResult(
+                        name=f"telemetryFields.{phase}.equals.{key}",
+                        passed=actual == expected,
+                        detail=f"expected {expected}, got {actual}",
+                    )
+                )
+
+        ranges_expect = telemetry_fields_expect.get("ranges", {})
+        if isinstance(ranges_expect, dict):
+            for name, bounds in ranges_expect.items():
+                key = str(name)
+                if key not in flat:
+                    checks.append(
+                        CheckResult(
+                            name=f"telemetryFields.{phase}.range.{key}",
+                            passed=False,
+                            detail="field not found in parsed telemetry snapshot",
+                        )
+                    )
+                    continue
+                if not isinstance(bounds, dict):
+                    checks.append(
+                        CheckResult(
+                            name=f"telemetryFields.{phase}.range.{key}",
+                            passed=False,
+                            detail="range spec must be an object with min/max",
+                        )
+                    )
+                    continue
+                min_v = int(bounds.get("min", -2147483648))
+                max_v = int(bounds.get("max", 2147483647))
+                actual = int(flat[key])
+                checks.append(
+                    CheckResult(
+                        name=f"telemetryFields.{phase}.range.{key}",
+                        passed=min_v <= actual <= max_v,
+                        detail=f"expected [{min_v}, {max_v}], got {actual}",
+                    )
+                )
+
+        if bool(telemetry_fields_expect.get("reportValues", False)):
+            report_pairs = [f"{k}={flat[k]}" for k in sorted(flat.keys())]
+            reset_reasons = "|".join(decode_boot_reset_raw(int(flat.get("boot_reset_raw", 0))))
+            temp_c, temp_f = decode_boot_temp_c_x100(int(flat.get("boot_temp_c_x100", 0)))
+            report_pairs.append(f"boot_reset_reason={reset_reasons}")
+            report_pairs.append(f"boot_temp_c={temp_c:.2f}")
+            report_pairs.append(f"boot_temp_f={temp_f:.2f}")
+            checks.append(
+                CheckResult(
+                    name=f"telemetryFields.{phase}.report",
+                    passed=True,
+                    detail="; ".join(report_pairs),
+                )
+            )
     return checks
 
 

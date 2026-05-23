@@ -1,0 +1,10 @@
+{
+  "boot_banner_lines": [],
+  "boot_capture_lines": 0,
+  "elapsed_ms": 26894,
+  "fqbn": "Seeeduino:nrf52:xiaonRF52840",
+  "ok": true,
+  "port": "COM3",
+  "returncode": 0,
+  "sketch": "C:\\Users\\3ricj\\Documents\\GitHub\\camptraptions_timing\\Camtraptions_Firmware"
+}

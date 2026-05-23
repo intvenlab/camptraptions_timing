@@ -1,0 +1,12 @@
+id: AO-LATENCY-HP-IN-TO-HP-OUT-1S-20X
+scenario: ADDON-LATENCY
+description: Measure HP_IN to HP_OUT assertion latency with 1s hold configuration
+tags: [addon, latency, hp, custom]
+parameters: { enabled: 1, FrameCount: 1, wakeHalfPressHoldTime: 1s }
+fixture: { captureAfterLastStimulusMs: 1500 }
+stimulus:
+  - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
+expect:
+  timing:
+    hpInToHpOutLatencyMs: { minMs: 0, maxMs: 200 }
+metrics: [hpInToHpOutLatencyMs]

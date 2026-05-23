@@ -78,7 +78,10 @@ Camera-config write status codes (`00e`):
 
 ## Telemetry characteristic (`00b`)
 
-Telemetry payload is fixed-length binary with little-endian fields and `TELEMETRY_VERSION = 2`.
+Telemetry payload is fixed-length binary with little-endian fields:
+
+- `TELEMETRY_VERSION = 3`
+- payload length = `84` bytes
 
 Client parsing requirements:
 
@@ -94,6 +97,31 @@ Live fields include:
 - `lastEventCode`, `lastScenarioHint`
 - `msUntilWakeDeadline`, `msUntilFpIgnoreClear`, `msUntilNextFrame`, `msUntilPostHoldEnd`
 - trailing persisted counters block (including lifetime `bootCount`)
+
+### Telemetry v3 tail fields (new)
+
+The final 4 bytes of the payload are boot diagnostics appended at the end:
+
+| Byte offset | Field | Type | Decode |
+|-------------|-------|------|--------|
+| `80..81` | `bootResetRaw` | `uint16` LE | Reset reason bitmask (see table below) |
+| `82..83` | `bootTempCx100` | `int16` LE | Centi-degrees C (`tempC = value / 100.0`) |
+
+Decode guidance:
+
+- `bootTempCx100`:
+  - `tempC = bootTempCx100 / 100.0`
+  - `tempF = (tempC * 9 / 5) + 32`
+- `bootResetRaw` bit names:
+  - bit0 `0x0001` = `pin`
+  - bit1 `0x0002` = `watchdog`
+  - bit2 `0x0004` = `soft`
+  - bit3 `0x0008` = `lockup`
+  - bit4 `0x0010` = `off`
+  - bit5 `0x0020` = `lpcomp`
+  - bit6 `0x0040` = `debug`
+  - bit7 `0x0080` = `nfc`
+  - if no bits set, display `power_on_or_unknown`
 
 ## Advertising manufacturer data
 

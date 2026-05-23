@@ -1,0 +1,14 @@
+Library Adafruit nRFCrypto has been declared precompiled:
+Using precompiled library in C:\Users\3ricj\AppData\Local\Arduino15\packages\Seeeduino\hardware\nrf52\1.1.12\libraries\Adafruit_nRFCrypto\src\cortex-m4\fpv4-sp-d16-hard
+Sketch uses 129828 bytes (16%) of program storage space. Maximum is 811008 bytes.
+Global variables use 15928 bytes (6%) of dynamic memory, leaving 221640 bytes for local variables. Maximum is 237568 bytes.
+Upgrading target on COM5 with DFU package C:\Users\3ricj\AppData\Local\arduino\sketches\BFDAB27BAD4B4E04C3AAC934D2168D82\Camtraptions_Firmware.ino.zip. Flow control is disabled, Single bank, Touch disabled
+########################################
+########################################
+########################################
+########################################
+########################################
+########################################
+##############
+Activating new firmware
+Device programmed.

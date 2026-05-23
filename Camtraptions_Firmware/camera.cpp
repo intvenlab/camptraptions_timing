@@ -104,8 +104,8 @@ uint32_t lastTelemetryServiceMs = 0;
 void populateCameraCharacteristics();
 
 static void assertPin(int pin) {
-  pinMode(pin, OUTPUT);
   digitalWrite(pin, LOW);
+  pinMode(pin, OUTPUT);
 }
 
 static void releasePin(int pin) {

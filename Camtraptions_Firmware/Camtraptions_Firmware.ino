@@ -15,24 +15,108 @@
 #include <bluefruit.h>
 #include <Adafruit_LittleFS.h>
 #include <InternalFileSystem.h>
+#include <stdio.h>
 
 #include "battery.h"
+#include "build_info.h"
 #include "gatt.h"
 #include "camera.h"
 #include "storage.h"
 
 using namespace Adafruit_LittleFS_Namespace;
 
-// Uncomment in config.h to emit state-machine pin transition logs over USB serial.
+static void appendResetReasons(uint32_t rawReason, char* out, size_t outLen) {
+  bool first = true;
+  auto append = [&](const char* token) {
+    if (outLen == 0) return;
+    if (!first) {
+      strncat(out, "|", outLen - strlen(out) - 1);
+    }
+    strncat(out, token, outLen - strlen(out) - 1);
+    first = false;
+  };
+
+  if (rawReason & POWER_RESETREAS_RESETPIN_Msk) append("pin");
+  if (rawReason & POWER_RESETREAS_DOG_Msk)      append("watchdog");
+  if (rawReason & POWER_RESETREAS_SREQ_Msk)     append("soft");
+  if (rawReason & POWER_RESETREAS_LOCKUP_Msk)   append("lockup");
+  if (rawReason & POWER_RESETREAS_OFF_Msk)      append("off");
+  if (rawReason & POWER_RESETREAS_LPCOMP_Msk)   append("lpcomp");
+  if (rawReason & POWER_RESETREAS_DIF_Msk)      append("debug");
+  if (rawReason & POWER_RESETREAS_NFC_Msk)      append("nfc");
+  if (first) {
+    strncat(out, "power_on_or_unknown", outLen - strlen(out) - 1);
+  }
+}
+
+static float readInternalTempC() {
+  NRF_TEMP->TASKS_START = 1;
+  while (NRF_TEMP->EVENTS_DATARDY == 0) {
+    // Wait for hardware sample.
+  }
+  NRF_TEMP->EVENTS_DATARDY = 0;
+  int32_t rawQuarterC = NRF_TEMP->TEMP;
+  NRF_TEMP->TASKS_STOP = 1;
+  return ((float)rawQuarterC) / 4.0f;
+}
+
+static int16_t tempCToCentiDegrees(float tempC) {
+  float scaled = tempC * 100.0f;
+  if (scaled >= 0.0f) {
+    return (int16_t)(scaled + 0.5f);
+  }
+  return (int16_t)(scaled - 0.5f);
+}
+
+static void emitBootLine() {
+  const uint32_t devId0 = NRF_FICR->DEVICEID[0];
+  const uint32_t devId1 = NRF_FICR->DEVICEID[1];
+  const uint32_t rawResetReason = NRF_POWER->RESETREAS;
+  NRF_POWER->RESETREAS = rawResetReason;
+
+  char resetReasons[96];
+  resetReasons[0] = '\0';
+  appendResetReasons(rawResetReason, resetReasons, sizeof(resetReasons));
+
+  const float tempC = readInternalTempC();
+  lastBootResetRaw = (uint16_t)(rawResetReason & 0xFFFFu);
+  lastBootTempCx100 = tempCToCentiDegrees(tempC);
+  Serial.print("[BOOT] bootCount=");
+  Serial.print((unsigned long)telCounters.bootCount);
+  Serial.print(" devId=");
+  Serial.print((unsigned long)devId1, HEX);
+  Serial.print((unsigned long)devId0, HEX);
+  Serial.print(" tempC=");
+  Serial.print(tempC, 2);
+  Serial.print(" resetRaw=0x");
+  Serial.print((unsigned long)rawResetReason, HEX);
+  Serial.print(" resetReason=");
+  Serial.print(resetReasons);
+  Serial.print(" build=");
+  Serial.print((unsigned int)BUILD_YEAR);
+  Serial.print("-");
+  if (BUILD_MONTH < 10) Serial.print("0");
+  Serial.print((unsigned int)BUILD_MONTH);
+  Serial.print("-");
+  if (BUILD_DAY < 10) Serial.print("0");
+  Serial.print((unsigned int)BUILD_DAY);
+  Serial.print(" ");
+  if (BUILD_HOUR < 10) Serial.print("0");
+  Serial.print((unsigned int)BUILD_HOUR);
+  Serial.print(":");
+  if (BUILD_MIN < 10) Serial.print("0");
+  Serial.print((unsigned int)BUILD_MIN);
+  Serial.print(":");
+  if (BUILD_SEC < 10) Serial.print("0");
+  Serial.println((unsigned int)BUILD_SEC);
+}
 
 void setup() {
-#ifdef DEBUG_CAMERA_LOGIC_PINS
   Serial.begin(115200);
   uint32_t serialWaitStart = millis();
-  while (!Serial && millis() - serialWaitStart < 1000) {
+  while (!Serial && millis() - serialWaitStart < 250) {
     delay(5);
   }
-#endif
 
   batteryInit();
 
@@ -49,6 +133,7 @@ void setup() {
   loadTelemetry();
   telCounters.bootCount++;
   saveTelemetry();
+  emitBootLine();
   batteryLoadAll();
 
   configureRuntimeIo();

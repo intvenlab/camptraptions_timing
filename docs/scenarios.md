@@ -1,6 +1,6 @@
 # Operational scenarios
 
-Primary specification artifact for timing behavior. Each scenario has a stable ID for acceptance tests, customer explanations, and parameter tuning.
+Scenario catalog and acceptance tests for timing behavior. Each scenario has a stable ID for customer explanations and parameter tuning. Normative precedence comes from [behavior-spec.md](behavior-spec.md).
 
 **Related docs:** [behavior-spec.md](behavior-spec.md) (rules R1–R15) · [parameters.md](parameters.md) · [validation-test-plan.md](validation-test-plan.md) · [diagrams/](diagrams/)
 

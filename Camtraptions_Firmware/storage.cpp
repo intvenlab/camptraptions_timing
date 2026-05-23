@@ -16,6 +16,8 @@ volatile bool telemetryUpdated = false;
 uint32_t nextTelemetryFlushMs = 0;
 uint8_t  lastTelemetryEvent = TEL_EVT_NONE;
 uint8_t  lastTelemetryScenario = TEL_SC_NONE;
+uint16_t lastBootResetRaw = 0;
+int16_t  lastBootTempCx100 = 0;
 
 static File cfgFile(InternalFS);
 static File camFile(InternalFS);
@@ -221,6 +223,8 @@ void populateTelemetryPayload() {
   noInterrupts();
   memcpy(&telPayload.counters, &telCounters, sizeof(telCounters));
   interrupts();
+  telPayload.bootResetRaw = lastBootResetRaw;
+  telPayload.bootTempCx100 = lastBootTempCx100;
 }
 
 void flushTelemetryIfDue(uint32_t now) {

@@ -24,6 +24,7 @@ cases:
   - ../scenarios/SC-18.yaml
   - ../scenarios/SC-19.yaml
   - ../scenarios/SC-20.yaml
+  - ../scenarios/AO-TELEMETRY-FIELD-COVERAGE.yaml
   - ../scenarios/AO-BLE-CONNECTED-SC04.yaml
   - ../scenarios/AO-BLE-CONNECTED-SC01.yaml
   - ../scenarios/AO-LATENCY-HP-IN-TO-HP-OUT.yaml

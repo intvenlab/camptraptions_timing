@@ -24,8 +24,11 @@ CAMCFG_STATUS_BY_NAME: dict[str, int] = {v: k for k, v in CAMCFG_STATUS_NAMES.it
 
 CAMERA_SETTINGS_VERSION = 3
 CAMERA_CONFIG_LEN = 22
-TELEMETRY_VERSION = 1
-TELEMETRY_PAYLOAD_LEN = 76
+TELEMETRY_VERSION = 3
+TELEMETRY_PAYLOAD_LEN = 84
+
+# Delay after issuing any BLE setting write so firmware can settle runtime I/O updates.
+BLE_SETTING_CHANGE_SETTLE_S = 1.0
 
 # Delay after camera-config write status before reading ca50000a readback (GATT cache lag).
 CAMERA_CONFIG_READBACK_DELAY_S = 0.10

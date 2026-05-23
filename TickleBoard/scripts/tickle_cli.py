@@ -4,11 +4,14 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime
 import json
 from pathlib import Path
+import subprocess
 import sys
+import time
 
-from tickleboard.artifacts import write_json
+from tickleboard.artifacts import write_json, write_text
 from tickleboard.ble_adapter import DutBleAdapter
 from tickleboard.constants import CAMERA_FIELDS
 from tickleboard.fixture_client import FixtureClient
@@ -17,6 +20,12 @@ from tickleboard.reporting import write_csv_rollup, write_markdown_report
 from tickleboard.runner import classify_ble_requirement, preflight, run_case, run_sc15_budget
 from tickleboard.telemetry import format_snapshot, parse_payload
 from tickleboard.vector_schema import load_suite, load_vector
+
+try:
+    import serial
+    import serial.tools.list_ports
+except ImportError:  # pragma: no cover
+    serial = None  # type: ignore[assignment]
 
 
 def _print_suite_progress(
@@ -54,6 +63,66 @@ def _resolve_port(port: str | None) -> str:
     return resolved
 
 
+def _auto_pick_dut_serial_port(fixture_port: str | None) -> str | None:
+    if serial is None:
+        return None
+    ports = list(serial.tools.list_ports.comports())
+    if not ports:
+        return None
+
+    fixture_lower = (fixture_port or "").lower()
+    candidates = [p for p in ports if p.device.lower() != fixture_lower]
+    if not candidates:
+        return None
+
+    preferred_tokens = ("xiao", "nrf", "seeed", "camtraptions", "usb serial")
+    excluded_tokens = ("arduino uno", "ch340", "cp210", "usb-serial ch340")
+
+    for p in candidates:
+        desc = (p.description or "").lower()
+        if any(token in desc for token in excluded_tokens):
+            continue
+        if any(token in desc for token in preferred_tokens):
+            return p.device
+    return candidates[0].device
+
+
+def _resolve_dut_serial_port(explicit_port: str | None, fixture_port: str | None) -> tuple[str | None, str]:
+    if explicit_port:
+        return explicit_port, "explicit"
+    auto = _auto_pick_dut_serial_port(fixture_port)
+    if auto:
+        return auto, "auto"
+    return None, "none"
+
+
+def _read_serial_lines(port: str, baud: int, timeout_s: float) -> list[str]:
+    if serial is None:
+        raise RuntimeError("pyserial is not installed. Run: pip install -r TickleBoard/scripts/requirements.txt")
+    out: list[str] = []
+    with serial.Serial(port, baudrate=baud, timeout=0.2) as ser:
+        ser.reset_input_buffer()
+        started = time.time()
+        while (time.time() - started) < timeout_s:
+            raw = ser.readline()
+            if not raw:
+                continue
+            txt = raw.decode("utf-8", errors="replace").rstrip("\r\n")
+            ts_ms = int((time.time() - started) * 1000)
+            out.append(f"{ts_ms} {txt}")
+    return out
+
+
+def _print_dut_serial_selection(port: str | None, source: str) -> None:
+    if source == "explicit" and port:
+        print(f"DUT serial capture: using explicit port {port}", flush=True)
+        return
+    if source == "auto" and port:
+        print(f"DUT serial capture: auto-selected port {port}", flush=True)
+        return
+    print("DUT serial capture: disabled (no port provided or detected)", flush=True)
+
+
 def cmd_ports() -> int:
     for dev, desc in FixtureClient.list_ports():
         print(f"{dev}\t{desc}")
@@ -75,6 +144,9 @@ def cmd_preflight(args: argparse.Namespace) -> int:
 
 def cmd_run_case(args: argparse.Namespace) -> int:
     v = load_vector(args.vector)
+    fixture_port = _resolve_port(args.port)
+    dut_serial_port, dut_serial_source = _resolve_dut_serial_port(args.dut_serial_port, fixture_port)
+    _print_dut_serial_selection(dut_serial_port, dut_serial_source)
     if not args.ble:
         requires_ble, reasons = classify_ble_requirement(v)
         if requires_ble:
@@ -97,11 +169,11 @@ def cmd_run_case(args: argparse.Namespace) -> int:
             return 0
     rec = run_case(
         vector=v,
-        fixture_port=_resolve_port(args.port),
+        fixture_port=fixture_port,
         artifacts_root=args.artifacts,
         ble_address=args.ble,
         strict_camera_readback=not args.non_strict_camera,
-        dut_serial_port=args.dut_serial_port,
+        dut_serial_port=dut_serial_port,
         dut_serial_baud=args.dut_serial_baud,
     )
     rec["status"] = "passed" if rec.get("passed") else "failed"
@@ -115,6 +187,8 @@ def cmd_run_suite(args: argparse.Namespace) -> int:
     suite_paths = load_suite(args.suite)
     records: list[dict] = []
     fixture_port = _resolve_port(args.port)
+    dut_serial_port, dut_serial_source = _resolve_dut_serial_port(args.dut_serial_port, fixture_port)
+    _print_dut_serial_selection(dut_serial_port, dut_serial_source)
     total = len(suite_paths)
     passed_count = 0
     failed_count = 0
@@ -133,7 +207,7 @@ def cmd_run_suite(args: argparse.Namespace) -> int:
                     ble_address=args.ble,
                     ble_session=ble_session,
                     strict_camera_readback=not args.non_strict_camera,
-                    dut_serial_port=args.dut_serial_port,
+                    dut_serial_port=dut_serial_port,
                     dut_serial_baud=args.dut_serial_baud,
                 )
                 rec["status"] = "passed" if rec.get("passed") else "failed"
@@ -198,7 +272,7 @@ def cmd_run_suite(args: argparse.Namespace) -> int:
                 artifacts_root=args.artifacts,
                 ble_address=None,
                 strict_camera_readback=not args.non_strict_camera,
-                dut_serial_port=args.dut_serial_port,
+                dut_serial_port=dut_serial_port,
                 dut_serial_baud=args.dut_serial_baud,
             )
             rec["status"] = "passed" if rec.get("passed") else "failed"
@@ -403,6 +477,88 @@ def cmd_gen_parameter_sweep(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_flash_dut(args: argparse.Namespace) -> int:
+    sketch_path = args.sketch.resolve()
+    if not sketch_path.exists():
+        raise RuntimeError(f"Sketch path not found: {sketch_path}")
+    if serial is None:
+        raise RuntimeError("pyserial is not installed. Run: pip install -r TickleBoard/scripts/requirements.txt")
+
+    flash_port = args.port or _auto_pick_dut_serial_port(fixture_port=None)
+    if not flash_port:
+        raise RuntimeError("No DUT serial port found. Provide --port COMx.")
+
+    command = [
+        args.arduino_cli,
+        "compile",
+        "--upload",
+        "--fqbn",
+        args.fqbn,
+        str(sketch_path),
+        "--port",
+        flash_port,
+    ]
+    print(f"Flashing with command: {' '.join(command)}", flush=True)
+    started = time.time()
+    proc = subprocess.run(command, capture_output=True, text=True, check=False)
+    elapsed_ms = int((time.time() - started) * 1000)
+
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    flash_dir = args.artifacts / f"{stamp}_FLASH_DUT"
+    flash_dir.mkdir(parents=True, exist_ok=True)
+    write_text(flash_dir / "upload_stdout.log", proc.stdout or "")
+    write_text(flash_dir / "upload_stderr.log", proc.stderr or "")
+
+    if proc.returncode != 0:
+        write_json(
+            flash_dir / "flash_result.json",
+            {
+                "ok": False,
+                "returncode": proc.returncode,
+                "port": flash_port,
+                "fqbn": args.fqbn,
+                "sketch": str(sketch_path),
+                "elapsed_ms": elapsed_ms,
+                "boot_capture_lines": 0,
+                "boot_banner_lines": [],
+            },
+        )
+        raise RuntimeError(f"Flash failed (exit {proc.returncode}). See {flash_dir / 'upload_stderr.log'}")
+
+    time.sleep(args.boot_capture_delay_s)
+    serial_lines = _read_serial_lines(flash_port, args.dut_serial_baud, args.boot_capture_seconds)
+    write_text(
+        flash_dir / "post_flash_serial.log",
+        "\n".join(serial_lines) + ("\n" if serial_lines else ""),
+    )
+    boot_lines = [line for line in serial_lines if "[BOOT]" in line]
+    write_json(
+        flash_dir / "flash_result.json",
+        {
+            "ok": True,
+            "returncode": proc.returncode,
+            "port": flash_port,
+            "fqbn": args.fqbn,
+            "sketch": str(sketch_path),
+            "elapsed_ms": elapsed_ms,
+            "boot_capture_lines": len(serial_lines),
+            "boot_banner_lines": boot_lines,
+        },
+    )
+    print(
+        json.dumps(
+            {
+                "ok": True,
+                "port": flash_port,
+                "flash_artifacts": str(flash_dir),
+                "boot_banner_lines": boot_lines,
+            },
+            indent=2,
+        )
+    )
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="TickleBoard validation framework")
     parser.add_argument(
@@ -483,6 +639,41 @@ def main() -> int:
         help="Vectors root directory (default: TickleBoard/vectors)",
     )
 
+    flash = sub.add_parser(
+        "flash-dut",
+        help="Flash DUT firmware and capture post-flash boot serial banner",
+    )
+    flash.add_argument(
+        "--sketch",
+        type=Path,
+        default=Path("Camtraptions_Firmware"),
+        help="Path to Arduino sketch folder",
+    )
+    flash.add_argument("--port", default=None, help="DUT serial port (auto-detected if omitted)")
+    flash.add_argument(
+        "--fqbn",
+        default="Seeeduino:nrf52:xiaonRF52840",
+        help="Arduino FQBN for DUT firmware",
+    )
+    flash.add_argument(
+        "--arduino-cli",
+        default="arduino-cli",
+        help="arduino-cli executable path",
+    )
+    flash.add_argument("--dut-serial-baud", type=int, default=115200, help="Baud rate for post-flash serial capture")
+    flash.add_argument(
+        "--boot-capture-seconds",
+        type=float,
+        default=3.0,
+        help="Seconds to capture serial after flash",
+    )
+    flash.add_argument(
+        "--boot-capture-delay-s",
+        type=float,
+        default=0.4,
+        help="Delay before starting post-flash serial capture",
+    )
+
     args = parser.parse_args()
     args.artifacts.mkdir(parents=True, exist_ok=True)
 
@@ -509,6 +700,8 @@ def main() -> int:
             return cmd_ble_telemetry_smoke(args)
         if args.cmd == "gen-parameter-sweep":
             return cmd_gen_parameter_sweep(args)
+        if args.cmd == "flash-dut":
+            return cmd_flash_dut(args)
     except Exception as exc:  # noqa: BLE001
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2

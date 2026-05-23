@@ -1,6 +1,7 @@
 name: mandatory_addons_suite
 description: Mandatory add-on cases from validation plan
 cases:
+  - ../scenarios/AO-TELEMETRY-FIELD-COVERAGE.yaml
   - ../scenarios/AO-BLE-CONNECTED-SC04.yaml
   - ../scenarios/AO-BLE-CONNECTED-SC01.yaml
   - ../scenarios/AO-LATENCY-HP-IN-TO-HP-OUT.yaml

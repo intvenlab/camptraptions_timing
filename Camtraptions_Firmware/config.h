@@ -30,7 +30,7 @@
 #define CAMERA_SETTINGS_FILE    "/camera.bin"
 #define CAMERA_SETTINGS_VERSION 3
 #define TELEMETRY_FILE          "/telemetry.bin"
-#define TELEMETRY_VERSION       2
+#define TELEMETRY_VERSION       3
 #define CAL_FILE                "/cal.bin"
 #define CALIBRATION_VERSION     1
 #define INT_CAL_FILE            "/int_cal.bin"
@@ -141,6 +141,8 @@ struct CameraTelemetryPayload {
   uint32_t msUntilNextFrame;
   uint32_t msUntilPostHoldEnd;
   CameraTelemetryCounters counters;
+  uint16_t bootResetRaw;
+  int16_t  bootTempCx100;
 };
 
 struct CalibrationConfig {
@@ -190,6 +192,8 @@ extern volatile uint32_t lastShutterMs;
 extern uint32_t nextTelemetryFlushMs;
 extern uint8_t  lastTelemetryEvent;
 extern uint8_t  lastTelemetryScenario;
+extern uint16_t lastBootResetRaw;
+extern int16_t  lastBootTempCx100;
 
 extern volatile bool fpPulseFlag;
 extern volatile bool hpPulseFlag;

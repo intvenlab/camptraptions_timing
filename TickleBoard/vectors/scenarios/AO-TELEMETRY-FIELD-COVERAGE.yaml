@@ -1,0 +1,48 @@
+id: AO-TELEMETRY-FIELD-COVERAGE
+scenario: ADDON-TELEMETRY
+description: Validate all telemetry fields decode and report their values
+tags: [addon, ble-connected, telemetry]
+requiresBle: true
+parameters: { enabled: 1, FrameCount: 4 }
+fixture: { captureAfterLastStimulusMs: 9000 }
+stimulus:
+  - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 120 }
+  - { atMs: 1000, signal: FP_IN_STIM, state: active, durationMs: 120 }
+expect:
+  fpOut: { pulseCount: 4, frameSpacingMs: 1000 }
+  telemetryDeltas:
+    acceptedFpCount: 1
+  telemetryFields:
+    phase: after
+    requireAllPresent: true
+    reportValues: true
+    equals:
+      version: 3
+      counters.version: 3
+    ranges:
+      camera_state: { min: 0, max: 4 }
+      flags: { min: 0, max: 3 }
+      frames_fired_this_sequence: { min: 0, max: 8 }
+      sequences_started_this_activity: { min: 0, max: 64 }
+      last_event_code: { min: 0, max: 255 }
+      last_scenario_hint: { min: 0, max: 255 }
+      ms_until_wake_deadline: { min: 0, max: 120000 }
+      ms_until_fp_ignore_clear: { min: 0, max: 120000 }
+      ms_until_next_frame: { min: 0, max: 120000 }
+      ms_until_post_hold_end: { min: 0, max: 120000 }
+      boot_reset_raw: { min: 0, max: 65535 }
+      boot_temp_c_x100: { min: -4000, max: 12500 }
+      counters.wakeTimeoutCount: { min: 0, max: 4294967295 }
+      counters.acceptedFpCount: { min: 0, max: 4294967295 }
+      counters.ignoredFpDuringGapCount: { min: 0, max: 4294967295 }
+      counters.ignoredFpDuringBurstCount: { min: 0, max: 4294967295 }
+      counters.MaxSequenceExceededCount: { min: 0, max: 4294967295 }
+      counters.coldFpSequenceCount: { min: 0, max: 4294967295 }
+      counters.hpRefreshCount: { min: 0, max: 4294967295 }
+      counters.hpIgnoredDuringBurstCount: { min: 0, max: 4294967295 }
+      counters.fpDebounceRejectCount: { min: 0, max: 4294967295 }
+      counters.hpDebounceRejectCount: { min: 0, max: 4294967295 }
+      counters.sequenceCompletedCount: { min: 0, max: 4294967295 }
+      counters.activityCompletedCount: { min: 0, max: 4294967295 }
+      counters.bootCount: { min: 1, max: 4294967295 }
+metrics: [frameCount]

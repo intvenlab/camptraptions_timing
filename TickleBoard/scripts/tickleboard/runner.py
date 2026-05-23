@@ -5,6 +5,7 @@ from dataclasses import asdict, replace
 from pathlib import Path
 from typing import Any
 import json
+import re
 import threading
 import time
 
@@ -105,6 +106,51 @@ def _capture_dut_serial(stop_event: threading.Event, out_lines: list[str], port:
         ser.close()
 
 
+def _summarize_dut_serial(lines: list[str]) -> dict[str, Any]:
+    boot_lines = [line for line in lines if "[BOOT]" in line]
+    reset_reasons: dict[str, int] = {}
+    boot_counts: list[int] = []
+    fault_lines: list[str] = []
+    boot_count_re = re.compile(r"\bbootCount=(\d+)\b")
+    reset_reason_re = re.compile(r"\bresetReason=([^\s]+)")
+    fault_tokens = (
+        "hardfault",
+        "fatal",
+        "panic",
+        "assert",
+        "stack overflow",
+        "exception",
+    )
+
+    for line in boot_lines:
+        count_match = boot_count_re.search(line)
+        if count_match:
+            boot_counts.append(int(count_match.group(1)))
+        reason_match = reset_reason_re.search(line)
+        if reason_match:
+            for token in reason_match.group(1).split("|"):
+                if token:
+                    reset_reasons[token] = reset_reasons.get(token, 0) + 1
+        reason_lower = line.lower()
+        if "watchdog" in reason_lower or "lockup" in reason_lower:
+            fault_lines.append(line)
+
+    for line in lines:
+        lower = line.lower()
+        if any(token in lower for token in fault_tokens):
+            fault_lines.append(line)
+
+    dedup_fault_lines = list(dict.fromkeys(fault_lines))
+    return {
+        "line_count": len(lines),
+        "boot_line_count": len(boot_lines),
+        "boot_counts": boot_counts,
+        "reset_reason_counts": reset_reasons,
+        "fault_line_count": len(dedup_fault_lines),
+        "fault_samples": dedup_fault_lines[:10],
+    }
+
+
 def _telemetry_is_idle(snapshot: Any) -> bool:
     flags = int(getattr(snapshot, "flags", 0))
     cam_state = int(getattr(snapshot, "camera_state", 0))
@@ -137,24 +183,62 @@ def _wait_for_idle_ble(active_ble: DutBleSession, *, timeout_s: float, run_id: s
         )
 
 
+def _read_stable_idle_telemetry(
+    active_ble: DutBleSession,
+    *,
+    timeout_s: float,
+    run_id: str,
+    phase: str,
+    stable_samples: int = 2,
+) -> tuple[Any, list[str]]:
+    notes: list[str] = []
+    deadline = time.time() + timeout_s
+    last_snapshot = None
+    consecutive_idle = 0
+    required_idle = stable_samples if stable_samples > 0 else 1
+
+    while time.time() < deadline:
+        snap = parse_payload(active_ble.read_telemetry_payload())
+        last_snapshot = snap
+        if _telemetry_is_idle(snap):
+            consecutive_idle += 1
+            if consecutive_idle >= required_idle:
+                return snap, notes
+        else:
+            consecutive_idle = 0
+        time.sleep(0.12)
+
+    if last_snapshot is None:
+        notes.append(f"telemetry_{phase}_read_failed_no_snapshot")
+        raise RuntimeError(f"{phase}: unable to read telemetry snapshot")
+
+    notes.append(
+        f"telemetry_{phase}_idle_timeout_state={int(last_snapshot.camera_state)}_flags=0x{int(last_snapshot.flags):02x}"
+    )
+    debug_log(
+        run_id=run_id,
+        hypothesis_id="H3_parameter_or_readback_mismatch",
+        location="runner.py:stable_idle_timeout",
+        message="Timed out waiting for stable idle telemetry",
+        data={
+            "phase": phase,
+            "camera_state": int(last_snapshot.camera_state),
+            "flags": int(last_snapshot.flags),
+            "ms_until_wake_deadline": int(last_snapshot.ms_until_wake_deadline),
+            "ms_until_fp_ignore_clear": int(last_snapshot.ms_until_fp_ignore_clear),
+            "ms_until_next_frame": int(last_snapshot.ms_until_next_frame),
+            "ms_until_post_hold_end": int(last_snapshot.ms_until_post_hold_end),
+        },
+    )
+    return last_snapshot, notes
+
+
 def run_vector_on_fixture(
     fixture: FixtureClient,
     vector: TestVector,
     run_id: str = "unknown",
-    dut_serial_port: str | None = None,
-    dut_serial_baud: int = 115200,
 ) -> dict[str, Any]:
     capture_ms = int(vector.fixture.get("captureAfterLastStimulusMs", 8000))
-    dut_serial_lines: list[str] = []
-    serial_stop = threading.Event()
-    serial_thread: threading.Thread | None = None
-    if dut_serial_port:
-        serial_thread = threading.Thread(
-            target=_capture_dut_serial,
-            args=(serial_stop, dut_serial_lines, dut_serial_port, dut_serial_baud),
-            daemon=True,
-        )
-        serial_thread.start()
     fixture.command_ok("RESET")
     fixture.command_ok("MAP HP_IN=5 FP_IN=4 HP_OUT=3 FP_OUT=2 POL=ACTIVE_LOW")
     fixture.command_ok(f"ARM {capture_ms}")
@@ -167,11 +251,8 @@ def run_vector_on_fixture(
             fixture.command_ok(f"LEVEL {sig} {step.at_ms} {state}")
     fixture.command_ok("RUN", total_timeout_s=(capture_ms / 1000.0) + 6.0)
     dump = fixture.dump()
-    if serial_thread is not None:
-        serial_stop.set()
-        serial_thread.join(timeout=2.0)
     metrics = extract_metrics(dump.edges, run_id=run_id)
-    return {"dump": dump, "metrics": metrics, "dut_serial_lines": dut_serial_lines}
+    return {"dump": dump, "metrics": metrics}
 
 
 def run_case(
@@ -185,12 +266,24 @@ def run_case(
     dut_serial_baud: int = 115200,
 ) -> dict[str, Any]:
     case_dir = create_run_dir(artifacts_root, vector.case_id)
+    capture_ms = int(vector.fixture.get("captureAfterLastStimulusMs", 8000))
     fixture = FixtureClient(fixture_port)
     before_tel = None
     after_tel = None
     camera_rw: dict[str, Any] = {}
     protocol_checks: list[Any] = []
     protocol_log: list[dict[str, Any]] = []
+    telemetry_capture_notes: list[str] = []
+    dut_serial_lines: list[str] = []
+    serial_stop = threading.Event()
+    serial_thread: threading.Thread | None = None
+    if dut_serial_port:
+        serial_thread = threading.Thread(
+            target=_capture_dut_serial,
+            args=(serial_stop, dut_serial_lines, dut_serial_port, dut_serial_baud),
+            daemon=True,
+        )
+        serial_thread.start()
     try:
         with ExitStack() as stack:
             # region agent log
@@ -228,8 +321,14 @@ def run_case(
                 # Ensure each case starts from a true idle baseline so short-lead and
                 # wake-hold assertions are not contaminated by prior-case activity.
                 _wait_for_idle_ble(active_ble, timeout_s=15.0, run_id=vector.case_id)
-                before_payload = active_ble.read_telemetry_payload()
-                before_tel = parse_payload(before_payload)
+                before_tel, before_notes = _read_stable_idle_telemetry(
+                    active_ble,
+                    timeout_s=8.0,
+                    run_id=vector.case_id,
+                    phase="before",
+                    stable_samples=2,
+                )
+                telemetry_capture_notes.extend(before_notes)
 
                 if vector.camera_config_protocol:
                     protocol_checks, protocol_log = execute_camera_config_protocol(
@@ -250,19 +349,31 @@ def run_case(
                 fixture,
                 vector,
                 run_id=vector.case_id,
-                dut_serial_port=dut_serial_port,
-                dut_serial_baud=dut_serial_baud,
             )
 
             if ble_address and active_ble is not None:
-                after_payload = active_ble.read_telemetry_payload()
-                after_tel = parse_payload(after_payload)
+                after_tel, after_notes = _read_stable_idle_telemetry(
+                    active_ble,
+                    timeout_s=max(10.0, (capture_ms / 1000.0) + 4.0),
+                    run_id=vector.case_id,
+                    phase="after",
+                    stable_samples=2,
+                )
+                telemetry_capture_notes.extend(after_notes)
 
         telemetry_available = before_tel is not None and after_tel is not None
         deltas = diff_counters(before_tel, after_tel)
         delta_notes = validate_delta_rules(deltas)
+        delta_notes.extend(telemetry_capture_notes)
+        if telemetry_available and int(deltas.get("bootCount", 0)) != 0:
+            delta_notes.append("telemetry_boot_count_changed_during_case")
         if not telemetry_available and isinstance(vector.expect.get("telemetryDeltas"), dict):
             delta_notes.append("telemetry_assertions_skipped_no_ble")
+        serial_summary = _summarize_dut_serial(dut_serial_lines) if dut_serial_port else {}
+        if serial_summary.get("boot_line_count", 0) > 0:
+            delta_notes.append(f"dut_serial_boot_lines={serial_summary['boot_line_count']}")
+        if serial_summary.get("fault_line_count", 0) > 0:
+            delta_notes.append(f"dut_serial_fault_lines={serial_summary['fault_line_count']}")
         sequence_start_hints = [
             int(step.at_ms)
             for step in vector.stimulus
@@ -291,6 +402,8 @@ def run_case(
             telemetry_available=telemetry_available,
             run_id=vector.case_id,
             vector_parameters=vector.parameters,
+            telemetry_before=before_tel,
+            telemetry_after=after_tel,
         )
         passed = all(c.passed for c in checks)
         timing_total = sum(1 for c in checks if c.category == "timing")
@@ -342,12 +455,16 @@ def run_case(
             "failure_class": failure_class,
             "camera_rw": camera_rw,
             "camera_config_protocol_log": protocol_log,
+            "dut_serial_summary": serial_summary,
             "passed": passed,
         }
         write_json(case_dir / "result.json", payload)
         write_text(case_dir / "raw_edges.log", "\n".join([f"{e.t_ms} {e.signal} {e.state}" for e in result["dump"].edges]) + "\n")
-        if result.get("dut_serial_lines"):
-            write_text(case_dir / "dut_serial.log", "\n".join(result["dut_serial_lines"]) + "\n")
+        if dut_serial_port:
+            if dut_serial_lines:
+                write_text(case_dir / "dut_serial.log", "\n".join(dut_serial_lines) + "\n")
+            else:
+                write_text(case_dir / "dut_serial.log", "# no serial lines captured\n")
         return {
             "run_dir": str(case_dir),
             "case_id": vector.case_id,
@@ -361,6 +478,9 @@ def run_case(
             "notes": delta_notes,
         }
     finally:
+        if serial_thread is not None:
+            serial_stop.set()
+            serial_thread.join(timeout=2.0)
         fixture.close()
 
 

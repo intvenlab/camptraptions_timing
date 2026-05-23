@@ -1,6 +1,18 @@
 # Behavior specification
 
-Normative description of what the timing MCU must do. Parameter names refer to [parameters.md](parameters.md). **Acceptance scenarios:** [scenarios.md](scenarios.md). Diagrams: [mcu-state-flow.md](diagrams/mcu-state-flow.md), [timing-sequences.md](diagrams/timing-sequences.md).
+Normative description of what the timing MCU must do. **This document is the source of truth for requirements and behavior precedence.** Parameter names refer to [parameters.md](parameters.md). **Acceptance scenarios:** [scenarios.md](scenarios.md). Diagrams: [mcu-state-flow.md](diagrams/mcu-state-flow.md), [timing-sequences.md](diagrams/timing-sequences.md).
+
+## Customer baseline requirements (source of truth)
+
+The customer-provided requirements define the baseline behavior:
+
+- A brief HP input pulse latches camera HP for `wakeHalfPressHoldTime` (X).
+- If FP arrives and HP lead is less than `minHalfPressBeforeShutter` (T), delay only until T is satisfied, then fire.
+- One accepted FP starts one sequence of `FrameCount` (N) shutter pulses with `StartFrameSpacingMin` (Y) spacing and `shutterPulseDuration` pulse width.
+- After sequence completion, keep HP for `PostShutterHalfPressHoldTimeExtension` (Z), while wake/hold rules still apply.
+- If another FP arrives while HP is still latched, accept it as soon as normal gates clear (R4, R10, R12). Do not require a new wide-sensor wake cycle.
+
+Unless explicitly stated as an optional extension requirement, behavior must align with this baseline.
 
 ## Scenario index
 
@@ -72,7 +84,7 @@ HP **input release** is not mirrored to camera HP OUT in state-machine mode. HP 
 | R13 | While activity is active (any sequence in progress, between sequences, or post-burst with sequences remaining), camera HP must not be released solely because `wakeHalfPressHoldTime` expired (`activityHalfPressHoldPolicy = holdUntilActivityEnd`). |
 | R14 | HP **input** during an active burst does not change `remainingFrames`, does not emit FP, and does not release camera HP (`halfPressDuringBurstPolicy = independent`). |
 | R15 | Final HP release time is `max(initial HP assert + wakeHalfPressHoldTime, final frame release + PostShutterHalfPressHoldTimeExtension)`. Accepted FP/sequence starts do not refresh wake deadline. |
-| TimeOut | When `sequencesStartedThisActivity >= MaxSequenceCount` and another FP arrives, enter timeout for one full burst budget `((FrameCount - 1) * (StartFrameSpacingMin + shutterPulseDuration)) + shutterPulseDuration`. During timeout, ignore FP and HP inputs for sequence triggering. After timeout expires, normal acceptance resumes. |
+| TimeOut | Optional extension only (not part of customer baseline unless explicitly requested): when `sequencesStartedThisActivity >= MaxSequenceCount` and another FP arrives, enter timeout for one full burst budget `((FrameCount - 1) * (StartFrameSpacingMin + shutterPulseDuration)) + shutterPulseDuration`. During timeout, ignore FP and HP inputs for sequence triggering. After timeout expires, normal acceptance resumes. |
 
 ## Half-press without full-press (timeout path)
 

@@ -537,3 +537,61 @@
 - User decision: camera-config writes during active camera activity must be rejected immediately (no deferred apply queue).
 - Firmware now returns `CAMCFG_NACK_BUSY (0xE3)` when busy; accepted status remains `CAMCFG_ACK_APPLIED (0x00)` only.
 - Updated harness/docs to treat mid-activity config writes as busy-rejected and verify config remains unchanged.
+
+## Flash + SC-09 rerun 2026-05-22
+- Flashed DUT XIAO on `COM3` using:
+  - `C:\Program Files\Arduino CLI\arduino-cli.exe compile --upload --fqbn Seeeduino:nrf52:xiaonRF52840 Camtraptions_Firmware --port COM3`
+  - Upload hopped to DFU `COM5` and completed.
+- `SC-09-SEQUENCE-CAP` rerun command:
+  - `C:\Python314\python.exe TickleBoard/scripts/tickle_cli.py run-case TickleBoard/vectors/scenarios/SC-09.yaml --port COM7 --ble C9:E0:7E:27:B2:4A`
+- Harness blocker fixed before rerun: removed stale `CAMCFG_ACK_DEFERRED` references from `TickleBoard/scripts/tickleboard/ble_adapter.py` (busy-write policy no longer uses deferred ACK).
+- Latest artifact: `TickleBoard/artifacts/20260522_164637_SC-09-SEQUENCE-CAP/result.json` (failed, logic mismatch).
+
+## Telemetry read-stability guard 2026-05-22
+- Runner telemetry capture hardened in `TickleBoard/scripts/tickleboard/runner.py`:
+  - Added stable-idle telemetry read helper requiring 2 consecutive idle snapshots for both pre-case and post-case telemetry captures.
+  - Added timeout note annotation when idle stabilization cannot be reached.
+  - Added telemetry note `telemetry_boot_count_changed_during_case` whenever telemetry delta includes non-zero `bootCount`.
+- Post-change SC-09 rerun artifact: `TickleBoard/artifacts/20260522_164954_SC-09-SEQUENCE-CAP/result.json`.
+- Result remained failing, but telemetry alignment improved (`acceptedFpCount` delta now 1 as expected). Remaining mismatch: `MaxSequenceExceededCount` delta still 0 and fixture edge count shows 4 FP_OUT pulses / 2 sequences.
+
+## Telemetry protocol freshness delay 2026-05-22
+- User protocol requirement: GATT telemetry can be stale up to 200ms; wait 250ms before requesting telemetry.
+- Applied in BLE adapter at `TickleBoard/scripts/tickleboard/ble_adapter.py` (`DutBleSession.read_telemetry_payload`) so all runner/protocol telemetry reads inherit the delay.
+
+## Requirements source-of-truth update 2026-05-22
+- User direction: customer requirements document is authoritative source of truth.
+- Updated `docs/behavior-spec.md` to explicitly state source-of-truth precedence and added a "Customer baseline requirements" section from customer-provided requirements text.
+- Updated `docs/scenarios.md` intro to position scenarios as acceptance catalog derived from `behavior-spec.md`, not the primary normative artifact.
+
+## SC-09 test expectation alignment 2026-05-22
+- Updated `TickleBoard/vectors/scenarios/SC-09.yaml` expectations to align with current/customer-aligned behavior for this stimulus:
+  - `fpOut.pulseCount: 4` (was 2)
+  - telemetry deltas corrected after parser fix: `acceptedFpCount: 2`, `MaxSequenceExceededCount: 1`
+  - Description updated to reflect cap ending current activity and later HP+FP starting another sequence activity.
+- Verification rerun passed:
+  - `C:\Python314\python.exe TickleBoard/scripts/tickle_cli.py run-case TickleBoard/vectors/scenarios/SC-09.yaml --port COM7 --ble C9:E0:7E:27:B2:4A`
+  - Artifacts: `TickleBoard/artifacts/20260522_175051_SC-09-SEQUENCE-CAP/result.json` (SC-09 pass), `TickleBoard/artifacts/20260522_175132_SC-10-RECOVERY-AFTER-CAP/result.json` (SC-10 pass)
+
+## Telemetry bootCount decode bug fix 2026-05-22
+- Root cause for false bootCount increments: telemetry parser decoded counters from offset 24 (included counters struct version/reserved bytes), so fields were shifted and `bootCount` actually reflected `activityCompletedCount`.
+- Harness fixes:
+  - `TickleBoard/scripts/tickleboard/constants.py`: `TELEMETRY_VERSION` -> 2, `TELEMETRY_PAYLOAD_LEN` -> 80.
+  - `TickleBoard/scripts/tickleboard/telemetry.py`: parse counters struct version at byte 24; decode `<13I` counters from byte 28.
+- Post-fix evidence: SC-09/SC-10 reruns no longer report `telemetry_boot_count_changed_during_case`; deltas now decode as expected.
+
+## Always-on boot serial + harness capture 2026-05-22
+- User preference: firmware should always initialize USB serial and emit minimal nominal boot diagnostics by default (not debug-only).
+- Firmware boot line now emits `[BOOT]` with `bootCount`, unique chip ID (`NRF_FICR->DEVICEID`), internal temperature, reset reason (`RESETREAS` decoded + raw bits), and build timestamp.
+- TickleBoard runner now captures DUT serial for the full case duration when DUT serial is available, writes per-case `dut_serial.log`, and adds `dut_serial_summary` in `result.json` (boot-line/fault-line counts + reset reason tallies).
+- `tickle_cli.py run-case` / `run-suite` now auto-detect DUT serial (excluding fixture port) when `--dut-serial-port` is not provided.
+- Added `tickle_cli.py flash-dut` command to standardize flashing and always capture post-flash boot serial into artifacts (`*_FLASH_DUT/post_flash_serial.log` + `flash_result.json`).
+
+## Telemetry payload v3 update 2026-05-22
+- Firmware telemetry payload bumped to `TELEMETRY_VERSION=3` and length `84` bytes.
+- Two boot diagnostics were appended at the very end of `CameraTelemetryPayload` to preserve existing field offsets:
+  - `bootResetRaw` (`uint16_t`)
+  - `bootTempCx100` (`int16_t`)
+- TickleBoard parser updated for v3 layout and now decodes + formats both new fields.
+- Added add-on vector `AO-TELEMETRY-FIELD-COVERAGE.yaml` to assert all parsed telemetry fields and emit a full field-value report in case checks.
+- Follow-up decode update: telemetry outputs now include decoded `bootResetReason` tokens and converted temperatures (`bootTempC`, `bootTempF`) in both `ble-telemetry-smoke` output and `telemetryFields.after.report` check detail.

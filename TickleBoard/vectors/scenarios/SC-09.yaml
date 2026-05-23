@@ -1,6 +1,6 @@
 id: SC-09-SEQUENCE-CAP
 scenario: SC-09
-description: Cap starts timeout and ignores FP/HP until timeout clears
+description: Cap ends current activity; later HP+FP can start a new sequence activity
 tags: [core, cap]
 parameters: { enabled: 1, FrameCount: 2, MaxSequenceCount: 1, wakeHalfPressHoldTime: 10s, StartFrameSpacingMin: 1.0s }
 fixture: { captureAfterLastStimulusMs: 12000 }
@@ -11,8 +11,8 @@ stimulus:
   - { atMs: 5600, signal: HP_IN_STIM, state: active, durationMs: 100 }
   - { atMs: 6200, signal: FP_IN_STIM, state: active, durationMs: 100 }
 expect:
-  fpOut: { pulseCount: 2, frameSpacingMs: 1000 }
+  fpOut: { pulseCount: 4, frameSpacingMs: 1000 }
   telemetryDeltas:
-    acceptedFpCount: 1
+    acceptedFpCount: 2
     MaxSequenceExceededCount: 1
 metrics: [sequenceCount, ignoredFpCount]
