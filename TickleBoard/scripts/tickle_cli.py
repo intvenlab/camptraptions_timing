@@ -16,7 +16,7 @@ from tickleboard.ble_adapter import DutBleAdapter
 from tickleboard.constants import CAMERA_FIELDS
 from tickleboard.fixture_client import FixtureClient
 from tickleboard.parameter_sweep import build_parameter_sweep_vectors
-from tickleboard.reporting import write_csv_rollup, write_markdown_report
+from tickleboard.reporting import write_csv_rollup, write_detailed_validation_report, write_markdown_report
 from tickleboard.runner import classify_ble_requirement, preflight, run_case, run_sc15_budget
 from tickleboard.telemetry import format_snapshot, parse_payload
 from tickleboard.vector_schema import load_suite, load_vector
@@ -310,7 +310,17 @@ def cmd_run_suite(args: argparse.Namespace) -> int:
 
 def cmd_report(args: argparse.Namespace) -> int:
     data = json.loads(args.input.read_text(encoding="utf-8"))
-    write_markdown_report(args.output_md, title=args.title, records=data)
+    if args.detailed:
+        write_detailed_validation_report(
+            args.output_md,
+            title=args.title,
+            records=data,
+            suite_path=args.suite_path,
+            artifacts_root=args.artifacts_root,
+            run_label=args.run_label,
+        )
+    else:
+        write_markdown_report(args.output_md, title=args.title, records=data)
     write_csv_rollup(args.output_csv, records=data)
     return 0
 
@@ -603,6 +613,26 @@ def main() -> int:
     rep.add_argument("--output-md", type=Path, default=Path("TickleBoard") / "artifacts" / "report.md")
     rep.add_argument("--output-csv", type=Path, default=Path("TickleBoard") / "artifacts" / "report.csv")
     rep.add_argument("--title", default="TickleBoard Report")
+    rep.add_argument(
+        "--detailed",
+        action="store_true",
+        help="Emit detailed validation report (Executive Summary + per-case assertion details)",
+    )
+    rep.add_argument(
+        "--suite-path",
+        default="TickleBoard/vectors/suites/full_validation_suite.yaml",
+        help="Suite YAML path shown in detailed report header",
+    )
+    rep.add_argument(
+        "--artifacts-root",
+        default="TickleBoard/artifacts",
+        help="Artifacts root shown in detailed report header",
+    )
+    rep.add_argument(
+        "--run-label",
+        default=None,
+        help="Optional run batch label for detailed report header",
+    )
 
     rspm = sub.add_parser("resume", help="List failed cases from a suite rollup")
     rspm.add_argument("rollup", type=Path, help="Path to suite_rollup.json")

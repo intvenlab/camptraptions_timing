@@ -66,7 +66,7 @@ Firmware constants:
 2. Read camera-config write status (`00e`) immediately after the write completes.
 3. On `0x00` (applied), **wait at least 100 ms** before reading camera config (`00a`). Immediate reads can return stale pre-write bytes from the host BLE stack even though firmware has already updated the characteristic. If the first readback still does not match the written payload, wait another 100 ms and read `00a` again before treating the write as failed.
 4. Read back camera config and update UI from readback values, not from requested values.
-5. Treat `0xE1` / `0xE2` status codes as write rejection; do not treat the config as updated.
+5. Treat `0xE1` / `0xE2` / `0xE3` status codes as write rejection; do not treat the config as updated. After any NACK, read `00a` again — firmware republishes the authoritative config so readback must match the pre-write values (short-length ATT writes previously could corrupt the GATT read buffer; fixed in firmware via `rejectCamCfgWrite()`).
 6. Validate the returned `version` and payload length before parsing policy bytes.
 
 Camera-config write status codes (`00e`):

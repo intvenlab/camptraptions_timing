@@ -383,25 +383,33 @@ void publishCamCfgWriteStatus(uint8_t statusCode) {
   }
 }
 
+static void rejectCamCfgWrite(uint8_t statusCode) {
+  publishCamCfgWriteStatus(statusCode);
+  // Rejected writes can still partially update the GATT read buffer (notably
+  // short-length ATT writes). Republish authoritative camCfg so readback matches
+  // the live settings the firmware is actually running.
+  chrCamCfg.write((const uint8_t*)&camCfg, sizeof(camCfg));
+}
+
 void onCamCfgWrite(uint16_t h, BLECharacteristic* c, uint8_t* d, uint16_t l) {
   (void)h; (void)c;
   if (l != sizeof(camCfg)) {
-    publishCamCfgWriteStatus(CAMCFG_NACK_BAD_FORMAT);
+    rejectCamCfgWrite(CAMCFG_NACK_BAD_FORMAT);
     return;
   }
   if (d[0] != CAMERA_SETTINGS_VERSION) {
-    publishCamCfgWriteStatus(CAMCFG_NACK_BAD_FORMAT);
+    rejectCamCfgWrite(CAMCFG_NACK_BAD_FORMAT);
     return;
   }
   CameraConfig incoming;
   memcpy(&incoming, d, sizeof(incoming));
   if (cameraConfigHasInvalidValues(incoming)) {
-    publishCamCfgWriteStatus(CAMCFG_NACK_OUT_OF_RANGE);
+    rejectCamCfgWrite(CAMCFG_NACK_OUT_OF_RANGE);
     return;
   }
 
   if (cameraActivityInProgress()) {
-    publishCamCfgWriteStatus(CAMCFG_NACK_BUSY);
+    rejectCamCfgWrite(CAMCFG_NACK_BUSY);
     return;
   }
 

@@ -1,0 +1,277 @@
+{
+  "camera_config_protocol_log": [
+    {
+      "camera_rw": {
+        "payload_readback_hex": "03010a05b80bb80b14231401040000000000000001fa",
+        "payload_written_hex": "03010a050a006400142314040400000000000100011f",
+        "payload_written_len": 22,
+        "write_status": 226,
+        "write_status_name": "NACK_OUT_OF_RANGE"
+      },
+      "step": "protocol[0]",
+      "transport_error": null,
+      "type": "writeRaw"
+    },
+    {
+      "camera_rw": {
+        "payload_readback_hex": "03010a05b80bb80b14231401040000000000000001fa",
+        "payload_written_hex": "03010a0500006400142314040400000000000000011f",
+        "payload_written_len": 22,
+        "write_status": 226,
+        "write_status_name": "NACK_OUT_OF_RANGE"
+      },
+      "step": "protocol[1]",
+      "transport_error": null,
+      "type": "writeRaw"
+    },
+    {
+      "camera_rw": {
+        "payload_readback_hex": "03010a05b80bb80b14231401040000000000000001fa",
+        "payload_written_hex": "03010a050a00a00f142314040400000000000000011f",
+        "payload_written_len": 22,
+        "write_status": 226,
+        "write_status_name": "NACK_OUT_OF_RANGE"
+      },
+      "step": "protocol[2]",
+      "transport_error": null,
+      "type": "writeRaw"
+    }
+  ],
+  "camera_rw": {},
+  "case_id": "AO-CAMCFG-NACK-OUT-OF-RANGE",
+  "check_summary": {
+    "functional_passed": 1,
+    "functional_total": 1,
+    "protocol_passed": 6,
+    "protocol_total": 6,
+    "timing_passed": 0,
+    "timing_total": 0
+  },
+  "checks": [
+    {
+      "category": "protocol",
+      "detail": "expected NACK_OUT_OF_RANGE (0xE2), got NACK_OUT_OF_RANGE (0xE2)",
+      "name": "protocol[0].writeStatus",
+      "passed": true
+    },
+    {
+      "category": "protocol",
+      "detail": "readback unchanged",
+      "name": "protocol[0].configUnchanged",
+      "passed": true
+    },
+    {
+      "category": "protocol",
+      "detail": "expected NACK_OUT_OF_RANGE (0xE2), got NACK_OUT_OF_RANGE (0xE2)",
+      "name": "protocol[1].writeStatus",
+      "passed": true
+    },
+    {
+      "category": "protocol",
+      "detail": "readback unchanged",
+      "name": "protocol[1].configUnchanged",
+      "passed": true
+    },
+    {
+      "category": "protocol",
+      "detail": "expected NACK_OUT_OF_RANGE (0xE2), got NACK_OUT_OF_RANGE (0xE2)",
+      "name": "protocol[2].writeStatus",
+      "passed": true
+    },
+    {
+      "category": "protocol",
+      "detail": "readback unchanged",
+      "name": "protocol[2].configUnchanged",
+      "passed": true
+    },
+    {
+      "category": "functional",
+      "detail": "deltas={'wakeTimeoutCount': 0, 'acceptedFpCount': 0, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'MaxSequenceExceededCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 0, 'activityCompletedCount': 0, 'bootCount': 0}",
+      "name": "telemetry_delta_sanity",
+      "passed": true
+    }
+  ],
+  "description": "Camera config write with invalid reserved/out-of-range fields returns NACK_OUT_OF_RANGE",
+  "dut_serial_summary": {
+    "boot_counts": [],
+    "boot_line_count": 0,
+    "fault_line_count": 0,
+    "fault_samples": [],
+    "line_count": 0,
+    "reset_reason_counts": {}
+  },
+  "failure_class": "pass",
+  "fixture_dump": {
+    "edges": [
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 1000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 1000
+      }
+    ],
+    "malformed_lines": [],
+    "run_id": 1,
+    "snapshots": [
+      "SNAPSHOT HP_IN=INACTIVE FP_IN=INACTIVE HP_OUT=INACTIVE FP_OUT=INACTIVE"
+    ],
+    "warnings": []
+  },
+  "metrics": {
+    "firstFrameAfLeadMs": null,
+    "firstFrameGateDelayMs": null,
+    "fpInToFpOutLatencyMs": null,
+    "fpInToHpOutLatencyMs": null,
+    "fpPulseWidthMs": null,
+    "frameCount": 0,
+    "frameEndToStartSpacingMs": null,
+    "frameStartSpacingMs": null,
+    "hpAssertToFinalFrameReleaseMs": null,
+    "hpHoldAfterLastFrameMs": null,
+    "hpHoldAfterLastFrameReason": "no_fp_out_release_edges",
+    "hpInToHpOutLatencyMs": null,
+    "hpInToHpOutLatencyReason": null,
+    "hpOutContinuityMs": null,
+    "hpOutPreAssertedBeforeHpIn": false,
+    "hpReleaseBeforeFinalFrameDetected": false,
+    "ignoredFpCount": 0,
+    "interSequenceGapMs": null,
+    "secondSequenceStartDelayMs": null,
+    "sequenceCount": 0,
+    "wakeOnlyHoldMs": null
+  },
+  "passed": true,
+  "scenario": "ADDON-CAMCFG-PROTOCOL",
+  "telemetry_after": {
+    "boot_reset_raw": 0,
+    "boot_temp_c_x100": 3825,
+    "camera_state": 0,
+    "counters": {
+      "MaxSequenceExceededCount": 0,
+      "acceptedFpCount": 3,
+      "activityCompletedCount": 3,
+      "bootCount": 5,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "sequenceCompletedCount": 3,
+      "version": 3,
+      "wakeTimeoutCount": 3
+    },
+    "flags": 0,
+    "frames_fired_this_sequence": 0,
+    "last_event_code": 4,
+    "last_scenario_hint": 1,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 0,
+    "sequences_started_this_activity": 0,
+    "version": 3
+  },
+  "telemetry_before": {
+    "boot_reset_raw": 0,
+    "boot_temp_c_x100": 3825,
+    "camera_state": 0,
+    "counters": {
+      "MaxSequenceExceededCount": 0,
+      "acceptedFpCount": 3,
+      "activityCompletedCount": 3,
+      "bootCount": 5,
+      "coldFpSequenceCount": 0,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 0,
+      "hpRefreshCount": 0,
+      "ignoredFpDuringBurstCount": 0,
+      "ignoredFpDuringGapCount": 0,
+      "sequenceCompletedCount": 3,
+      "version": 3,
+      "wakeTimeoutCount": 3
+    },
+    "flags": 0,
+    "frames_fired_this_sequence": 0,
+    "last_event_code": 4,
+    "last_scenario_hint": 1,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 0,
+    "sequences_started_this_activity": 0,
+    "version": 3
+  },
+  "telemetry_deltas": {
+    "MaxSequenceExceededCount": 0,
+    "acceptedFpCount": 0,
+    "activityCompletedCount": 0,
+    "bootCount": 0,
+    "coldFpSequenceCount": 0,
+    "fpDebounceRejectCount": 0,
+    "hpDebounceRejectCount": 0,
+    "hpIgnoredDuringBurstCount": 0,
+    "hpRefreshCount": 0,
+    "ignoredFpDuringBurstCount": 0,
+    "ignoredFpDuringGapCount": 0,
+    "sequenceCompletedCount": 0,
+    "wakeTimeoutCount": 0
+  },
+  "telemetry_notes": [],
+  "vector": {
+    "baseline_config_write": false,
+    "camera_config_protocol": [
+      {
+        "writeRaw": {
+          "configUnchanged": true,
+          "expectStatus": "NACK_OUT_OF_RANGE",
+          "mutate": {
+            "inputActivePolarity": 1
+          },
+          "payloadFromDefaults": true
+        }
+      },
+      {
+        "writeRaw": {
+          "configUnchanged": true,
+          "expectStatus": "NACK_OUT_OF_RANGE",
+          "mutate": {
+            "shutterPulseDuration": 0
+          },
+          "payloadFromDefaults": true
+        }
+      },
+      {
+        "writeRaw": {
+          "configUnchanged": true,
+          "expectStatus": "NACK_OUT_OF_RANGE",
+          "mutate": {
+            "StartFrameSpacingMin": 4000
+          },
+          "payloadFromDefaults": true
+        }
+      }
+    ],
+    "case_id": "AO-CAMCFG-NACK-OUT-OF-RANGE",
+    "description": "Camera config write with invalid reserved/out-of-range fields returns NACK_OUT_OF_RANGE",
+    "expect": {},
+    "fixture": {
+      "captureAfterLastStimulusMs": 1000
+    },
+    "metrics": [],
+    "parameters": {},
+    "requires_ble": true,
+    "scenario": "ADDON-CAMCFG-PROTOCOL",
+    "stimulus": [],
+    "tags": [
+      "addon",
+      "camcfg-protocol"
+    ]
+  }
+}

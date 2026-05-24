@@ -595,3 +595,27 @@
 - TickleBoard parser updated for v3 layout and now decodes + formats both new fields.
 - Added add-on vector `AO-TELEMETRY-FIELD-COVERAGE.yaml` to assert all parsed telemetry fields and emit a full field-value report in case checks.
 - Follow-up decode update: telemetry outputs now include decoded `bootResetReason` tokens and converted temperatures (`bootTempC`, `bootTempF`) in both `ble-telemetry-smoke` output and `telemetryFields.after.report` check detail.
+
+## Full-suite failure triage + fixes 2026-05-22
+- Full validation run (`full_validation_suite.yaml`, COM7 + BLE C9:E0:7E:27:B2:4A) had 4 failures; all fixed and reruns pass.
+- `SC-19`: added explicit `FrameCount: 4` in vector so `sequenceCount.fpOutPulseCount` check can derive 2 sequences × 4 frames = 8 pulses.
+- `AO-DEFERRED-CONFIG-WRITES`: corrected `telemetryDeltas.acceptedFpCount` expectation from 1 -> 2 (protocol sub-run + main stimulus each start one sequence).
+- `AO-FACTORY-RESET-AND-COERCION`: removed `telemetryDeltas.acceptedFpCount` assertion (factory reset clears counters; delta baseline is invalid).
+- `AO-BOUNDS-COERCE-MAX`: harness pre-write validator rejected 40s params because `fullPressIgnoreGap` max was 255 in schema but firmware sanitizes to 250; fixed `CAMERA_FIELDS.fullPressIgnoreGap.max_value` 255 -> 250 in `constants.py`.
+- Rerun artifacts (all pass): `20260523_103557_SC-19-NEW-EVENT-AFTER-RELEASE`, `20260523_103645_AO-DEFERRED-CONFIG-WRITES`, `20260523_103737_AO-FACTORY-RESET-AND-COERCION`, `20260523_103822_AO-BOUNDS-COERCE-MAX`.
+
+## E2E workflow audit 2026-05-23
+- Deliverable: `docs/e2e-workflow-audit-report.md` — full REQ→R→SC→vector→artifact→code traceability, doc drift, evidence freshness, coverage gaps, firmware review, static analysis.
+- Verdict: conditional release — published validation-test-report.md is stale (31 cases); latest suite_rollup 37/38 (AO-NACK-LEN pre-fix fail; post-fix isolated pass at 20260523_112115 not in rollup).
+- Top gaps: no original customer quote in repo, no CI/cppcheck, telemetry.md + validation-test-plan.md still v1/v2 vs firmware v3, missing AO vector for ignoreFP policy.
+- Static analysis run: arduino-cli compile PASS; compileall PASS; ruff PASS; mypy 11 errors in camera_config_protocol.py.
+- cppcheck 2.20.0 at `C:\Program Files\Cppcheck\cppcheck.exe` (not on PATH in agent shell — use full path or add to PATH). Repeat: `.\scripts\run-cppcheck.ps1`. Result on firmware .cpp files: 0 errors, 9 warnings (dangerousTypeCast), style items (redundant conditionals camera.cpp:481, storage.cpp:132/134; unread holdMs/pulseMs).
+
+## AO-CAMCFG-NACK-BAD-LENGTH firmware fix 2026-05-23
+- Root cause: short-length ATT writes to ca50000a could partially overwrite the GATT read buffer even when firmware returned NACK_BAD_FORMAT; live `camCfg` was unchanged but readback looked like a hybrid/default payload.
+- Fix: `Camtraptions_Firmware/gatt.cpp` now calls `rejectCamCfgWrite()` on all camera-config reject paths, republishing authoritative `camCfg` to the read characteristic after NACK.
+- Flashed DUT: `arduino-cli compile --upload --fqbn Seeeduino:nrf52:xiaonRF52840 Camtraptions_Firmware --port COM3` (DFU COM5).
+- Verified in suite order: AO-BOUNDS-COERCE-MAX -> AO-CAMCFG-NACK-BAD-VERSION -> AO-CAMCFG-NACK-BAD-LENGTH -> AO-CAMCFG-NACK-OUT-OF-RANGE all pass (`20260523_112115_AO-CAMCFG-NACK-BAD-LENGTH` shows `configUnchanged` pass).
+- Full validation suite rerun 2026-05-23: **38/38 pass**, exit 0, rollup `TickleBoard/artifacts/suite_rollup.json` (timing 94/94, functional 167/167).
+- Regenerated detailed validation report from latest rollup: `docs/validation-test-report.md` + `dist/Camptraptions-Timing-Test-Report.docx` via `tickle_cli.py report --detailed` and `export-docs.ps1 -Target validationreport`. Added `write_detailed_validation_report()` in `TickleBoard/scripts/tickleboard/reporting.py`.
+- Refreshed all docs for v3 protocol alignment and 38/38 evidence: telemetry.md, validation-test-plan.md, TickleBoard/README.md, e2e-workflow-audit-report.md, android-client-handoff.md (NACK readback note), firmware_editing_guide.md. Re-exported all dist/*.docx via `export-docs.ps1 -Target all`.

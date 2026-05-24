@@ -61,6 +61,6 @@ CAMERA_FIELDS: dict[str, CameraField] = {
     "inputActivePolarity": CameraField(18, 0, 1, "raw"),
     "outputDriveMode": CameraField(19, 0, 1, "raw"),
     "powerSaveIdleMode": CameraField(20, 0, 1, "raw"),
-    "fullPressIgnoreGap": CameraField(21, 5, 255, "ms100_to_u8"),
+    "fullPressIgnoreGap": CameraField(21, 5, 250, "ms100_to_u8"),
 }
 

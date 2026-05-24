@@ -386,7 +386,7 @@ struct CameraConfig {
 
 2. **Increment CAMERA_SETTINGS_VERSION:**
 ```cpp
-#define CAMERA_SETTINGS_VERSION 2  // Was 1
+#define CAMERA_SETTINGS_VERSION 4  // Was 3
 ```
 
 3. **Set default in `resetCameraToDefaults()`:**

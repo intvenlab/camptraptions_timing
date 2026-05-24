@@ -84,7 +84,7 @@ Use isolation or series protection appropriate for the actual hardware. The fixt
 | Input polarity | `active-low` | Active means line pulled to ground |
 | Output drive | `open-drain` or `opto` | Timing is measured by active edge and release edge |
 | DUT mode | Camera device, state-machine enabled | Pass-through mode is outside this validation plan unless added later |
-| Camera settings version | `CAMERA_SETTINGS_VERSION` 2 | Windows client must write/read the 20-byte camera config |
+| Camera settings version | `CAMERA_SETTINGS_VERSION` 3 | Windows client must write/read the 22-byte camera config |
 
 ### Windows client responsibilities
 

@@ -31,6 +31,4 @@ expect:
   fpOut:
     pulseCount: 4
     frameSpacingMs: 1000
-  telemetryDeltas:
-    acceptedFpCount: 1
 metrics: [frameCount]

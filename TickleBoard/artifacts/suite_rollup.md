@@ -1,8 +1,8 @@
 # TickleBoard Suite Report
 
-- Cases: 31 passed, 3 failed, 0 skipped, 34 total
-- Timing assertions: 91/92
-- Functional assertions: 130/133
+- Cases: 38 passed, 0 failed, 0 skipped, 38 total
+- Timing assertions: 94/94
+- Functional assertions: 167/167
 
 | Case | Scenario | Status | Failure Class | Timing | Functional | Skip Reason | Notes |
 |------|----------|--------|---------------|--------|------------|-------------|-------|
@@ -12,12 +12,12 @@
 | SC-04-WAKE-TIMEOUT | SC-04 | passed | pass | 2/2 | 3/3 |  |  |
 | SC-04B-REPEATED-HP | SC-04b | passed | pass | 2/2 | 3/3 |  |  |
 | SC-05-BACK-TO-BACK | SC-05 | passed | pass | 5/5 | 7/7 |  |  |
-| SC-05B-FP-DURING-POST-HOLD | SC-05b | failed | timing_tolerance | 4/5 | 7/7 |  |  |
+| SC-05B-FP-DURING-POST-HOLD | SC-05b | passed | pass | 5/5 | 7/7 |  |  |
 | SC-06-COLD-FP | SC-06 | passed | pass | 2/2 | 3/3 |  |  |
 | SC-07-HP-DURING-BURST | SC-07 | passed | pass | 2/2 | 3/3 |  |  |
 | SC-07B-HP-DURING-POST-HOLD | SC-07b | passed | pass | 2/2 | 3/3 |  |  |
 | SC-08-FP-BEFORE-HP | SC-08 | passed | pass | 3/3 | 3/3 |  |  |
-| SC-09-SEQUENCE-CAP | SC-09 | failed | logic_mismatch | 2/2 | 2/4 |  |  |
+| SC-09-SEQUENCE-CAP | SC-09 | passed | pass | 2/2 | 4/4 |  |  |
 | SC-10-RECOVERY-AFTER-CAP | SC-10 | passed | pass | 3/3 | 7/7 |  |  |
 | SC-11-SPACING-VS-T | SC-11 | passed | pass | 3/3 | 2/2 |  |  |
 | SC-12-HP-ONLY-MIN-GAP | SC-12 | passed | pass | 2/2 | 3/3 |  |  |
@@ -27,8 +27,9 @@
 | SC-16-HP-RELEASE-AFTER-FP | SC-16 | passed | pass | 6/6 | 2/2 |  |  |
 | SC-17-SHORT-HP-LEAD | SC-17 | passed | pass | 3/3 | 2/2 |  |  |
 | SC-18-HP-CHATTER-BURST | SC-18 | passed | pass | 2/2 | 3/3 |  |  |
-| SC-19-NEW-EVENT-AFTER-RELEASE | SC-19 | failed | logic_mismatch | 4/4 | 6/7 |  |  |
+| SC-19-NEW-EVENT-AFTER-RELEASE | SC-19 | passed | pass | 4/4 | 7/7 |  |  |
 | SC-20-T-GREATER-THAN-Y | SC-20 | passed | pass | 3/3 | 2/2 |  |  |
+| AO-TELEMETRY-FIELD-COVERAGE | ADDON-TELEMETRY | passed | pass | 2/2 | 32/32 |  |  |
 | AO-BLE-CONNECTED-SC04 | ADDON-BLE-CONNECTED | passed | pass | 2/2 | 3/3 |  |  |
 | AO-BLE-CONNECTED-SC01 | ADDON-BLE-CONNECTED | passed | pass | 2/2 | 3/3 |  |  |
 | AO-LATENCY-HP-IN-TO-HP-OUT | ADDON-LATENCY | passed | pass | 2/2 | 1/1 |  |  |
@@ -37,6 +38,9 @@
 | AO-GAP-CADENCE | ADDON-GAP-CADENCE | passed | pass | 3/3 | 7/7 |  |  |
 | AO-MAX-SEQUENCE-RANGE-64 | ADDON-MAX-SEQUENCE-RANGE | passed | pass | 2/2 | 7/7 |  |  |
 | AO-DEFERRED-CONFIG-WRITES | ADDON-DEFERRED-CONFIG | passed | pass | 2/2 | 3/3 |  |  |
-| AO-FACTORY-RESET-AND-COERCION | ADDON-FACTORY-RESET | passed | pass | 2/2 | 3/3 |  |  |
+| AO-FACTORY-RESET-AND-COERCION | ADDON-FACTORY-RESET | passed | pass | 2/2 | 2/2 |  |  |
 | AO-BOUNDS-COERCE-MIN | ADDON-BOUNDS-COERCE | passed | pass | 3/3 | 4/4 |  |  |
-| AO-BOUNDS-COERCE-MAX | ADDON-BOUNDS-COERCE | passed | pass | 1/1 | 3/3 |  |  |
+| AO-BOUNDS-COERCE-MAX | ADDON-BOUNDS-COERCE | passed | pass | 1/1 | 3/3 |  | telemetry_after_idle_timeout_state=3_flags=0x03 |
+| AO-CAMCFG-NACK-BAD-VERSION | ADDON-CAMCFG-PROTOCOL | passed | pass | 0/0 | 1/1 |  |  |
+| AO-CAMCFG-NACK-BAD-LENGTH | ADDON-CAMCFG-PROTOCOL | passed | pass | 0/0 | 1/1 |  |  |
+| AO-CAMCFG-NACK-OUT-OF-RANGE | ADDON-CAMCFG-PROTOCOL | passed | pass | 0/0 | 1/1 |  |  |

@@ -30,9 +30,23 @@ The payload is a fixed little-endian binary struct with a schema version byte. A
 ### Parser compatibility contract
 
 - Parse telemetry by `(version, expectedLength)`; reject or ignore unsupported versions.
-- Current telemetry payload is `TELEMETRY_VERSION = 1` and fixed to `sizeof(CameraTelemetryPayload)`.
+- Current telemetry payload is `TELEMETRY_VERSION = 3` and fixed to `sizeof(CameraTelemetryPayload)` (**84 bytes**).
 - Treat added trailing fields in future versions as opt-in via version bump, not as implicit extensions.
 - Validation/client logs should capture payload version and observed payload length for troubleshooting.
+
+### Telemetry v3 boot diagnostics (tail fields)
+
+The final 4 bytes of the v3 payload are boot diagnostics appended at the end (offsets 80–83):
+
+| Byte offset | Field | Type | Decode |
+|-------------|-------|------|--------|
+| `80..81` | `bootResetRaw` | `uint16` LE | Reset reason bitmask from `RESETREAS` |
+| `82..83` | `bootTempCx100` | `int16` LE | Centi-degrees C (`tempC = value / 100.0`) |
+
+Decode guidance:
+
+- `bootTempCx100`: `tempC = bootTempCx100 / 100.0`, `tempF = (tempC * 9 / 5) + 32`
+- `bootResetRaw` bits: `pin`, `watchdog`, `soft`, `lockup`, `off`, `lpcomp`, `debug`, `nfc`; if no bits set, treat as `power_on_or_unknown`
 
 ### Live state fields
 

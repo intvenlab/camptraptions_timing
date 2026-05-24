@@ -2,7 +2,7 @@ id: SC-19-NEW-EVENT-AFTER-RELEASE
 scenario: SC-19
 description: New FP after HP release should be cold/short-lead behavior
 tags: [core, cold-fp]
-parameters: { enabled: 1, minHalfPressBeforeShutter: 0.5s }
+parameters: { enabled: 1, minHalfPressBeforeShutter: 0.5s, FrameCount: 4 }
 fixture: { captureAfterLastStimulusMs: 16000 }
 stimulus:
   - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }

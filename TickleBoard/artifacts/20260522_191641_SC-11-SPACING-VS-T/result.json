@@ -1,0 +1,347 @@
+{
+  "camera_config_protocol_log": [],
+  "camera_rw": {
+    "mismatches": {},
+    "payload_readback_hex": "03010a050a006400142314040400000000000000011f",
+    "payload_written_hex": "03010a050a006400142314040400000000000000011f",
+    "readback_norm": {
+      "FrameCount": 4,
+      "MaxSequenceCount": 4,
+      "PostShutterHalfPressHoldTimeExtension": 20,
+      "StartFrameSpacingMin": 100,
+      "activityHalfPressHoldPolicy": 0,
+      "enabled": 1,
+      "fpAfterMaxSequenceCountPolicy": 0,
+      "fullPressIgnoreGap": 31,
+      "fullPressInputDebounce": 20,
+      "fullPressWithoutPriorHpPolicy": 0,
+      "halfPressDuringBurstPolicy": 0,
+      "halfPressInputDebounce": 35,
+      "inputActivePolarity": 0,
+      "minHalfPressBeforeShutter": 5,
+      "outputDriveMode": 0,
+      "powerSaveIdleMode": 1,
+      "shutterPulseDuration": 10,
+      "wakeHalfPressHoldTime": 10,
+      "wakeHoldRefreshPolicy": 0
+    },
+    "requested_norm": {
+      "FrameCount": 4,
+      "MaxSequenceCount": 4,
+      "PostShutterHalfPressHoldTimeExtension": 20,
+      "StartFrameSpacingMin": 100,
+      "activityHalfPressHoldPolicy": 0,
+      "enabled": 1,
+      "fpAfterMaxSequenceCountPolicy": 0,
+      "fullPressIgnoreGap": 31,
+      "fullPressInputDebounce": 20,
+      "fullPressWithoutPriorHpPolicy": 0,
+      "halfPressDuringBurstPolicy": 0,
+      "halfPressInputDebounce": 35,
+      "inputActivePolarity": 0,
+      "minHalfPressBeforeShutter": 5,
+      "outputDriveMode": 0,
+      "powerSaveIdleMode": 1,
+      "shutterPulseDuration": 10,
+      "wakeHalfPressHoldTime": 10,
+      "wakeHoldRefreshPolicy": 0
+    },
+    "write_status": 0,
+    "write_status_name": "ACK_APPLIED"
+  },
+  "case_id": "SC-11-SPACING-VS-T",
+  "check_summary": {
+    "functional_passed": 2,
+    "functional_total": 2,
+    "protocol_passed": 0,
+    "protocol_total": 0,
+    "timing_passed": 3,
+    "timing_total": 3
+  },
+  "checks": [
+    {
+      "category": "functional",
+      "detail": "expected 4, got 4",
+      "name": "frameCount",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "expected 1000.0 +/- 10.0, got 999.0",
+      "name": "frameEndToStartSpacingMs",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "expected range [350.0, 650.0], got 399.0",
+      "name": "firstFrameGateDelayMs",
+      "passed": true
+    },
+    {
+      "category": "timing",
+      "detail": "expected >= 0 when measurable, got 0.0",
+      "name": "hpInToHpOutLatencyMs_non_negative",
+      "passed": true
+    },
+    {
+      "category": "functional",
+      "detail": "deltas={'wakeTimeoutCount': 1, 'acceptedFpCount': 1, 'ignoredFpDuringGapCount': 0, 'ignoredFpDuringBurstCount': 0, 'MaxSequenceExceededCount': 0, 'coldFpSequenceCount': 0, 'hpRefreshCount': 0, 'hpIgnoredDuringBurstCount': 0, 'fpDebounceRejectCount': 0, 'hpDebounceRejectCount': 0, 'sequenceCompletedCount': 1, 'activityCompletedCount': 1, 'bootCount': 0}",
+      "name": "telemetry_delta_sanity",
+      "passed": true
+    }
+  ],
+  "description": "Validate T gating frame 1 and Y spacing for later frames",
+  "dut_serial_summary": {
+    "boot_counts": [],
+    "boot_line_count": 0,
+    "fault_line_count": 0,
+    "fault_samples": [],
+    "line_count": 0,
+    "reset_reason_counts": {}
+  },
+  "failure_class": "pass",
+  "fixture_dump": {
+    "edges": [
+      {
+        "signal": "HP_IN",
+        "state": "ACTIVE",
+        "t_ms": 0
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 0
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 100
+      },
+      {
+        "signal": "FP_IN",
+        "state": "ACTIVE",
+        "t_ms": 100
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 200
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 499
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 599
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 1598
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 1698
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 2697
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 2796
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "ACTIVE",
+        "t_ms": 3795
+      },
+      {
+        "signal": "FP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 3896
+      },
+      {
+        "signal": "HP_OUT",
+        "state": "INACTIVE",
+        "t_ms": 9989
+      },
+      {
+        "signal": "HP_IN",
+        "state": "INACTIVE",
+        "t_ms": 10000
+      },
+      {
+        "signal": "FP_IN",
+        "state": "INACTIVE",
+        "t_ms": 10000
+      }
+    ],
+    "malformed_lines": [],
+    "run_id": 1,
+    "snapshots": [
+      "SNAPSHOT HP_IN=INACTIVE FP_IN=INACTIVE HP_OUT=INACTIVE FP_OUT=INACTIVE"
+    ],
+    "warnings": []
+  },
+  "metrics": {
+    "firstFrameAfLeadMs": 499.0,
+    "firstFrameGateDelayMs": 399.0,
+    "fpInToFpOutLatencyMs": 399.0,
+    "fpInToHpOutLatencyMs": -100.0,
+    "fpPulseWidthMs": 100.0,
+    "frameCount": 4,
+    "frameEndToStartSpacingMs": 999.0,
+    "frameStartSpacingMs": 1098.6666666666667,
+    "hpAssertToFinalFrameReleaseMs": 3896.0,
+    "hpHoldAfterLastFrameMs": 6093.0,
+    "hpHoldAfterLastFrameReason": null,
+    "hpInToHpOutLatencyMs": 0.0,
+    "hpInToHpOutLatencyReason": null,
+    "hpOutContinuityMs": 9989.0,
+    "hpOutPreAssertedBeforeHpIn": false,
+    "hpReleaseBeforeFinalFrameDetected": false,
+    "ignoredFpCount": 0,
+    "interSequenceGapMs": null,
+    "secondSequenceStartDelayMs": null,
+    "sequenceCount": 1,
+    "wakeOnlyHoldMs": null
+  },
+  "passed": true,
+  "scenario": "SC-11",
+  "telemetry_after": {
+    "boot_reset_raw": 0,
+    "boot_temp_c_x100": 4025,
+    "camera_state": 0,
+    "counters": {
+      "MaxSequenceExceededCount": 2,
+      "acceptedFpCount": 23,
+      "activityCompletedCount": 91,
+      "bootCount": 4,
+      "coldFpSequenceCount": 4,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 1,
+      "hpRefreshCount": 4,
+      "ignoredFpDuringBurstCount": 4,
+      "ignoredFpDuringGapCount": 4,
+      "sequenceCompletedCount": 23,
+      "version": 3,
+      "wakeTimeoutCount": 89
+    },
+    "flags": 0,
+    "frames_fired_this_sequence": 0,
+    "last_event_code": 4,
+    "last_scenario_hint": 1,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 0,
+    "sequences_started_this_activity": 0,
+    "version": 3
+  },
+  "telemetry_before": {
+    "boot_reset_raw": 0,
+    "boot_temp_c_x100": 4025,
+    "camera_state": 0,
+    "counters": {
+      "MaxSequenceExceededCount": 2,
+      "acceptedFpCount": 22,
+      "activityCompletedCount": 90,
+      "bootCount": 4,
+      "coldFpSequenceCount": 4,
+      "fpDebounceRejectCount": 0,
+      "hpDebounceRejectCount": 0,
+      "hpIgnoredDuringBurstCount": 1,
+      "hpRefreshCount": 4,
+      "ignoredFpDuringBurstCount": 4,
+      "ignoredFpDuringGapCount": 4,
+      "sequenceCompletedCount": 22,
+      "version": 3,
+      "wakeTimeoutCount": 88
+    },
+    "flags": 0,
+    "frames_fired_this_sequence": 0,
+    "last_event_code": 4,
+    "last_scenario_hint": 1,
+    "ms_until_fp_ignore_clear": 0,
+    "ms_until_next_frame": 0,
+    "ms_until_post_hold_end": 0,
+    "ms_until_wake_deadline": 0,
+    "sequences_started_this_activity": 0,
+    "version": 3
+  },
+  "telemetry_deltas": {
+    "MaxSequenceExceededCount": 0,
+    "acceptedFpCount": 1,
+    "activityCompletedCount": 1,
+    "bootCount": 0,
+    "coldFpSequenceCount": 0,
+    "fpDebounceRejectCount": 0,
+    "hpDebounceRejectCount": 0,
+    "hpIgnoredDuringBurstCount": 0,
+    "hpRefreshCount": 0,
+    "ignoredFpDuringBurstCount": 0,
+    "ignoredFpDuringGapCount": 0,
+    "sequenceCompletedCount": 1,
+    "wakeTimeoutCount": 1
+  },
+  "telemetry_notes": [],
+  "vector": {
+    "baseline_config_write": true,
+    "camera_config_protocol": [],
+    "case_id": "SC-11-SPACING-VS-T",
+    "description": "Validate T gating frame 1 and Y spacing for later frames",
+    "expect": {
+      "fpOut": {
+        "frameSpacingMs": 1000,
+        "pulseCount": 4
+      },
+      "timing": {
+        "firstFrameGateDelayMs": {
+          "maxMs": 650,
+          "minMs": 350
+        }
+      }
+    },
+    "fixture": {
+      "captureAfterLastStimulusMs": 10000
+    },
+    "metrics": [
+      "firstFrameAfLeadMs",
+      "frameStartSpacingMs"
+    ],
+    "parameters": {
+      "FrameCount": 4,
+      "StartFrameSpacingMin": "1.0s",
+      "enabled": 1,
+      "minHalfPressBeforeShutter": "0.5s"
+    },
+    "requires_ble": false,
+    "scenario": "SC-11",
+    "stimulus": [
+      {
+        "at_ms": 0,
+        "duration_ms": 100,
+        "signal": "HP_IN_STIM",
+        "state": "active"
+      },
+      {
+        "at_ms": 100,
+        "duration_ms": 100,
+        "signal": "FP_IN_STIM",
+        "state": "active"
+      }
+    ],
+    "tags": [
+      "core",
+      "timing"
+    ]
+  }
+}
