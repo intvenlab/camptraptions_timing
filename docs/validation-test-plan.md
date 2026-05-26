@@ -592,7 +592,7 @@ Run factory reset in two states:
 1. Idle baseline
 2. During active camera activity
 
-Verify settings/camera config reset, telemetry reset, and safe activity teardown behavior.
+Verify camera config reset, telemetry reset, and safe activity teardown behavior. Device settings and battery calibration must remain unchanged.
 
 ### Reserved field coercion checks
 

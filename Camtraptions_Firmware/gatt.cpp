@@ -359,18 +359,13 @@ void onFactoryWrite(uint16_t h, BLECharacteristic* c, uint8_t* d, uint16_t l) {
   if (cameraActivityInProgress()) {
     endActivity();
   }
-  resetToDefaults();
   resetCameraToDefaults();
   resetTelemetryCounters();
   pendingCamCfgApply = false;
   runtimeIoReconfigurePending = true;
-  batteryResetCalibration();
-  InternalFS.remove(CAMERA_SETTINGS_FILE);
   populateCharacteristics();
   populateCameraCharacteristics();
   populateTelemetryCharacteristic();
-  Bluefruit.setName("Camtraptions Device");
-  saveSettings();
   saveCameraSettings();
   saveTelemetry();
 }

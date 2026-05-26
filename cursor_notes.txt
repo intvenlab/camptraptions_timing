@@ -604,6 +604,11 @@
 - `AO-BOUNDS-COERCE-MAX`: harness pre-write validator rejected 40s params because `fullPressIgnoreGap` max was 255 in schema but firmware sanitizes to 250; fixed `CAMERA_FIELDS.fullPressIgnoreGap.max_value` 255 -> 250 in `constants.py`.
 - Rerun artifacts (all pass): `20260523_103557_SC-19-NEW-EVENT-AFTER-RELEASE`, `20260523_103645_AO-DEFERRED-CONFIG-WRITES`, `20260523_103737_AO-FACTORY-RESET-AND-COERCION`, `20260523_103822_AO-BOUNDS-COERCE-MAX`.
 
+## Factory reset scope 2026-05-26
+- Factory reset (`ca500009`, write `0x01`) now resets camera config + telemetry only.
+- Preserved: device settings (`/settings.bin`), battery calibration (`/cal.bin`, `/int_cal.bin`), boot count.
+- Does not call `resetToDefaults()` or `batteryResetCalibration()`; does not overwrite BLE device name.
+
 ## E2E workflow audit 2026-05-23
 - Deliverable: `docs/e2e-workflow-audit-report.md` — full REQ→R→SC→vector→artifact→code traceability, doc drift, evidence freshness, coverage gaps, firmware review, static analysis.
 - Verdict: conditional release — published validation-test-report.md is stale (31 cases); latest suite_rollup 37/38 (AO-NACK-LEN pre-fix fail; post-fix isolated pass at 20260523_112115 not in rollup).

@@ -154,15 +154,19 @@ Payload offsets after company ID:
 
 ## Factory reset expectations
 
-Writing `0x01` to `ca500009...` now resets:
+Writing `0x01` to `ca500009...` resets:
 
-- device settings
-- camera config
+- camera config (timing/behavior parameters to factory defaults)
 - telemetry counters/file
 - active activity state (safe teardown)
-- boot count is preserved across factory reset
 
-Android UX should treat this as a full device reset and refresh all cached settings after reconnect.
+Preserved across factory reset:
+
+- device settings (name, group, `deviceType`, `cellCount`, chemistry, shutter count, etc.)
+- battery calibration
+- boot count
+
+Android UX should refresh cached **camera config** and telemetry after factory reset; device identity/settings need not be re-entered.
 
 ## Known implementation caveats
 
