@@ -58,7 +58,7 @@ Firmware constants:
 | 18 | `inputActivePolarity` | reserved, currently coerced to `0` |
 | 19 | `outputDriveMode` | reserved, currently coerced to `0` |
 | 20 | `powerSaveIdleMode` | `0` disabled, `1` enabled |
-| 21 | `fullPressIgnoreGapTenths` | x100 ms (default `34` = 3.4 s) |
+| 21 | `fullPressIgnoreGapTenths` | x100 ms (default `50` = 5.0 s) |
 
 ### Android write/readback rules
 

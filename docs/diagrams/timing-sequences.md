@@ -29,7 +29,7 @@ Waveform-style views cross-linked to [scenarios.md](../scenarios.md). Use [param
 | `StartFrameSpacingMin` (Y) | 1.0 s | Min pulse-end-to-next-start between frames 2…N |
 | `FrameCount` (N) | 4 | Shutter pulses per sequence |
 | `PostShutterHalfPressHoldTimeExtension` (Z) | 2.0 s | HP hold after last frame |
-| `shutterPulseDuration` | 100 ms | FP OUT pulse width |
+| `shutterPulseDuration` | 200 ms | FP OUT pulse width |
 | `wakeHalfPressHoldTime` (X) | 10 s | Wake timeout anchored to initial HP assert; final HP release uses R15 max-rule |
 
 **SC-01 timeline:** HP wake t=0, FP accepted t=1.0 s (HP lead already ≥ T). **Camera HP OUT goes ON once** and stays latched through burst + Z. **No** extra T-wait between frames 2…N.
@@ -48,11 +48,11 @@ sequenceDiagram
     FPi->>MCU: FP accepted t=1.0s starts sequence
     Note over MCU: R10 ignore all FP until burst done
     MCU->>FPo: frame 1 t=1.0s
-    MCU->>FPo: frame 2 t=2.0s
-    MCU->>FPo: frame 3 t=3.0s
-    MCU->>FPo: frame 4 t=4.0s
+    MCU->>FPo: frame 2 t=2.2s
+    MCU->>FPo: frame 3 t=3.4s
+    MCU->>FPo: frame 4 t=4.6s
     Note over MCU,HPo: PostShutterHalfPressHoldTimeExtension Z=2s HP still ON
-    MCU->>HPo: OFF t≈6s activity end
+    MCU->>HPo: OFF t≈10s activity end
 ```
 
 **Camera outputs (SC-01 defaults)**
@@ -64,10 +64,10 @@ sequenceDiagram
 | HP wake (HP OUT ON) | 0.0 |
 | FP accepted (sequence start) | 1.0 |
 | Frame 1 FP OUT start | 1.0 |
-| Frame 2 FP OUT start | 2.0 |
-| Frame 3 FP OUT start | 3.0 |
-| Frame 4 FP OUT start | 4.0 |
-| HP OUT OFF (after Z) | ~6.0 |
+| Frame 2 FP OUT start | 2.2 |
+| Frame 3 FP OUT start | 3.4 |
+| Frame 4 FP OUT start | 4.6 |
+| HP OUT OFF (after max-rule) | ~10.0 |
 
 Exception paths: [A wake timeout](#a--sc-04-wake-only-then-timeout), [B cold FP](#b--sc-06-fp-without-prior-wake-cold-start), [G HP input during burst](#g--sc-07-hp-during-burst-no-effect-on-schedule), [H HP input release after FP](#h--sc-16-hp-input-release-after-fp), [I short HP lead](#i--sc-17-short-hp-lead), [J T greater than Y](#j--sc-20-t-greater-than-y), mid-burst HP OUT release in [behavior-spec](../behavior-spec.md#exception-path-hp-out-released-mid-burst).
 

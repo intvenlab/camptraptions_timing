@@ -276,8 +276,8 @@ parameters:
   MaxSequenceCount: 4
   StartFrameSpacingMin: 1.0s
   PostShutterHalfPressHoldTimeExtension: 2.0s
-  shutterPulseDuration: 100ms
-  fullPressIgnoreGap: 3.4s
+  shutterPulseDuration: 200ms
+  fullPressIgnoreGap: 5.0s
   powerSaveIdleMode: enabled
 fixture:
   idleBeforeMs: 1000
@@ -297,8 +297,8 @@ expect:
     releaseNearMs: 6000
   fpOut:
     pulseCount: 4
-    pulseWidthMs: 100
-    startTimesMs: [1000, 2000, 3000, 4000]
+    pulseWidthMs: 200
+    startTimesMs: [1000, 2200, 3400, 4600]
   sequences: 1
 metrics:
   - hpInToHpOutLatencyMs
@@ -347,12 +347,12 @@ Use this set unless a scenario or sweep overrides it.
 | `wakeHalfPressHoldTime` | 10 s |
 | `wakeHoldRefreshPolicy` | `legacy-no-op` |
 | `minHalfPressBeforeShutter` | 0.5 s |
-| `fullPressIgnoreGap` | 3.4 s |
+| `fullPressIgnoreGap` | 5.0 s |
 | `FrameCount` | 4 |
 | `MaxSequenceCount` | 4 |
 | `StartFrameSpacingMin` | 1.0 s |
 | `PostShutterHalfPressHoldTimeExtension` | 2.0 s |
-| `shutterPulseDuration` | 100 ms |
+| `shutterPulseDuration` | 200 ms |
 | `halfPressInputDebounce` | 35 ms |
 | `fullPressInputDebounce` | 20 ms |
 | `powerSaveIdleMode` | `enabled` |
@@ -614,10 +614,10 @@ Run these sweeps after nominal scenarios pass. Use one parameter at a time unles
 | `MaxSequenceCount` | 1 | 4 | 64 | SC-09, SC-10 |
 | `StartFrameSpacingMin` | 0.2 s | 1.0 s | 5.0 s | SC-01, SC-11, SC-18, SC-20 |
 | `PostShutterHalfPressHoldTimeExtension` | 0.1 s | 2.0 s | 10.0 s | SC-01, SC-05b |
-| `shutterPulseDuration` | 20 ms | 100 ms | 500 ms | SC-01, SC-14 |
+| `shutterPulseDuration` | 20 ms | 200 ms | 500 ms | SC-01, SC-14 |
 | `halfPressInputDebounce` | 10 ms | 35 ms | 50 ms | SC-13 |
 | `fullPressInputDebounce` | 5 ms | 20 ms | 30 ms | SC-13, SC-14 |
-| `fullPressIgnoreGap` | 0.5 s | 3.1 s | Derived from long burst | SC-02, SC-03, SC-05 |
+| `fullPressIgnoreGap` | 0.5 s | 5.0 s | Derived from long burst | SC-02, SC-03, SC-05 |
 
 For the long `fullPressIgnoreGap` case, calculate at least:
 

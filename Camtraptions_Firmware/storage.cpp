@@ -66,7 +66,7 @@ void resetCameraToDefaults() {
   camCfg.enabled                   = 1;
   camCfg.wakeHalfPressHoldSec      = 10;
   camCfg.minHalfPressBeforeShutter = 5;
-  camCfg.shutterPulseDuration      = 10;
+  camCfg.shutterPulseDuration      = 20;
   camCfg.startFrameSpacingTicks    = 100;
   camCfg.postShutterHpHoldTenths   = 20;
   camCfg.hpDebounceMs              = 35;
@@ -74,7 +74,7 @@ void resetCameraToDefaults() {
   camCfg.frameCount                = 4;
   camCfg.maxSequenceCount          = 4;
   camCfg.powerSaveIdleMode         = 1;
-  camCfg.fullPressIgnoreGapTenths  = 31;
+  camCfg.fullPressIgnoreGapTenths  = 50;
 }
 
 void loadCameraSettings() {

@@ -42,8 +42,8 @@ Scenario catalog and acceptance tests for timing behavior. Each scenario has a s
 | `StartFrameSpacingMin` | 1.0 s |
 | `PostShutterHalfPressHoldTimeExtension` | 2.0 s |
 | `MaxSequenceCount` | 4 per activity |
-| `fullPressIgnoreGap` | 3.4 s (estimate (N-1)×(Y + pulse) + pulse) |
-| `shutterPulseDuration` | 100 ms |
+| `fullPressIgnoreGap` | 5.0 s |
+| `shutterPulseDuration` | 200 ms |
 | PIR Gap | minimum (0.5 s) — see [pir-sensor-settings.md](pir-sensor-settings.md) |
 
 ---
@@ -119,9 +119,9 @@ sequenceDiagram
 
 **Intent:** PIR **Gap = minimum** — narrow PIR may retrigger during the whole burst. MCU ignores **all** FP inputs for the **entire sequence**, not just after each shutter pulse.
 
-**Preconditions:** Sequence in progress (first FP already accepted). `FrameCount = 4`, `StartFrameSpacingMin = 1.0 s`, `shutterPulseDuration = 100 ms`.
+**Preconditions:** Sequence in progress (first FP already accepted). `FrameCount = 4`, `StartFrameSpacingMin = 1.0 s`, `shutterPulseDuration = 200 ms`.
 
-**`fullPressIgnoreGap`:** 3.1 s in this trace (`(4 - 1) × 1.0 + 0.1` per registry default estimate).
+**`fullPressIgnoreGap`:** 5.0 s in this trace (current registry default).
 
 | Step | Event | Frames fired | Notes |
 |------|-------|--------------|-------|

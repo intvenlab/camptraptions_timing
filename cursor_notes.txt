@@ -609,6 +609,11 @@
 - Preserved: device settings (`/settings.bin`), battery calibration (`/cal.bin`, `/int_cal.bin`), boot count.
 - Does not call `resetToDefaults()` or `batteryResetCalibration()`; does not overwrite BLE device name.
 
+## Production flash prep 2026-05-26
+- User request: flash multiple production units using existing binary only (no recompile).
+- Latest cached firmware artifact folder: `C:\Users\3ricj\AppData\Local\arduino\sketches\BFDAB27BAD4B4E04C3AAC934D2168D82` (contains `Camtraptions_Firmware.ino.zip`, `.hex`, `.elf`; timestamp 2026-05-26 14:37).
+- No-compile upload command template (fill COM): `C:\Program Files\Arduino CLI\arduino-cli.exe upload --fqbn Seeeduino:nrf52:xiaonRF52840 --input-dir C:\Users\3ricj\AppData\Local\arduino\sketches\BFDAB27BAD4B4E04C3AAC934D2168D82 --port COMx`.
+
 ## E2E workflow audit 2026-05-23
 - Deliverable: `docs/e2e-workflow-audit-report.md` — full REQ→R→SC→vector→artifact→code traceability, doc drift, evidence freshness, coverage gaps, firmware review, static analysis.
 - Verdict: conditional release — published validation-test-report.md is stale (31 cases); latest suite_rollup 37/38 (AO-NACK-LEN pre-fix fail; post-fix isolated pass at 20260523_112115 not in rollup).
@@ -624,3 +629,15 @@
 - Full validation suite rerun 2026-05-23: **38/38 pass**, exit 0, rollup `TickleBoard/artifacts/suite_rollup.json` (timing 94/94, functional 167/167).
 - Regenerated detailed validation report from latest rollup: `docs/validation-test-report.md` + `dist/Camptraptions-Timing-Test-Report.docx` via `tickle_cli.py report --detailed` and `export-docs.ps1 -Target validationreport`. Added `write_detailed_validation_report()` in `TickleBoard/scripts/tickleboard/reporting.py`.
 - Refreshed all docs for v3 protocol alignment and 38/38 evidence: telemetry.md, validation-test-plan.md, TickleBoard/README.md, e2e-workflow-audit-report.md, android-client-handoff.md (NACK readback note), firmware_editing_guide.md. Re-exported all dist/*.docx via `export-docs.ps1 -Target all`.
+
+## UF2 desktop flasher prototype 2026-05-26
+- User preference: production-friendly path should be compile at home, then distribute UF2 artifact for field flashing with a simple Windows GUI (no Arduino IDE/CLI required on target machine).
+- Added prototype app at `tools/FirmwareUf2Flasher/` (.NET 8 WinForms) with: UF2 browse, COM select, 1200-baud bootloader tickle, UF2 drive detect/copy, strict serial verification (`[BOOT]` + exact `build=` token).
+- Run: `dotnet run --project .\tools\FirmwareUf2Flasher\FirmwareUf2Flasher.csproj`
+- Publish (standalone): `dotnet publish .\tools\FirmwareUf2Flasher\FirmwareUf2Flasher.csproj -c Release -r win-x64 --self-contained true`
+
+## Default timing update 2026-05-26
+- User-directed default changes:
+  - `shutterPulseDuration` default changed to **200 ms** (`camCfg.shutterPulseDuration = 20` ticks).
+  - `fullPressIgnoreGap` default changed to **5.0 s** (`camCfg.fullPressIgnoreGapTenths = 50`).
+- Updated firmware defaults and aligned docs (`parameters.md`, `behavior-spec.md`, `scenarios.md`, `validation-test-plan.md`, `diagrams/timing-sequences.md`, `android-client-handoff.md`).

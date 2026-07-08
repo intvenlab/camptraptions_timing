@@ -7,12 +7,12 @@
 | `wakeHalfPressHoldTime` | X | 10 | s |
 | `wakeHoldRefreshPolicy` | — | `legacy-no-op` | enum |
 | `minHalfPressBeforeShutter` | T | 0.5 | s |
-| `fullPressIgnoreGap` | — | 3.4 | s |
+| `fullPressIgnoreGap` | — | 5.0 | s |
 | `FrameCount` | N | 4 | frames |
 | `MaxSequenceCount` | — | 4 | sequences |
 | `StartFrameSpacingMin` | Y | 1.0 | s |
 | `PostShutterHalfPressHoldTimeExtension` | Z | 2.0 | s |
-| `shutterPulseDuration` | — | 100 | ms |
+| `shutterPulseDuration` | — | 200 | ms |
 | `halfPressInputDebounce` | — | 20–50 | ms |
 | `fullPressInputDebounce` | — | 10–30 | ms |
 
@@ -42,7 +42,7 @@ Legacy field retained for backward compatibility. In current requirement-aligned
 
 #### `fullPressIgnoreGap`
 
-After **sequence start**, FP **inputs** are ignored for this duration (R10). The PIR **Gap** menu value is a **minimum** — see [pir-sensor-settings.md](pir-sensor-settings.md). Default **3.4 s** is an estimate (recalculate when burst params change): `(FrameCount - 1) × (StartFrameSpacingMin + shutterPulseDuration) + shutterPulseDuration` (e.g. 3×(1.0 + 0.1) + 0.1 s with registry defaults). Set longer if retriggers persist after the burst or gates stretch spacing.
+After **sequence start**, FP **inputs** are ignored for this duration (R10). The PIR **Gap** menu value is a **minimum** — see [pir-sensor-settings.md](pir-sensor-settings.md). Default is **5.0 s**. With registry defaults (`FrameCount=4`, `StartFrameSpacingMin=1.0 s`, `shutterPulseDuration=0.2 s`), nominal burst budget is **3.8 s** (`(FrameCount - 1) × (StartFrameSpacingMin + shutterPulseDuration) + shutterPulseDuration`), leaving about **1.2 s** post-burst retrigger margin.
 
 #### `FrameCount`
 

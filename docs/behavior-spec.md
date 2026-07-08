@@ -120,13 +120,13 @@ sequenceDiagram
 
 **FP ignore during sequence (R10):** Set PIR **Gap** to **minimum** (0.5 s). The MCU ignores FP **inputs** for `fullPressIgnoreGap` after each sequence start — not a per-pulse gap after each shutter.
 
-**Default estimate** for `fullPressIgnoreGap` (tunable — set longer in the field if needed):
+**Burst-budget estimate** for `fullPressIgnoreGap` (minimum):
 
 ```text
 (FrameCount - 1) × (StartFrameSpacingMin + shutterPulseDuration) + shutterPulseDuration
 ```
 
-Example: `FrameCount = 4`, `StartFrameSpacingMin = 1.0 s`, `shutterPulseDuration = 0.1 s` → default **3.4 s**. With `shutterPulseDuration = 0.2 s` → **3.8 s**. Increase if `minHalfPressBeforeShutter` or other gates stretch real burst spacing beyond this estimate.
+Example: `FrameCount = 4`, `StartFrameSpacingMin = 1.0 s`, `shutterPulseDuration = 0.2 s` → burst budget **3.8 s**. Current default `fullPressIgnoreGap` is **5.0 s** to allow additional post-burst recharge margin.
 
 **Example** (`FrameCount = 4`):
 
