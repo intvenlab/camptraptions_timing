@@ -3,6 +3,7 @@
 #include "battery.h"
 #include "build_info.h"
 #include "camera.h"
+#include "feeder.h"
 #include "storage.h"
 
 #include <bluefruit.h>
@@ -27,6 +28,8 @@ BLECharacteristic chrTelemetry("ca50000b-0000-0000-0000-000000000000");
 BLECharacteristic chrCalSet   ("ca50000c-0000-0000-0000-000000000000");
 BLECharacteristic chrIntCalSet("ca50000d-0000-0000-0000-000000000000");
 BLECharacteristic chrCamCfgStatus("ca50000e-0000-0000-0000-000000000000");
+BLECharacteristic chrFeederCfg      ("ca50000f-0000-0000-0000-000000000000");
+BLECharacteristic chrFeederCfgStatus("ca500010-0000-0000-0000-000000000000");
 
 volatile bool isConnected    = false;
 volatile bool settingsDirty  = false;
@@ -34,9 +37,11 @@ volatile bool shutterUpdated = false;
 volatile uint32_t lastShutterMs = 0;
 
 uint8_t camCfgWriteStatus = CAMCFG_ACK_APPLIED;
+uint8_t feederCfgWriteStatus = FEEDERCFG_ACK_APPLIED;
 
 static void setupTelemetryGatt();
 static void setupCameraGatt();
+static void setupFeederGatt();
 
 static bool budgetExpired(uint32_t startedUs, uint32_t budgetUs) {
   if (budgetUs == 0) return false;
@@ -86,6 +91,11 @@ void populateCameraCharacteristics() {
   chrCamCfgStatus.write8(camCfgWriteStatus);
 }
 
+void populateFeederCharacteristics() {
+  chrFeederCfg.write((const uint8_t*)&feederCfg, sizeof(feederCfg));
+  chrFeederCfgStatus.write8(feederCfgWriteStatus);
+}
+
 void populateTelemetryCharacteristic() {
   populateTelemetryPayload();
   chrTelemetry.write((const uint8_t*)&telPayload, sizeof(telPayload));
@@ -109,6 +119,19 @@ static void setupCameraGatt() {
   chrCamCfgStatus.setPermission(SECMODE_OPEN, SECMODE_NO_ACCESS);
   chrCamCfgStatus.setFixedLen(1);
   chrCamCfgStatus.begin();
+}
+
+static void setupFeederGatt() {
+  chrFeederCfg.setProperties(CHR_PROPS_READ | CHR_PROPS_WRITE);
+  chrFeederCfg.setPermission(SECMODE_OPEN, SECMODE_OPEN);
+  chrFeederCfg.setFixedLen(sizeof(feederCfg));
+  chrFeederCfg.setWriteCallback(onFeederCfgWrite);
+  chrFeederCfg.begin();
+
+  chrFeederCfgStatus.setProperties(CHR_PROPS_READ | CHR_PROPS_NOTIFY);
+  chrFeederCfgStatus.setPermission(SECMODE_OPEN, SECMODE_NO_ACCESS);
+  chrFeederCfgStatus.setFixedLen(1);
+  chrFeederCfgStatus.begin();
 }
 
 void setupGatt() {
@@ -168,6 +191,7 @@ void setupGatt() {
   chrFactory.begin();
 
   setupCameraGatt();
+  setupFeederGatt();
   setupTelemetryGatt();
 
   chrCalSet.setProperties(CHR_PROPS_WRITE);
@@ -184,6 +208,7 @@ void setupGatt() {
 
   populateCharacteristics();
   populateCameraCharacteristics();
+  populateFeederCharacteristics();
   populateTelemetryCharacteristic();
 }
 
@@ -196,6 +221,7 @@ void advertiseData(int intPct, float intVoltage, uint8_t extPct, uint16_t extVol
   if (cfg.configured)           flags |= 0x01;
   flags |= (cfg.deviceType & 0x03) << 1;
   flags |= (cfg.chemistry  & 0x03) << 3;
+  flags |= ((cfg.deviceType >> 2) & 0x01) << 5;      // deviceType MSB (bits1-2 hold the low 2 bits)
 
   uint16_t intVoltMv = (uint16_t)(intVoltage * 1000.0f);
 
@@ -315,10 +341,11 @@ void onGroupNameWrite(uint16_t h, BLECharacteristic* c, uint8_t* d, uint16_t l) 
 void onDevTypeWrite(uint16_t h, BLECharacteristic* c, uint8_t* d, uint16_t l) {
   (void)h; (void)c;
   if (l < 1) return;
-  cfg.deviceType = d[0] & 0x03;
+  cfg.deviceType = d[0] & 0x07;
   if (cameraActivityInProgress()) {
     endActivity();
   }
+  resetFeederState();
   runtimeIoReconfigurePending = true;
   markConfigured();
   saveSettings();
@@ -360,13 +387,16 @@ void onFactoryWrite(uint16_t h, BLECharacteristic* c, uint8_t* d, uint16_t l) {
     endActivity();
   }
   resetCameraToDefaults();
+  resetFeederToDefaults();
   resetTelemetryCounters();
   pendingCamCfgApply = false;
   runtimeIoReconfigurePending = true;
   populateCharacteristics();
   populateCameraCharacteristics();
+  populateFeederCharacteristics();
   populateTelemetryCharacteristic();
   saveCameraSettings();
+  saveFeederSettings();
   saveTelemetry();
 }
 
@@ -413,4 +443,41 @@ void onCamCfgWrite(uint16_t h, BLECharacteristic* c, uint8_t* d, uint16_t l) {
   populateCameraCharacteristics();
   runtimeIoReconfigurePending = true;
   publishCamCfgWriteStatus(CAMCFG_ACK_APPLIED);
+}
+
+void publishFeederCfgWriteStatus(uint8_t statusCode) {
+  feederCfgWriteStatus = statusCode;
+  chrFeederCfgStatus.write8(statusCode);
+  if (isConnected) {
+    chrFeederCfgStatus.notify(&feederCfgWriteStatus, 1);
+  }
+}
+
+static void rejectFeederCfgWrite(uint8_t statusCode) {
+  publishFeederCfgWriteStatus(statusCode);
+  chrFeederCfg.write((const uint8_t*)&feederCfg, sizeof(feederCfg));
+}
+
+void onFeederCfgWrite(uint16_t h, BLECharacteristic* c, uint8_t* d, uint16_t l) {
+  (void)h; (void)c;
+  if (l != sizeof(feederCfg)) {
+    rejectFeederCfgWrite(FEEDERCFG_NACK_BAD_FORMAT);
+    return;
+  }
+  if (d[0] != FEEDER_SETTINGS_VERSION) {
+    rejectFeederCfgWrite(FEEDERCFG_NACK_BAD_FORMAT);
+    return;
+  }
+  FeederConfig incoming;
+  memcpy(&incoming, d, sizeof(incoming));
+  if (feederConfigHasInvalidValues(incoming)) {
+    rejectFeederCfgWrite(FEEDERCFG_NACK_OUT_OF_RANGE);
+    return;
+  }
+
+  feederCfg = incoming;
+  saveFeederSettings();
+  populateFeederCharacteristics();
+  runtimeIoReconfigurePending = true;
+  publishFeederCfgWriteStatus(FEEDERCFG_ACK_APPLIED);
 }

@@ -8,7 +8,7 @@ void applyPendingCamCfgIfIdle();
 void refreshWakeHoldFromHp(uint32_t now);
 bool cameraControlWorkPending();
 void processCameraLogic();
-void idleWaitWithCameraWake(uint32_t durationMs);
+void idleWaitWithDeviceWake(uint32_t durationMs);
 void endActivity();
 
 void onShutterPulse();

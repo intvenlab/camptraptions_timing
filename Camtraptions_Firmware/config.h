@@ -13,6 +13,12 @@
 #define HP_IN_PIN            3
 #define FP_OUT_PIN           4
 #define HP_OUT_PIN           5
+#define FEEDER_TRIG_IN_PIN   2
+#define FEEDER_PULSE_OUT_PIN 4
+#define FEEDER_PUMP_OUT_PIN  6
+
+// ─── Device types ────────────────────────────────────────────────────────────
+#define DEVICE_TYPE_FEEDER   4
 
 // ─── ADC ─────────────────────────────────────────────────────────────────────
 #define ADC_MAX_VALUE          1024.0f
@@ -29,6 +35,8 @@
 #define SETTINGS_VERSION        1
 #define CAMERA_SETTINGS_FILE    "/camera.bin"
 #define CAMERA_SETTINGS_VERSION 3
+#define FEEDER_SETTINGS_FILE    "/feeder.bin"
+#define FEEDER_SETTINGS_VERSION 1
 #define TELEMETRY_FILE          "/telemetry.bin"
 #define TELEMETRY_VERSION       3
 #define CAL_FILE                "/cal.bin"
@@ -80,6 +88,22 @@ struct __attribute__((packed)) CameraConfig {
   uint8_t outputDriveMode;
   uint8_t powerSaveIdleMode;
   uint8_t fullPressIgnoreGapTenths;
+};
+
+// ─── Feeder config (12 bytes) ─────────────────────────────────────────────────
+struct __attribute__((packed)) FeederConfig {
+  uint8_t  version;
+  uint8_t  enabled;            // 0 = passive (outputs held low, no logic), 1 = active
+  uint16_t pulseStretchMinMs;  // min output-assert duration, ms (default 100; range 10-60000)
+  uint32_t pumpOnMs;           // pump-on duration per cycle, ms (default 2000; range 50-3,600,000)
+  uint32_t pumpOffMs;          // pump-off duration per cycle, ms (default 10000; range 50-3,600,000)
+};
+
+enum FeederCfgWriteStatusCode : uint8_t {
+  FEEDERCFG_ACK_APPLIED       = 0x00,
+  FEEDERCFG_NACK_BAD_FORMAT   = 0xE1,
+  FEEDERCFG_NACK_OUT_OF_RANGE = 0xE2,
+  FEEDERCFG_NACK_BUSY         = 0xE3
 };
 
 enum TelemetryEvent : uint8_t {
@@ -179,6 +203,7 @@ inline bool timeReached(uint32_t now, uint32_t target) {
 // ─── Shared runtime state (defined in module .cpp files) ───────────────────────
 extern DeviceConfig cfg;
 extern CameraConfig camCfg;
+extern FeederConfig feederCfg;
 extern CameraTelemetryCounters telCounters;
 extern CameraTelemetryPayload telPayload;
 

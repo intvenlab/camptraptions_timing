@@ -1,5 +1,6 @@
 #include "camera.h"
 
+#include "feeder.h"
 #include "storage.h"
 
 #ifdef DEBUG_CAMERA_LOGIC_PINS
@@ -340,12 +341,26 @@ void configureRuntimeIo() {
 #endif
   detachInterrupt(digitalPinToInterrupt(FP_IN_PIN));
   detachInterrupt(digitalPinToInterrupt(HP_IN_PIN));
+  detachInterrupt(digitalPinToInterrupt(FEEDER_TRIG_IN_PIN));
 
   pinMode(FP_OUT_PIN, INPUT);
   pinMode(HP_OUT_PIN, INPUT);
 #ifdef DEBUG_CAMERA_LOGIC_PINS
   dbgLogRuntimeIo("configureRuntimeIo.outputsInput");
 #endif
+
+  // Unlike Camera's open-drain FP_OUT/HP_OUT (safe floating because the camera
+  // side has pull-ups), a floating MOSFET gate can partially turn on -- always
+  // drive these two pins to a defined OFF state regardless of device type.
+  pinMode(FEEDER_PULSE_OUT_PIN, OUTPUT);
+  digitalWrite(FEEDER_PULSE_OUT_PIN, LOW);
+  pinMode(FEEDER_PUMP_OUT_PIN, OUTPUT);
+  digitalWrite(FEEDER_PUMP_OUT_PIN, LOW);
+
+  if (cfg.deviceType == DEVICE_TYPE_FEEDER) {
+    if (feederCfg.enabled) configureFeederIo();
+    return;
+  }
 
   if (cfg.deviceType == 1 /* CAMERA */) {
     pinMode(FP_IN_PIN, INPUT_PULLUP);
@@ -603,8 +618,10 @@ void processCameraLogic() {
   }
 }
 
-void idleWaitWithCameraWake(uint32_t durationMs) {
-  if (!(cfg.deviceType == 1 && camCfg.enabled && camCfg.powerSaveIdleMode)) {
+void idleWaitWithDeviceWake(uint32_t durationMs) {
+  bool cameraIdleWakeEligible = (cfg.deviceType == 1 && camCfg.enabled && camCfg.powerSaveIdleMode);
+  bool feederActive = feederModeActive();
+  if (!(cameraIdleWakeEligible || feederActive)) {
     delay(durationMs);
     return;
   }
@@ -616,6 +633,7 @@ void idleWaitWithCameraWake(uint32_t durationMs) {
       if (cameraLogicActive) return;
       if (hpPulseFlag || fpPulseFlag) continue;
     }
+    if (feederActive) processFeederLogic();
     __WFE();
   }
 }

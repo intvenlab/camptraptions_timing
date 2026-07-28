@@ -7,6 +7,7 @@ using namespace Adafruit_LittleFS_Namespace;
 
 DeviceConfig cfg;
 CameraConfig camCfg;
+FeederConfig feederCfg;
 CameraTelemetryCounters telCounters;
 CameraTelemetryPayload telPayload;
 
@@ -21,6 +22,7 @@ int16_t  lastBootTempCx100 = 0;
 
 static File cfgFile(InternalFS);
 static File camFile(InternalFS);
+static File feederFile(InternalFS);
 static File telFile(InternalFS);
 
 void loadSettings() {
@@ -146,6 +148,57 @@ bool cameraConfigHasInvalidValues(const CameraConfig &cfgToCheck) {
   CameraConfig sanitized = cfgToCheck;
   sanitizeCameraConfig(sanitized);
   return memcmp(&cfgToCheck, &sanitized, sizeof(CameraConfig)) != 0;
+}
+
+void resetFeederToDefaults() {
+  memset(&feederCfg, 0, sizeof(feederCfg));
+  feederCfg.version           = FEEDER_SETTINGS_VERSION;
+  feederCfg.enabled           = 1;
+  feederCfg.pulseStretchMinMs = 100;
+  feederCfg.pumpOnMs          = 2000;
+  feederCfg.pumpOffMs         = 10000;
+}
+
+void loadFeederSettings() {
+  resetFeederToDefaults();
+  if (!InternalFS.exists(FEEDER_SETTINGS_FILE)) return;
+  if (feederFile.open(FEEDER_SETTINGS_FILE, FILE_O_READ)) {
+    feederFile.read(&feederCfg, sizeof(feederCfg));
+    feederFile.close();
+  }
+  if (feederCfg.version != FEEDER_SETTINGS_VERSION) {
+    resetFeederToDefaults();
+  } else {
+    sanitizeFeederConfig(feederCfg);
+  }
+}
+
+void saveFeederSettings() {
+  InternalFS.remove(FEEDER_SETTINGS_FILE);
+  if (feederFile.open(FEEDER_SETTINGS_FILE, FILE_O_WRITE)) {
+    feederFile.write((const uint8_t*)&feederCfg, sizeof(feederCfg));
+    feederFile.close();
+  }
+}
+
+void sanitizeFeederConfig(FeederConfig &cfgToSanitize) {
+  cfgToSanitize.version = FEEDER_SETTINGS_VERSION;
+  cfgToSanitize.enabled = cfgToSanitize.enabled ? 1 : 0;
+
+  if (cfgToSanitize.pulseStretchMinMs < 10)    cfgToSanitize.pulseStretchMinMs = 10;
+  if (cfgToSanitize.pulseStretchMinMs > 60000) cfgToSanitize.pulseStretchMinMs = 60000;
+
+  if (cfgToSanitize.pumpOnMs < 50)      cfgToSanitize.pumpOnMs = 50;
+  if (cfgToSanitize.pumpOnMs > 3600000) cfgToSanitize.pumpOnMs = 3600000;
+
+  if (cfgToSanitize.pumpOffMs < 50)      cfgToSanitize.pumpOffMs = 50;
+  if (cfgToSanitize.pumpOffMs > 3600000) cfgToSanitize.pumpOffMs = 3600000;
+}
+
+bool feederConfigHasInvalidValues(const FeederConfig &cfgToCheck) {
+  FeederConfig sanitized = cfgToCheck;
+  sanitizeFeederConfig(sanitized);
+  return memcmp(&cfgToCheck, &sanitized, sizeof(FeederConfig)) != 0;
 }
 
 void resetTelemetryCounters() {

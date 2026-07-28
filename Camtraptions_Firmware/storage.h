@@ -12,6 +12,12 @@ void resetCameraToDefaults();
 void sanitizeCameraConfig(CameraConfig &cfgToSanitize);
 bool cameraConfigHasInvalidValues(const CameraConfig &cfgToCheck);
 
+void loadFeederSettings();
+void saveFeederSettings();
+void resetFeederToDefaults();
+void sanitizeFeederConfig(FeederConfig &cfgToSanitize);
+bool feederConfigHasInvalidValues(const FeederConfig &cfgToCheck);
+
 void resetTelemetryCounters();
 void loadTelemetry();
 void saveTelemetry();

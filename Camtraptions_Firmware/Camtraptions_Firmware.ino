@@ -21,6 +21,7 @@
 #include "build_info.h"
 #include "gatt.h"
 #include "camera.h"
+#include "feeder.h"
 #include "storage.h"
 
 using namespace Adafruit_LittleFS_Namespace;
@@ -130,6 +131,7 @@ void setup() {
   InternalFS.begin();
   loadSettings();
   loadCameraSettings();
+  loadFeederSettings();
   loadTelemetry();
   telCounters.bootCount++;
   saveTelemetry();
@@ -153,6 +155,7 @@ void setup() {
 
 void loop() {
   bool cameraModeEnabled = (cfg.deviceType == 1 /* CAMERA */ && camCfg.enabled);
+  bool feederModeEnabled = feederModeActive();
 
   if (cameraModeEnabled && cameraControlWorkPending()) {
     processCameraLogic();
@@ -163,6 +166,10 @@ void loop() {
 
   if (cameraModeEnabled && !cameraControlWorkPending()) {
     processCameraLogic();
+  }
+
+  if (feederModeEnabled) {
+    processFeederLogic();
   }
 
   if (isConnected) {
@@ -189,7 +196,7 @@ void loop() {
   uint16_t extBatMv  = extPresent ? (uint16_t)extVoltMvF  : 0xFFFF;
 
   advertiseData(intPct, intVoltage, extBatPct, extBatMv);
-  idleWaitWithCameraWake(ADVERTISING_DURATION_MS);
+  idleWaitWithDeviceWake(ADVERTISING_DURATION_MS);
   Bluefruit.Advertising.stop();
 
   if (settingsDirty) {
@@ -198,5 +205,5 @@ void loop() {
   }
   flushTelemetryIfDue(millis());
 
-  idleWaitWithCameraWake(SLEEP_INTERVAL_MS - ADVERTISING_DURATION_MS);
+  idleWaitWithDeviceWake(SLEEP_INTERVAL_MS - ADVERTISING_DURATION_MS);
 }
