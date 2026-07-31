@@ -3,6 +3,21 @@
 #include <Arduino.h>
 #include <stdint.h>
 
+// ─── HARD-CODED DEVICE IDENTITY (temporary reliability stopgap) ──────────────
+// Edit these 4 lines for EACH physical device before compiling + flashing it.
+// They always override the device's name/type/cell-count/Kit-number at boot,
+// regardless of what's saved in flash -- some units have shown flash storage
+// corruption that could otherwise leave a device stuck reporting as
+// unconfigured (and an unconfigured Camera device won't run its trigger logic
+// at all). Set USE_HARDCODED_DEVICE_IDENTITY to 0 to go back to normal
+// flash-loaded config once that's resolved.
+#define USE_HARDCODED_DEVICE_IDENTITY 1
+
+#define HARDCODED_DEVICE_NAME  "Camera 1"  // up to 20 chars
+#define HARDCODED_DEVICE_TYPE  1            // 0=BattMon 1=Camera 2=Strobe 3=Focus 4=Feeder
+#define HARDCODED_CELL_COUNT   3
+#define HARDCODED_KIT_NUMBER   1
+
 // Uncomment in Camtraptions_Firmware.ino to emit state-machine pin transition logs over USB serial.
 // #define DEBUG_CAMERA_LOGIC_PINS
 

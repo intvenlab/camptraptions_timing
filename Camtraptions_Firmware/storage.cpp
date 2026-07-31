@@ -31,19 +31,30 @@ void loadSettings() {
   cfg.deviceType = 1;
   cfg.cellCount = 1;
 
-  if (!InternalFS.exists(SETTINGS_FILE)) return;
+  if (InternalFS.exists(SETTINGS_FILE)) {
+    if (cfgFile.open(SETTINGS_FILE, FILE_O_READ)) {
+      cfgFile.read(&cfg, sizeof(cfg));
+      cfgFile.close();
+    }
 
-  if (cfgFile.open(SETTINGS_FILE, FILE_O_READ)) {
-    cfgFile.read(&cfg, sizeof(cfg));
-    cfgFile.close();
+    if (cfg.version != SETTINGS_VERSION) {
+      memset(&cfg, 0, sizeof(cfg));
+      cfg.version   = SETTINGS_VERSION;
+      cfg.deviceType = 1;
+      cfg.cellCount = 1;
+    }
   }
 
-  if (cfg.version != SETTINGS_VERSION) {
-    memset(&cfg, 0, sizeof(cfg));
-    cfg.version   = SETTINGS_VERSION;
-    cfg.deviceType = 1;
-    cfg.cellCount = 1;
-  }
+#if USE_HARDCODED_DEVICE_IDENTITY
+  // Always wins, regardless of what flash produced above (or whether a settings
+  // file existed at all) -- see the HARD-CODED DEVICE IDENTITY block in config.h.
+  cfg.configured = 1;
+  strncpy(cfg.name, HARDCODED_DEVICE_NAME, sizeof(cfg.name) - 1);
+  cfg.name[sizeof(cfg.name) - 1] = '\0';
+  cfg.deviceType = HARDCODED_DEVICE_TYPE;
+  cfg.cellCount  = HARDCODED_CELL_COUNT;
+  cfg.groupId    = HARDCODED_KIT_NUMBER;
+#endif
 }
 
 void saveSettings() {
