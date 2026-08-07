@@ -128,7 +128,7 @@ void sanitizeCameraConfig(CameraConfig &cfgToSanitize) {
   if (cfgToSanitize.startFrameSpacingTicks < 1)    cfgToSanitize.startFrameSpacingTicks = 1;
   if (cfgToSanitize.startFrameSpacingTicks > 3000) cfgToSanitize.startFrameSpacingTicks = 3000;
 
-  if (cfgToSanitize.postShutterHpHoldTenths < 1)   cfgToSanitize.postShutterHpHoldTenths = 1;
+  // Z=0 is valid: release HP immediately after each FP pulse end when timing permits.
   if (cfgToSanitize.postShutterHpHoldTenths > 200) cfgToSanitize.postShutterHpHoldTenths = 200;
 
   if (cfgToSanitize.hpDebounceMs < 1)   cfgToSanitize.hpDebounceMs = 1;

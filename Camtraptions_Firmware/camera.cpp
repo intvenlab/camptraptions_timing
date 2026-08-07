@@ -95,6 +95,10 @@ uint32_t fpOutReleaseMs = 0;
 uint32_t postShutterHoldUntilMs = 0;
 uint32_t fullPressIgnoreUntilMs = 0;
 uint32_t maxSequenceTimeoutUntilMs = 0;
+uint32_t interFrameHpHoldUntilMs = 0;
+uint32_t hpReassertAtMs = 0;
+bool interFrameHpRelaxActive = false;
+bool interFrameHpReleased = false;
 bool fpAcceptedAtGapBoundary = false;
 bool pendingCamCfgApply = false;
 volatile bool runtimeIoReconfigurePending = false;
@@ -167,6 +171,58 @@ static uint32_t startFrameSpacingMs() {
 
 static uint32_t postShutterHoldMs() {
   return (uint32_t)camCfg.postShutterHpHoldTenths * 100UL;
+}
+
+// Safety margin so inter-frame HP release only happens when there is clear slack
+// for Z hold + T reassert inside Y (see docs/hp-relax-transition-spec.md).
+static const uint32_t HP_RELAX_GUARD_MS = 20UL;
+
+static bool interFrameHpRelaxAllowed() {
+  uint32_t yMs = startFrameSpacingMs();
+  uint32_t tMs = minHalfPressMs();
+  uint32_t zMs = postShutterHoldMs();
+  if (yMs <= tMs + HP_RELAX_GUARD_MS) return false;
+  return zMs < (yMs - tMs - HP_RELAX_GUARD_MS);
+}
+
+static void clearInterFrameHpRelax() {
+  interFrameHpHoldUntilMs = 0;
+  hpReassertAtMs = 0;
+  interFrameHpRelaxActive = false;
+  interFrameHpReleased = false;
+}
+
+static void beginInterFrameHpRelax(uint32_t pulseEndMs) {
+  clearInterFrameHpRelax();
+  if (!interFrameHpRelaxAllowed()) return;
+
+  interFrameHpRelaxActive = true;
+  interFrameHpReleased = false;
+  interFrameHpHoldUntilMs = pulseEndMs + postShutterHoldMs();
+
+  uint32_t tMs = minHalfPressMs();
+  if (nextFrameMs > tMs) {
+    hpReassertAtMs = nextFrameMs - tMs;
+  } else {
+    hpReassertAtMs = pulseEndMs;
+  }
+}
+
+static void serviceInterFrameHpRelax(uint32_t now) {
+  if (!interFrameHpRelaxActive) return;
+
+  if (!interFrameHpReleased && timeReached(now, interFrameHpHoldUntilMs)) {
+    if (hpOutAsserted) {
+      releaseHpOut();
+    }
+    interFrameHpReleased = true;
+  }
+
+  if (interFrameHpReleased && !hpOutAsserted) {
+    if (hpReassertAtMs == 0 || timeReached(now, hpReassertAtMs)) {
+      assertHpOut(now);
+    }
+  }
 }
 
 static uint32_t wakeHalfPressHoldMs() {
@@ -259,6 +315,7 @@ static void startSequence(uint32_t now) {
   fpOutReleaseMs = 0;
   lastFpOutStartMs = 0;
   nextFrameMs = now;
+  clearInterFrameHpRelax();
   cameraState = CAM_BURST_ACTIVE;
   cameraLogicActive = true;
 }
@@ -279,6 +336,7 @@ void endActivity() {
   lastFpOutStartMs = 0;
   postShutterHoldUntilMs = 0;
   fullPressIgnoreUntilMs = 0;
+  clearInterFrameHpRelax();
   fpAcceptedAtGapBoundary = false;
   lastActivityEndMs = millis();
 
@@ -297,8 +355,16 @@ void endActivity() {
 static void runBurstScheduler(uint32_t now) {
   if (fpOutReleaseMs != 0 && timeReached(now, fpOutReleaseMs)) {
     releaseFpOut(now, "burstPulseComplete");
+    uint32_t pulseEndMs = now;
     fpOutReleaseMs = 0;
+
+    if (framesFired < camCfg.frameCount) {
+      // More frames remain: Z is per-pulse hold; release only when Y/T/Z allow.
+      beginInterFrameHpRelax(pulseEndMs);
+    }
   }
+
+  serviceInterFrameHpRelax(now);
 
   if (fpOutReleaseMs == 0 && framesFired < camCfg.frameCount && timeReached(now, nextFrameMs)) {
     if (!hpOutAsserted) {
@@ -312,6 +378,7 @@ static void runBurstScheduler(uint32_t now) {
       return;
     }
 
+    clearInterFrameHpRelax();
     assertFpOut(now, "burstFrameFire");
     fpOutReleaseMs = now + shutterPulseMs();
     framesFired++;
@@ -319,8 +386,10 @@ static void runBurstScheduler(uint32_t now) {
   }
 
   if (framesFired >= camCfg.frameCount && fpOutReleaseMs == 0) {
+    clearInterFrameHpRelax();
     telCounters.sequenceCompletedCount++;
     markTelemetryChanged(TEL_EVT_BURST_COMPLETE, TEL_SC_NONE, false);
+    // Final-frame Z hold uses the same PostShutter parameter semantics.
     postShutterHoldUntilMs = now + postShutterHoldMs();
     cameraState = CAM_POST_SHUTTER_EXT;
   }
@@ -502,7 +571,22 @@ void processCameraLogic() {
     case CAM_IDLE:
       cameraLogicActive = false;
 
-      if (hpTrig) {
+      if (hpTrig && fpTrig && camCfg.fullPressWithoutHpPolicy == 0) {
+        // Simultaneous HP+FP is valid shoot intent: latch HP and start sequence.
+        assertHpOut(now);
+        activityActive = true;
+        sequencesStartedThisActivity = 0;
+        wakeHoldDeadlineMs = now + wakeHalfPressHoldMs();
+        fullPressIgnoreUntilMs = 0;
+        cameraLogicActive = true;
+        markTelemetryEvent(TEL_EVT_HP_WAKE, TEL_SC_NONE);
+        if (tryAcceptFp(now)) {
+          startSequence(now);
+          runBurstScheduler(now);
+        } else {
+          cameraState = CAM_WAKE_AF;
+        }
+      } else if (hpTrig) {
         assertHpOut(now);
         activityActive = false;
         sequencesStartedThisActivity = 0;
@@ -578,7 +662,8 @@ void processCameraLogic() {
 
     case CAM_BURST_ACTIVE:
       cameraLogicActive = true;
-      ensureHpOutAsserted(now);
+      // Do not force HP asserted here: inter-frame relax may intentionally
+      // release HP between frames when Z/Y/T permit it.
 
       if (hpTrig) {
         telCounters.hpIgnoredDuringBurstCount++;
