@@ -28,11 +28,13 @@ Waveform-style views cross-linked to [scenarios.md](../scenarios.md). Use [param
 | `minHalfPressBeforeShutter` (T) | 0.5 s | Gates frame 1 only if HP lead too short |
 | `StartFrameSpacingMin` (Y) | 1.0 s | Min pulse-end-to-next-start between frames 2…N |
 | `FrameCount` (N) | 4 | Shutter pulses per sequence |
-| `PostShutterHalfPressHoldTimeExtension` (Z) | 2.0 s | HP hold after last frame |
+| `PostShutterHalfPressHoldTimeExtension` (Z) | 2.0 s | HP hold after each FP pulse end; stock Z keeps HP continuous |
 | `shutterPulseDuration` | 200 ms | FP OUT pulse width |
 | `wakeHalfPressHoldTime` (X) | 10 s | Wake timeout anchored to initial HP assert; final HP release uses R15 max-rule |
 
-**SC-01 timeline:** HP wake t=0, FP accepted t=1.0 s (HP lead already ≥ T). **Camera HP OUT goes ON once** and stays latched through burst + Z. **No** extra T-wait between frames 2…N.
+**SC-01 timeline (stock):** HP wake t=0, FP accepted t=1.0 s (HP lead already ≥ T). With stock `Z=2.0 s` (`Z >= Y - T`), **camera HP OUT stays continuous** through burst. **No** extra T-wait between frames 2…N.
+
+**Relax note:** If `Z` is small enough that `Z < (Y - T - 20 ms)`, HP may drop after each pulse’s Z hold and reassert `T` before the next frame. See [hp-relax-transition-spec.md](../hp-relax-transition-spec.md).
 
 ```mermaid
 sequenceDiagram

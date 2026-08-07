@@ -1,0 +1,30 @@
+id: AO-HPRELAX-ALLOWED-Z0
+scenario: ADDON-HP-RELAX
+description: Inter-frame HP release allowed when Z is zero and Y-T has slack
+tags: [addon, hp-relax-transition, interframe-release]
+parameters:
+  enabled: 1
+  wakeHalfPressHoldTime: 10s
+  minHalfPressBeforeShutter: 0.5s
+  FrameCount: 4
+  MaxSequenceCount: 4
+  StartFrameSpacingMin: 1.0s
+  PostShutterHalfPressHoldTimeExtension: 0.0s
+  shutterPulseDuration: 100ms
+  halfPressInputDebounce: 35ms
+  fullPressInputDebounce: 20ms
+  fullPressIgnoreGap: 5.0s
+fixture:
+  captureAfterLastStimulusMs: 12000
+stimulus:
+  - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 1000, signal: FP_IN_STIM, state: active, durationMs: 100 }
+expect:
+  fpOut: { pulseCount: 4, pulseWidthMs: 100, frameSpacingMs: 1000 }
+  sequences: 1
+  holdExpect:
+    requireInterFrameHpRelease: true
+  telemetryDeltas:
+    acceptedFpCount: 1
+    sequenceCompletedCount: 1
+metrics: [frameCount, hpInterFrameReleaseCount, hpInterFrameReassertCount, frameEndToStartSpacingMs]

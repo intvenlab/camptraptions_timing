@@ -45,7 +45,7 @@ Firmware constants:
 | 3 | `minHalfPressBeforeShutter` | x100 ms |
 | 4..5 | `shutterPulseDuration` | little-endian uint16, x10 ms (range 10..30000ms) |
 | 6..7 | `startFrameSpacingTicks` | little-endian uint16, x10 ms (range 10..30000ms), pulse-end-to-next-start |
-| 8 | `postShutterHpHoldTenths` | x100 ms |
+| 8 | `postShutterHpHoldTenths` | x100 ms (range `0..200` = 0..20.0 s); HP hold after **each** FP pulse end |
 | 9 | `hpDebounceMs` | ms |
 | 10 | `fpDebounceMs` | ms |
 | 11 | `frameCount` | count |

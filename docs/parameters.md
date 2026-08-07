@@ -64,7 +64,9 @@ Range: **10ms..30000ms**.
 
 #### `PostShutterHalfPressHoldTimeExtension`
 
-After the last shutter in a sequence, hold camera HP for this duration (R11). Final HP release is the later of wake timeout or this post-final-frame extension window.
+HP hold after **each** FP pulse end (including the last) (R11). Enables settings-driven inter-frame HP deassert/reassert without a new mode: when `Z < (Y - T - guard)`, HP may drop between frames and reassert for `T` before the next shot; otherwise HP stays continuous. See [hp-relax-transition-spec.md](hp-relax-transition-spec.md).
+
+Range: **0..20.0 s** (`0..200` ticks). `0` means release immediately after a pulse end when timing permits. Final activity HP release still follows R15 (`max(wake hold, final frame release + Z)`).
 
 #### `shutterPulseDuration`
 

@@ -63,6 +63,6 @@ Run outputs are written to `TickleBoard/artifacts/`:
 ## Latest authoritative run
 
 - BLE full-suite artifacts: per-case folders under `TickleBoard/artifacts/` with batch prefix `20260523_124553_*`
-- Current top-level rollups (`TickleBoard/artifacts/suite_rollup.json`, `.md`, `.csv`) mirror the **2026-05-23** BLE full suite: **38/38 pass** (timing 94/94, functional 167/167, protocol 24/24)
+- Current top-level rollups (`TickleBoard/artifacts/suite_rollup.json`, `.md`, `.csv`) mirror the **2026-08-06** BLE full suite (HP-relax): **43/43 pass** (timing 115/115, functional 202/202, protocol 24/24)
 - Customer-facing detailed report: `docs/validation-test-report.md` (generated via `tickle_cli.py report --detailed`)
 - Archived prior run (31-case generation): `TickleBoard/artifacts/full_run_ble_20260521_1719`

@@ -48,7 +48,7 @@ CAMERA_FIELDS: dict[str, CameraField] = {
     "minHalfPressBeforeShutter": CameraField(3, 1, 100, "ms100_to_u8"),
     "shutterPulseDuration": CameraField(4, 1, 3000, "ms10_to_u16"),
     "StartFrameSpacingMin": CameraField(6, 1, 3000, "ms10_to_u16"),
-    "PostShutterHalfPressHoldTimeExtension": CameraField(8, 1, 100, "ms100_to_u8"),
+    "PostShutterHalfPressHoldTimeExtension": CameraField(8, 0, 200, "ms100_to_u8"),
     "halfPressInputDebounce": CameraField(9, 1, 100, "ms_to_u8"),
     "fullPressInputDebounce": CameraField(10, 1, 100, "ms_to_u8"),
     "FrameCount": CameraField(11, 1, 8, "raw"),

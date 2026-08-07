@@ -1,8 +1,8 @@
 # TickleBoard Suite Report
 
-- Cases: 38 passed, 0 failed, 0 skipped, 38 total
-- Timing assertions: 94/94
-- Functional assertions: 167/167
+- Cases: 43 passed, 0 failed, 0 skipped, 43 total
+- Timing assertions: 115/115
+- Functional assertions: 202/202
 
 | Case | Scenario | Status | Failure Class | Timing | Functional | Skip Reason | Notes |
 |------|----------|--------|---------------|--------|------------|-------------|-------|
@@ -44,3 +44,8 @@
 | AO-CAMCFG-NACK-BAD-VERSION | ADDON-CAMCFG-PROTOCOL | passed | pass | 0/0 | 1/1 |  |  |
 | AO-CAMCFG-NACK-BAD-LENGTH | ADDON-CAMCFG-PROTOCOL | passed | pass | 0/0 | 1/1 |  |  |
 | AO-CAMCFG-NACK-OUT-OF-RANGE | ADDON-CAMCFG-PROTOCOL | passed | pass | 0/0 | 1/1 |  |  |
+| AO-HPRELAX-SIMULTANEOUS-INTENT | ADDON-HP-RELAX | passed | pass | 5/5 | 7/7 |  |  |
+| AO-HPRELAX-ALLOWED-Z0 | ADDON-HP-RELAX | passed | pass | 4/4 | 7/7 |  |  |
+| AO-HPRELAX-BLOCKED-Z500-T700 | ADDON-HP-RELAX | passed | pass | 4/4 | 7/7 |  |  |
+| AO-HPRELAX-BOUNDARY-Z300-T700 | ADDON-HP-RELAX | passed | pass | 4/4 | 7/7 |  |  |
+| SC-01-HPRELAX | SC-01 | passed | pass | 4/4 | 7/7 |  |  |

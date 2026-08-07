@@ -282,6 +282,26 @@ def evaluate_case(
 
     hold_expect = vector_expect.get("holdExpect", {})
     if isinstance(hold_expect, dict):
+        if hold_expect.get("requireInterFrameHpRelease") is True:
+            release_count = int(metrics.get("hpInterFrameReleaseCount") or 0)
+            checks.append(
+                CheckResult(
+                    name="hold.requireInterFrameHpRelease",
+                    passed=release_count > 0,
+                    detail=f"expected >0 inter-frame HP release edges, got {release_count}",
+                    category="timing",
+                )
+            )
+        if hold_expect.get("forbidInterFrameHpRelease") is True:
+            release_count = int(metrics.get("hpInterFrameReleaseCount") or 0)
+            checks.append(
+                CheckResult(
+                    name="hold.forbidInterFrameHpRelease",
+                    passed=release_count == 0,
+                    detail=f"expected 0 inter-frame HP release edges, got {release_count}",
+                    category="timing",
+                )
+            )
         if hold_expect.get("noHpReleaseBeforeFinalFrame") is True:
             prefinal_release = bool(metrics.get("hpReleaseBeforeFinalFrameDetected", False))
             checks.append(

@@ -105,7 +105,8 @@ def sanitize_camera_config_bytes(raw: bytes | bytearray) -> bytearray:
     spacing = max(1, min(3000, spacing))
     _write_field(buf, CAMERA_FIELDS["StartFrameSpacingMin"], spacing)
 
-    buf[8] = max(1, min(200, int(buf[8])))
+    # Z=0 is valid (immediate post-pulse HP release when Y/T allow).
+    buf[8] = max(0, min(200, int(buf[8])))
     buf[9] = max(1, min(250, int(buf[9])))
     buf[10] = max(1, min(250, int(buf[10])))
     buf[11] = max(1, min(8, int(buf[11])))

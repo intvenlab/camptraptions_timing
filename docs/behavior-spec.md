@@ -1,6 +1,6 @@
 # Behavior specification
 
-Normative description of what the timing MCU must do. **This document is the source of truth for requirements and behavior precedence.** Parameter names refer to [parameters.md](parameters.md). **Acceptance scenarios:** [scenarios.md](scenarios.md). Diagrams: [mcu-state-flow.md](diagrams/mcu-state-flow.md), [timing-sequences.md](diagrams/timing-sequences.md).
+Normative description of what the timing MCU must do. **This document is the source of truth for requirements and behavior precedence.** Parameter names refer to [parameters.md](parameters.md). **Acceptance scenarios:** [scenarios.md](scenarios.md). Diagrams: [mcu-state-flow.md](diagrams/mcu-state-flow.md), [timing-sequences.md](diagrams/timing-sequences.md). Transition design for adaptive inter-frame HP release is captured in [hp-relax-transition-spec.md](hp-relax-transition-spec.md).
 
 ## Customer baseline requirements (source of truth)
 
@@ -9,8 +9,8 @@ The customer-provided requirements define the baseline behavior:
 - A brief HP input pulse latches camera HP for `wakeHalfPressHoldTime` (X).
 - If FP arrives and HP lead is less than `minHalfPressBeforeShutter` (T), delay only until T is satisfied, then fire.
 - One accepted FP starts one sequence of `FrameCount` (N) shutter pulses with `StartFrameSpacingMin` (Y) spacing and `shutterPulseDuration` pulse width.
-- After sequence completion, keep HP for `PostShutterHalfPressHoldTimeExtension` (Z), while wake/hold rules still apply.
-- If another FP arrives while HP is still latched, accept it as soon as normal gates clear (R4, R10, R12). Do not require a new wide-sensor wake cycle.
+- After each FP pulse end (including the last), hold HP for `PostShutterHalfPressHoldTimeExtension` (Z). Between frames, HP may deassert/reassert when `Z/Y/T` permit; stock settings keep HP continuous. Wake/hold rules still apply for final release.
+- Simultaneous HP+FP at idle is valid shoot intent. If another FP arrives while gates clear (R4, R10, R12), accept it without requiring a new wide-sensor wake cycle.
 
 Unless explicitly stated as an optional extension requirement, behavior must align with this baseline.
 
@@ -72,19 +72,30 @@ HP **input release** is not mirrored to camera HP OUT in state-machine mode. HP 
 | R1 | HP **input** is wake/prepare only; MCU **latches camera HP ON** on wake. Repeated HP pulses while already latched do not refresh wake deadline. |
 | R2 | If no FP arrives before `wakeHalfPressHoldTime` expires, MCU **releases camera HP**. |
 | R3 | FP may arrive **without** prior HP input. |
-| R4 | Before any FP **output** pulse, camera HP must have been active for at least `minHalfPressBeforeShutter`. In the common latched-HP path, this typically gates frame 1 only; later frames follow `StartFrameSpacingMin` unless HP had been dropped. |
+| R4 | Before any FP **output** pulse, camera HP must have been active for at least `minHalfPressBeforeShutter`. When HP stays continuous, this typically gates frame 1 only; when HP is released between frames, R4 applies again before the next pulse. |
 | R5 | Each FP pulse to the camera lasts `shutterPulseDuration` (no overlapping FP outputs). |
 | R6 | In a sequence, schedule successive FP **output** pulse starts so each next start occurs at least `StartFrameSpacingMin` after the prior pulse end (falling edge to next rising edge). Spacing is **pulse-end-to-next-start**; start-to-start interval therefore includes `shutterPulseDuration` and may be longer if R4 or HP release delays the next start. |
-| R7 | During a sequence burst, **keep camera HP OUT asserted** between frames; do not release HP because of trigger activations (original §4b). |
-| R9 | During burst, **do not drop HP** merely because another FP input arrives (HP latch is independent of ignored FP). |
+| R7 | Do **not** release camera HP because of trigger activations during a burst (original §4b). Between frames, HP may intentionally deassert/reassert when `PostShutterHalfPressHoldTimeExtension` / `StartFrameSpacingMin` / `minHalfPressBeforeShutter` permit (see [hp-relax-transition-spec.md](hp-relax-transition-spec.md)); otherwise keep HP continuous. |
+| R9 | During burst, **do not drop HP** merely because another FP input arrives (HP latch/relax is independent of ignored FP). |
 | R10 | From **sequence start** (accepted FP that schedules the burst), ignore all FP **inputs** for `fullPressIgnoreGap` — no second sequence and no extra frames in that window. Telemetry reject counters may still increment for those ignored inputs. Covers PIR retrigger flood when PIR **Gap = minimum**. Set **≥** typical burst length; default estimate `(FrameCount - 1) × (StartFrameSpacingMin + shutterPulseDuration) + shutterPulseDuration`. |
-| R10b | An FP **input** is accepted and **starts a new sequence** only when the burst schedule is not in progress, `fullPressIgnoreGap` has elapsed since that sequence’s start, `sequencesStartedThisActivity < MaxSequenceCount`, and R4/R12 gates pass. A retrigger while HP is still latched is taken as soon as these gates clear. |
-| R11 | After the last frame of a sequence’s burst schedule, hold HP for `PostShutterHalfPressHoldTimeExtension`. If another sequence may still start (under `MaxSequenceCount`), HP may remain latched; release HP only when activity ends. |
+| R10b | An FP **input** is accepted and **starts a new sequence** only when the burst schedule is not in progress, `fullPressIgnoreGap` has elapsed since that sequence’s start, `sequencesStartedThisActivity < MaxSequenceCount`, and R4/R12 gates pass. A retrigger while HP is still latched is taken as soon as these gates clear. Simultaneous HP+FP at idle is valid shoot intent. |
+| R11 | `PostShutterHalfPressHoldTimeExtension` (`Z`) is HP hold after **each** FP pulse end (including the last). Range includes `0`. If another sequence may still start (under `MaxSequenceCount`), HP may remain latched after the final Z window; release HP only when activity ends under R15. |
 | R12 | A new **sequence** begins when an FP is accepted after the prior sequence’s burst **schedule** is complete and normal gates pass. R4 applies before the first FP output of that sequence. |
 | R13 | While activity is active (any sequence in progress, between sequences, or post-burst with sequences remaining), camera HP must not be released solely because `wakeHalfPressHoldTime` expired (`activityHalfPressHoldPolicy = holdUntilActivityEnd`). |
 | R14 | HP **input** during an active burst does not change `remainingFrames`, does not emit FP, and does not release camera HP (`halfPressDuringBurstPolicy = independent`). |
 | R15 | Final HP release time is `max(initial HP assert + wakeHalfPressHoldTime, final frame release + PostShutterHalfPressHoldTimeExtension)`. Accepted FP/sequence starts do not refresh wake deadline. |
 | TimeOut | Optional extension only (not part of customer baseline unless explicitly requested): when `sequencesStartedThisActivity >= MaxSequenceCount` and another FP arrives, enter timeout for one full burst budget `((FrameCount - 1) * (StartFrameSpacingMin + shutterPulseDuration)) + shutterPulseDuration`. During timeout, ignore FP and HP inputs for sequence triggering. After timeout expires, normal acceptance resumes. |
+
+## Adaptive inter-frame HP release (implemented)
+
+Using existing settings only (no new mode byte):
+
+1. `PostShutterHalfPressHoldTimeExtension` (`Z`) is hold after **each** FP pulse end (`0` allowed).
+2. Inter-frame HP may deassert only when `Z < (Y - T - guard)` (guard = 20 ms); otherwise HP stays continuous.
+3. Before every frame, enforce `minHalfPressBeforeShutter` (`T`), reasserting HP early when needed.
+4. Simultaneous HP+FP at idle is valid shoot intent (sequence starts; first frame gated by T).
+
+Stock settings (`Z=2.0 s`, `Y=1.0 s`, `T=0.5 s`) remain continuous HP. Normative equations and validation gates: [hp-relax-transition-spec.md](hp-relax-transition-spec.md).
 
 ## Half-press without full-press (timeout path)
 
@@ -144,44 +155,32 @@ Example: `FrameCount = 4`, `StartFrameSpacingMin = 1.0 s`, `shutterPulseDuration
 
 Normative timing for firmware — avoids reading `minHalfPressBeforeShutter` as an extra delay on top of `StartFrameSpacingMin`.
 
-### Normal case (HP latched for whole sequence)
+### Continuous-HP case (stock / Z large enough)
 
-Half press stays up; frames fire with a minimum idle gap **Y** after each pulse release.
+When `Z >= (Y - T - guard)`, half press stays up; frames fire with minimum idle gap **Y** after each pulse release.
 
-1. Sequence starts → camera HP OUT **on** (wake path or cold-FP path).
-2. **Sequence start:** Begin R10 FP ignore for `fullPressIgnoreGap` (default ≈ `(FrameCount - 1) × (StartFrameSpacingMin + shutterPulseDuration) + shutterPulseDuration`).
-3. **Frame 1:** Wait until `minHalfPressBeforeShutter` satisfied → FP OUT pulse (`shutterPulseDuration`).
-4. **Frames 2…N:** At each scheduled time `t_prev_release + StartFrameSpacingMin`, fire the next FP OUT pulse (R6). **Do not** wait another full `minHalfPressBeforeShutter` if HP never dropped — R4 is already satisfied.
-5. **Sequence end:** After frame **N** → `PostShutterHalfPressHoldTimeExtension` (R11). R10 ignore ends when `fullPressIgnoreGap` elapses (burst may finish earlier).
+1. Sequence starts → camera HP OUT **on** (wake, simultaneous HP+FP, or cold-FP path).
+2. **Sequence start:** Begin R10 FP ignore for `fullPressIgnoreGap`.
+3. **Frame 1:** Wait until `minHalfPressBeforeShutter` satisfied → FP OUT pulse.
+4. **Frames 2…N:** At `t_prev_release + StartFrameSpacingMin`, fire next FP OUT (R6). Do **not** wait another full T if HP never dropped.
+5. **Sequence end:** After frame **N**, apply final Z hold (R11), then R15 release rule.
 
-Example (`minHalfPressBeforeShutter` = 0.5 s, `StartFrameSpacingMin` = 1.0 s, `shutterPulseDuration` = 0.1 s, `FrameCount` = 4, HP held throughout):
+### Relaxed-HP case (Z small enough)
 
-| Event | Time (illustrative) |
-|-------|---------------------|
-| HP asserted | 0.0 s |
-| Frame 1 OUT | 0.5 s (after T) |
-| Frame 2 OUT | 1.6 s |
-| Frame 3 OUT | 2.7 s |
-| Frame 4 OUT | 3.8 s |
+When `Z < (Y - T - guard)`, after each non-final FP pulse end:
 
-`StartFrameSpacingMin` sets the schedule. **`minHalfPressBeforeShutter` does not override or replace `StartFrameSpacingMin`** in this case.
+1. Hold HP for Z, then release HP OUT.
+2. Reassert HP at `next_frame_start - T`.
+3. Fire next FP only when schedule time is reached and R4 lead is satisfied.
 
-### Exception path (HP OUT released mid-burst)
-
-Not normal operation. This means camera HP **output** was released by the MCU, not that HP **input** from the trigger released. If camera HP OUT was released between scheduled frames, **before** the next FP OUT pulse:
-
-1. Assert HP OUT.
-2. Wait until `minHalfPressBeforeShutter` has elapsed since that assert.
-3. Then fire the pulse.
-
-The **actual** gap since the previous frame may be **longer than** `StartFrameSpacingMin`; that is a late gate, not a change to **Y**.
+Cadence still targets Y; R4 may delay a frame if reassert is late.
 
 ### What does *not* happen
 
-- No separate focus-acquisition interval between frames.
-- `minHalfPressBeforeShutter` is **not** added to every inter-frame interval when HP stays latched.
+- No separate focus-acquisition interval beyond R4 lead enforcement.
+- `minHalfPressBeforeShutter` is **not** added to every inter-frame interval when HP stays continuous.
 - `StartFrameSpacingMin` is **not** shortened or replaced by **T** when HP lead is already satisfied.
-- HP **input release** is not a command to release camera HP OUT in state-machine mode.
+- HP **input release** is not a command to release camera HP OUT in state-machine mode (MCU may still release HP OUT under adaptive Z/Y/T rules).
 
 ## Policies (enums)
 

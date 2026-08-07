@@ -641,3 +641,36 @@
   - `shutterPulseDuration` default changed to **200 ms** (`camCfg.shutterPulseDuration = 20` ticks).
   - `fullPressIgnoreGap` default changed to **5.0 s** (`camCfg.fullPressIgnoreGapTenths = 50`).
 - Updated firmware defaults and aligned docs (`parameters.md`, `behavior-spec.md`, `scenarios.md`, `validation-test-plan.md`, `diagrams/timing-sequences.md`, `android-client-handoff.md`).
+
+## HP relax transition planning 2026-08-06
+- User requested no new mode byte; behavior should be settings-driven:
+  - keep continuous HP where `T/Y/Z` imply no safe inter-frame drop,
+  - allow inter-frame HP deassert/reassert when timing permits,
+  - treat simultaneous HP+FP as valid shoot intent.
+- Added transition spec doc: `docs/hp-relax-transition-spec.md`.
+- Added validation plan section and new suite/vectors:
+  - `TickleBoard/vectors/suites/hp_relax_transition_suite.yaml`
+  - `AO-HPRELAX-SIMULTANEOUS-INTENT`
+  - `AO-HPRELAX-ALLOWED-Z0`
+  - `AO-HPRELAX-BLOCKED-Z500-T700`
+  - `AO-HPRELAX-BOUNDARY-Z300-T700`
+- Harness updated with inter-frame HP metrics/checks:
+  - metrics: `hpInterFrameReleaseCount`, `hpInterFrameReassertCount`, `hpInterFrameLowMs`
+  - checks: `hold.requireInterFrameHpRelease`, `hold.forbidInterFrameHpRelease`
+
+## HP relax transition implemented 2026-08-06
+- Firmware (`storage.cpp`): `postShutterHpHoldTenths` may be **0** (was clamped to ≥1).
+- Firmware (`camera.cpp`):
+  - Per-pulse Z hold; inter-frame HP release/reassert when `Z < (Y - T - 20ms)`.
+  - `CAM_BURST_ACTIVE` no longer unconditionally re-asserts HP (would defeat relax).
+  - `CAM_IDLE` simultaneous HP+FP accepted as shoot intent (wake + tryAcceptFp + startSequence).
+- Harness bounds: `CAMERA_FIELDS.PostShutterHalfPressHoldTimeExtension` min 0 / max 200.
+- Harness sanitize mirror: `camera_config.py` `buf[8]` clamp `max(0, min(200, ...))` (was `max(1,...)` — blocked Z=0 writes).
+- Vectors: transition suite + `SC-01-HPRELAX`; retired diagnostic `AO-HPFP-SIMULTANEOUS-WAKE100-FC6` as hard-pass alias; wake ≥1s on simultaneous vectors (firmware wake min 1s).
+- Docs aligned: behavior-spec R7/R11, parameters, scenarios, validation-test-plan, timing-sequences, android-client-handoff.
+- Validation gates (fixture COM7, DUT COM3, BLE C9:E0:7E:27:B2:4A):
+  - `hp_relax_transition_suite`: **5/5 pass**
+  - `full_validation_suite`: **43/43 pass** (timing 115/115, functional 202/202, protocol 24/24)
+  - Report refreshed: `docs/validation-test-report.md` (run label `HP-relax-20260806`)
+- Ports reminder: fixture **COM7**, DUT serial **COM3**, BLE **C9:E0:7E:27:B2:4A**, Python **C:\Python314\python.exe**
+- Do not commit/push unless user asks.

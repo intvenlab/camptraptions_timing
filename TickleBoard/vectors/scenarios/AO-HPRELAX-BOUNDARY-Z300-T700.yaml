@@ -1,0 +1,30 @@
+id: AO-HPRELAX-BOUNDARY-Z300-T700
+scenario: ADDON-HP-RELAX
+description: Boundary case near Z equals Y-T should resolve deterministically
+tags: [addon, hp-relax-transition, boundary]
+parameters:
+  enabled: 1
+  wakeHalfPressHoldTime: 10s
+  minHalfPressBeforeShutter: 0.7s
+  FrameCount: 4
+  MaxSequenceCount: 4
+  StartFrameSpacingMin: 1.0s
+  PostShutterHalfPressHoldTimeExtension: 0.3s
+  shutterPulseDuration: 100ms
+  halfPressInputDebounce: 35ms
+  fullPressInputDebounce: 20ms
+  fullPressIgnoreGap: 5.0s
+fixture:
+  captureAfterLastStimulusMs: 12000
+stimulus:
+  - { atMs: 0, signal: HP_IN_STIM, state: active, durationMs: 100 }
+  - { atMs: 1000, signal: FP_IN_STIM, state: active, durationMs: 100 }
+expect:
+  fpOut: { pulseCount: 4, pulseWidthMs: 100, frameSpacingMs: 1000 }
+  sequences: 1
+  holdExpect:
+    forbidInterFrameHpRelease: true
+  telemetryDeltas:
+    acceptedFpCount: 1
+    sequenceCompletedCount: 1
+metrics: [frameCount, hpInterFrameReleaseCount, frameEndToStartSpacingMs]

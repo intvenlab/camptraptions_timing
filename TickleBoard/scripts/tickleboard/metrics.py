@@ -28,6 +28,16 @@ def _first_at_or_after(times: list[int], target: int) -> int | None:
     return None
 
 
+def _first_between(times: list[int], start: int, end_exclusive: int) -> int | None:
+    for t in times:
+        if t < start:
+            continue
+        if t >= end_exclusive:
+            break
+        return t
+    return None
+
+
 def _pair_widths(active: list[int], inactive: list[int]) -> list[int]:
     widths: list[int] = []
     j = 0
@@ -223,6 +233,23 @@ def extract_metrics(
     elif hp_in_a and not hp_out_a:
         hp_in_to_hp_out_latency_reason = "no_hp_out_active_edges"
 
+    hp_interframe_release_count = 0
+    hp_interframe_reassert_count = 0
+    hp_interframe_low_ms: list[int] = []
+    interframe_pair_count = min(len(fp_out_i), max(0, len(fp_out_a) - 1))
+    if interframe_pair_count > 0:
+        for i in range(interframe_pair_count):
+            gap_start = fp_out_i[i]
+            gap_end = fp_out_a[i + 1]
+            releases = [t for t in hp_out_i if gap_start <= t < gap_end]
+            reasserts = [t for t in hp_out_a if gap_start <= t < gap_end]
+            hp_interframe_release_count += len(releases)
+            hp_interframe_reassert_count += len(reasserts)
+            for release_t in releases:
+                reassert_t = _first_between(hp_out_a, release_t, gap_end)
+                if reassert_t is not None and reassert_t >= release_t:
+                    hp_interframe_low_ms.append(reassert_t - release_t)
+
     wake_only_hold = None
     if inferred_hp_out_start is not None and hp_out_i and not fp_out_a:
         wake_only_hold = float(hp_out_i[-1] - inferred_hp_out_start)
@@ -264,6 +291,9 @@ def extract_metrics(
         "hpAssertToFinalFrameReleaseMs": hp_assert_to_final_fp_release,
         "hpOutPreAssertedBeforeHpIn": hp_out_pre_asserted_before_hp_in,
         "hpInToHpOutLatencyReason": hp_in_to_hp_out_latency_reason,
+        "hpInterFrameReleaseCount": hp_interframe_release_count,
+        "hpInterFrameReassertCount": hp_interframe_reassert_count,
+        "hpInterFrameLowMs": float(mean(hp_interframe_low_ms)) if hp_interframe_low_ms else None,
         "hpOutContinuityMs": (
             float(hp_out_i[-1] - inferred_hp_out_start)
             if inferred_hp_out_start is not None and hp_out_i

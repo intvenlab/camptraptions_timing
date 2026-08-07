@@ -80,10 +80,10 @@ Each defined scenario uses:
 
 1. On HP: assert camera HP ON; start `wakeHalfPressHoldTime` (R1, R13).
 2. At t=1.0 s: HP lead ≥ `minHalfPressBeforeShutter` → **sequence 1** starts; schedule `FrameCount` frames (R4, R10b). Accepted FP does not refresh wake timer (R15).
-3. Fire frames on `StartFrameSpacingMin` schedule measured from prior FP OUT pulse end to next start (R6) with `shutterPulseDuration` each (R5); HP latched throughout (R7); `minHalfPressBeforeShutter` only gates frame 1 if needed (see behavior-spec burst scheduling).
-4. After last frame: hold HP for `PostShutterHalfPressHoldTimeExtension` (R11). Activity ends; release HP → idle.
+3. Fire frames on `StartFrameSpacingMin` schedule measured from prior FP OUT pulse end to next start (R6) with `shutterPulseDuration` each (R5). With stock `Z`, HP stays continuous (R7); `minHalfPressBeforeShutter` gates frame 1 if needed (and every frame if HP was relaxed between shots).
+4. After each FP pulse end (including last): apply `PostShutterHalfPressHoldTimeExtension` (R11). Activity ends under R15; release HP → idle.
 
-**Outputs:** 1 sequence, 4 frames (if `FrameCount=4`). HP latched from t=0 through post-burst hold.
+**Outputs:** 1 sequence, 4 frames (if `FrameCount=4`). With stock Z, HP continuous from t=0 through post-burst hold.
 
 **Parameters:** `wakeHalfPressHoldTime`, `minHalfPressBeforeShutter`, `FrameCount`, `shutterPulseDuration`, `StartFrameSpacingMin`, `PostShutterHalfPressHoldTimeExtension`
 
@@ -745,7 +745,7 @@ Record debounce settings, temperature, and supply voltage in the log. Outliers f
 2. FP is accepted and starts sequence 1 if gates pass; accepted FP does not refresh wake timeout (R15).
 3. Camera HP OUT remains asserted through the burst and `PostShutterHalfPressHoldTimeExtension` even though HP input is released (R7, R13).
 4. If the HP lead at FP accept is shorter than `minHalfPressBeforeShutter`, frame 1 waits until HP OUT has been active for T (R4).
-5. Frames 2..N follow `StartFrameSpacingMin`; no extra T wait is inserted while HP OUT remains latched.
+5. Frames 2..N follow `StartFrameSpacingMin`; no extra T wait is inserted while HP OUT remains continuous (stock Z).
 
 **Pass criteria**
 
@@ -877,7 +877,7 @@ next FP_OUT start >= previous FP_OUT release + StartFrameSpacingMin
 
 **Status:** defined
 
-**Intent:** Prevent a parameter interpretation error when `minHalfPressBeforeShutter` is longer than `StartFrameSpacingMin`. T can delay frame 1 after inadequate HP lead, but it must not be added before every later frame while HP OUT stays latched.
+**Intent:** Prevent a parameter interpretation error when `minHalfPressBeforeShutter` is longer than `StartFrameSpacingMin`. T can delay frame 1 after inadequate HP lead, but it must not be added before every later frame while HP OUT stays continuous.
 
 **Preconditions:** Configure `minHalfPressBeforeShutter > StartFrameSpacingMin`, for example T = 2.0 s and Y = 0.5 s. Use `FrameCount >= 3`.
 

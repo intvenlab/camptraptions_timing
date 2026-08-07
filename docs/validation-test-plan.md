@@ -16,6 +16,7 @@ This plan validates the timing MCU behavior described by [scenarios.md](scenario
 |--------|----------------|
 | [scenarios.md](scenarios.md) | Scenario intent, inputs, and expected behavior |
 | [behavior-spec.md](behavior-spec.md) | Rules R1-R15 plus TimeOut behavior and sequence/activity definitions |
+| [hp-relax-transition-spec.md](hp-relax-transition-spec.md) | Next-revision adaptive HP release equations, compatibility constraints, and pass gates |
 | [parameters.md](parameters.md) | Parameter names, defaults, units, and enum behavior |
 | [diagrams/timing-sequences.md](diagrams/timing-sequences.md) | Canonical timing examples and reference waveforms |
 | [pir-sensor-settings.md](pir-sensor-settings.md) | Field PIR setup assumptions, especially PIR Gap minimum |
@@ -169,6 +170,8 @@ expect:
     pulseWidthMs: 100
     frameSpacingMs: 1000
   holdExpect:
+    requireInterFrameHpRelease: false
+    forbidInterFrameHpRelease: true
     noHpReleaseBeforeFinalFrame: true
     requirePostFinalFrameHpRelease: true
     dropTimeRule:
@@ -197,6 +200,8 @@ If tolerance is not specified in a vector, use this plan's metric-specific defau
 
 `holdExpect` rules:
 
+- `requireInterFrameHpRelease: true` -> pass only if at least one `HP_OUT INACTIVE` edge occurs in any inter-frame gap.
+- `forbidInterFrameHpRelease: true` -> pass only if no `HP_OUT INACTIVE` edge occurs in inter-frame gaps.
 - `noHpReleaseBeforeFinalFrame: true` -> fail if any `HP_OUT INACTIVE` edge occurs before the final `FP_OUT INACTIVE` edge in that case/activity.
 - `requirePostFinalFrameHpRelease: true` -> fail if no `HP_OUT INACTIVE` edge is observed after the final frame release.
 - `dropTimeRule` -> assert `HP_OUT` continuity matches `max(wakeHoldMs, hpAssertToFinalFrameReleaseMs + postFinalFrameHoldMs)` within tolerance.
@@ -212,6 +217,8 @@ If tolerance is not specified in a vector, use this plan's metric-specific defau
 | `fpPulseWidthMs` | FP OUT active duration | SC-01, SC-11, SC-14 |
 | `frameStartSpacingMs` | FP OUT active-edge to active-edge spacing (diagnostic only; expected ~`StartFrameSpacingMin + shutterPulseDuration`) | SC-01, SC-11 |
 | `frameEndToStartSpacingMs` | FP OUT inactive-edge to next active-edge spacing (normative R6 metric) | SC-01, SC-11 |
+| `hpInterFrameReleaseCount` | Number of HP_OUT release edges observed between FP frame pulses | HP relax transition add-ons |
+| `hpInterFrameReassertCount` | Number of HP_OUT assert edges observed between FP frame pulses | HP relax transition add-ons |
 | `hpHoldAfterLastFrameMs` | Time from final FP OUT release to first HP OUT release that occurs at/after that final frame release | SC-01, SC-05, SC-05b |
 | `hpOutContinuityMs` | Continuous HP OUT active time across HP input release/chatter | SC-16, SC-18 |
 | `firstFrameGateDelayMs` | Difference between first FP OUT start and `max(FP accept, HP OUT assert + T)` | SC-16, SC-17, SC-19, SC-20 |
@@ -361,7 +368,7 @@ Use this set unless a scenario or sweep overrides it.
 
 | ID | Required validation | Primary metrics | Pass criteria |
 |-------|---------------------|-----------------|---------------|
-| SC-01 | HP wake, FP at 1 s, one nominal burst | Latency, pulse count, pulse width, frame spacing, HP release | 1 sequence, `FrameCount` FP OUT pulses, HP OUT held through burst and Z |
+| SC-01 | HP wake, FP at 1 s, one nominal burst | Latency, pulse count, pulse width, frame spacing, HP release | 1 sequence, `FrameCount` FP OUT pulses; with stock Z, HP OUT continuous through burst (relax covered by `hp_relax_transition_suite`) |
 | SC-02 | Extra FP during sequence | Frame count, ignored FP behavior | Extra FP does not add frames, restart schedule, or drop HP |
 | SC-03 | FP flood during burst | Frame count, ignored FP behavior | Continuous/repeated FP still produces exactly one sequence |
 | SC-04 | HP only, no FP | Wake-only hold | HP OUT releases after `wakeHalfPressHoldTime`; no FP OUT |
@@ -395,10 +402,10 @@ Expected output:
 
 | Output | Expected |
 |--------|------------------|
-| HP OUT | Active near t=0; remains active through all frames and Z |
+| HP OUT | Active near t=0; with stock Z remains continuous through all frames (inter-frame relax only when Z/Y/T permit — see transition suite) |
 | FP OUT | `FrameCount` pulses |
-| FP OUT starts | 1.0 s, then every `StartFrameSpacingMin` |
-| Activity | Ends after final frame and `PostShutterHalfPressHoldTimeExtension` |
+| FP OUT starts | 1.0 s, then every `StartFrameSpacingMin` (+ pulse width for start-to-start) |
+| Activity | Ends under R15 after final-frame Z hold |
 
 ### SC-02 - FP during sequence ignored
 
@@ -434,7 +441,7 @@ Pulse FP IN from idle with no prior HP. HP OUT must assert promptly, then first 
 
 ### SC-07 - HP during active burst
 
-Run a normal burst and inject HP IN pulses between FP OUT frames. The frame schedule must remain unchanged and HP OUT must not drop.
+Run a normal burst and inject HP IN pulses between FP OUT frames. The frame schedule must remain unchanged. HP **input** must not force HP OUT drop or alter FPS (intentional MCU inter-frame relax under low Z is covered separately by `hp_relax_transition_suite`).
 
 ### SC-07b - HP during post-burst hold
 
@@ -597,6 +604,49 @@ Verify camera config reset, telemetry reset, and safe activity teardown behavior
 ### Reserved field coercion checks
 
 Write non-default values for `inputActivePolarity` and `outputDriveMode`. Read back and verify firmware coercion to supported defaults. Repeat for reserved policy bytes where applicable.
+
+## HP relax transition validation (next revision)
+
+This section defines the validation gate for adaptive inter-frame HP release behavior using existing settings (`T`, `Y`, `Z`) and no new mode byte.
+
+### New transition vectors (required)
+
+Run `TickleBoard/vectors/suites/hp_relax_transition_suite.yaml` with BLE enabled:
+
+1. Simultaneous HP+FP shoot intent accepted.
+2. Inter-frame HP release allowed (`Z` small enough) and `T` still enforced.
+3. Inter-frame HP release blocked (`Z` large enough), continuous HP retained.
+4. Boundary case near `Z ~= (Y - T)` to verify deterministic behavior under guard/jitter.
+
+### Required metric and checker additions
+
+The harness must produce and check these metrics for transition vectors:
+
+| Metric / check | Purpose |
+|---|---|
+| `hpInterFrameReleaseCount` | Count of HP_OUT inactive transitions between consecutive FP frames |
+| `hpInterFrameReassertCount` | Count of HP_OUT active transitions before later frames |
+| `hold.requireInterFrameHpRelease` | Assert release happens when settings permit |
+| `hold.forbidInterFrameHpRelease` | Assert continuous HP when settings do not permit release |
+
+### Revision plan for existing scenarios
+
+| Existing case | Keep as-is | Revision for transition |
+|---|---|---|
+| SC-01 | Yes | Add companion `SC-01-HPRELAX` variant with same nominal timing but explicit inter-frame HP expectation derived from `T/Y/Z` |
+| SC-11 | Partial | Split into two vectors: `SC-11A` (release allowed) and `SC-11B` (release blocked), both enforcing frame-1 gate and frame cadence |
+| SC-16 | Yes | Keep existing guarantee that HP input release does not force HP_OUT drop; add check that sequence still runs when FP accepted |
+| SC-17 | Partial | Extend to include simultaneous HP+FP boundary and short-lead + reassert path |
+| SC-20 | Partial | Keep `T > Y` framing; add explicit expectation that HP stays continuous when reassert window is impossible |
+| AO-GAP-CADENCE | Yes | Keep cadence gate; add optional per-frame HP release expectation in a transition companion vector |
+
+### Acceptance gate for merge readiness
+
+All of the following must be true for the transition firmware:
+
+1. `full_validation_suite` passes (no regressions in existing behavior contracts).
+2. `hp_relax_transition_suite` passes (new adaptive HP semantics verified).
+3. Parameter-sweep subset for `T/Y/Z` edge values passes, including the `Z=0` case.
 
 ### `fullPressWithoutPriorHpPolicy = ignoreFP`
 

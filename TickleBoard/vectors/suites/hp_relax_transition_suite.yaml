@@ -1,0 +1,9 @@
+name: hp_relax_transition_suite
+description: Transition validation for adaptive inter-frame HP release semantics
+cases:
+  - ../scenarios/AO-HPRELAX-SIMULTANEOUS-INTENT.yaml
+  - ../scenarios/AO-HPRELAX-ALLOWED-Z0.yaml
+  - ../scenarios/AO-HPRELAX-BLOCKED-Z500-T700.yaml
+  - ../scenarios/AO-HPRELAX-BOUNDARY-Z300-T700.yaml
+  - ../scenarios/SC-01-HPRELAX.yaml
+
